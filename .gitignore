@@ -19,3 +19,7 @@ build/
 # Temporary
 *.tmp
 *.log
+
+# Binaries (install via aftman, don't commit)
+rojo
+wally
