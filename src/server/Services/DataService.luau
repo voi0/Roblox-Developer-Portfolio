@@ -409,6 +409,19 @@ function DataService.Init()
 	dataReady.Name = "DataReady"
 	dataReady.Parent = ReplicatedStorage
 
+	-- Create GetData remote function for reliable client-side bootstrap
+	local getData = Instance.new("RemoteFunction")
+	getData.Name = "GetData"
+	getData.Parent = ReplicatedStorage
+
+	getData.OnServerInvoke = function(clientPlayer: Player)
+		local start = os.clock()
+		while not DataService.IsDataLoaded(clientPlayer) and (os.clock() - start) < 10 do
+			task.wait(0.1)
+		end
+		return DataService.GetData(clientPlayer)
+	end
+
 	-- Connect player lifecycle
 	Players.PlayerAdded:Connect(DataService.OnPlayerAdded)
 	Players.PlayerRemoving:Connect(DataService.OnPlayerRemoving)

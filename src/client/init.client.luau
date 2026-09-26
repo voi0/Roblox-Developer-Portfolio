@@ -1,79 +1,165 @@
 --!strict
 --[[
 	Client Boot Script — STARWEAVE
-	Initializes client-side controllers and UI.
+	Orchestrates all client-side controllers: 3D World Sanctuary,
+	Spatial Garden, Audio Experience, VFX Engine, and Master UI.
 	Located in: StarterPlayerScripts.Client
 ]]
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
+
+local SoundController = require(script.Controllers.SoundController)
+local VFXController = require(script.Controllers.VFXController)
+local WorldController = require(script.Controllers.WorldController)
+local UIController = require(script.Controllers.UIController)
+local NotificationUI = require(script.UI.NotificationUI)
 
 local player = Players.LocalPlayer
 
--- ============================================================
--- WAIT FOR DATA
--- ============================================================
-local dataReady = ReplicatedStorage:WaitForChild("DataReady") :: RemoteEvent
 local playerData: any = nil
+local isInitialized = false
 
-dataReady.OnClientEvent:Connect(function(data)
+-- ============================================================
+-- INITIALIZE SYSTEMS ON DATA READY
+-- ============================================================
+local function initializeGame(data: any)
+	if isInitialized then
+		playerData = data
+		UIController.Update(data)
+		WorldController.Update(data)
+		return
+	end
+
+	isInitialized = true
 	playerData = data
-	print("[Client] Data received! Welcome to Starweave ✨")
-	-- TODO: Initialize UI controllers here
+
+	print("========================================")
+	print("  ✨ STARWEAVE Client Booting...")
+	print("========================================")
+
+	SoundController.Init()
+	VFXController.Init()
+	WorldController.Init()
+	WorldController.StartRenderLoop()
+	UIController.Init()
+
+	UIController.Update(data)
+	WorldController.Update(data)
+
+	print("========================================")
+	print("  ✅ STARWEAVE Sanctuary Loaded!")
+	print("========================================")
+end
+
+local dataReady = ReplicatedStorage:WaitForChild("DataReady") :: RemoteEvent
+dataReady.OnClientEvent:Connect(function(data)
+	initializeGame(data)
 end)
 
--- ============================================================
--- GARDEN UPDATE LISTENER
--- ============================================================
-local gardenUpdate = ReplicatedStorage:WaitForChild("GardenUpdate") :: RemoteEvent
-
-gardenUpdate.OnClientEvent:Connect(function(action: string, plotIndex: number, data: any)
-	if action == "Planted" then
-		print(`[Garden] Planted seed in plot {plotIndex}`)
-		-- TODO: Play planting animation, update UI
-
-	elseif action == "Ready" then
-		print(`[Garden] Plot {plotIndex} is ready to harvest! 🌿`)
-		-- TODO: Show harvest indicator, play sparkle effect
-
-	elseif action == "Harvested" then
-		if data then
-			local tierDisplay = data.MutationTier
-			local multiplier = data.MutationMultiplier
-			local value = data.FinalValue
-
-			if data.IsRare then
-				print(`[Garden] 🌟 RARE HARVEST! {tierDisplay} mutation ({multiplier}x) = {value} Stardust!`)
-				-- TODO: Play epic harvest animation, screen shake, particles
-			else
-				print(`[Garden] Harvested: {tierDisplay} ({multiplier}x) = {value} Stardust`)
-				-- TODO: Play normal harvest animation
-			end
-
-			if data.IsNewCollection then
-				print(`[Garden] 📚 NEW COLLECTION ENTRY!`)
-				-- TODO: Show collection popup
+-- Robust fallback: invoke GetData in case DataReady fired before client listener attached
+task.spawn(function()
+	task.wait(0.2)
+	if not isInitialized then
+		local getData = ReplicatedStorage:WaitForChild("GetData", 10) :: RemoteFunction?
+		if getData and not isInitialized then
+			local data = getData:InvokeServer()
+			if data and not isInitialized then
+				initializeGame(data)
 			end
 		end
-
-	elseif action == "PlotUnlocked" then
-		print(`[Garden] Plot {plotIndex} unlocked! 🔓`)
-		-- TODO: Play unlock animation
 	end
 end)
 
 -- ============================================================
--- WEATHER LISTENER
+-- LIVE GARDEN EVENT LISTENER
+-- ============================================================
+local gardenUpdate = ReplicatedStorage:WaitForChild("GardenUpdate") :: RemoteEvent
+
+gardenUpdate.OnClientEvent:Connect(function(action: string, plotIndex: number, data: any)
+	if not playerData then return end
+
+	if action == "Planted" then
+		if playerData.Garden and playerData.Garden[plotIndex] then
+			playerData.Garden[plotIndex].Plant = data
+		end
+		WorldController.UpdatePlantVisual(plotIndex, data)
+		UIController.Update(playerData)
+
+	elseif action == "Ready" then
+		if playerData.Garden and playerData.Garden[plotIndex] then
+			playerData.Garden[plotIndex].Plant = data
+		end
+		SoundController.Play("PlantReady")
+		WorldController.UpdatePlantVisual(plotIndex, data)
+		UIController.Update(playerData)
+
+	elseif action == "Harvested" then
+		local harvestResult = data
+		if playerData.Garden and playerData.Garden[plotIndex] then
+			playerData.Garden[plotIndex].Plant = nil
+		end
+
+		if harvestResult then
+			-- Update local Stardust balance
+			playerData.Stardust = (playerData.Stardust or 0) + (harvestResult.FinalValue or 0)
+			playerData.TotalHarvests = (playerData.TotalHarvests or 0) + 1
+
+			if harvestResult.IsNewCollection and harvestResult.SeedId and harvestResult.MutationTier then
+				local cKey = harvestResult.SeedId .. "_" .. harvestResult.MutationTier
+				if not playerData.PlantCollection then playerData.PlantCollection = {} end
+				playerData.PlantCollection[cKey] = true
+			end
+
+			-- Audio & Visual Juice
+			local tier = harvestResult.MutationTier or "None"
+			if tier == "Primordial" then
+				SoundController.Play("HarvestPrimordial")
+			elseif harvestResult.IsRare then
+				SoundController.Play("HarvestRare")
+			else
+				SoundController.Play("HarvestCommon")
+			end
+
+			-- Spawn 3D Burst in World
+			local plotModel = WorldController._plotModels[plotIndex]
+			local worldPos = Vector3.new(0, 1, 25)
+			if plotModel then
+				local soil = plotModel:FindFirstChild("Soil") :: BasePart?
+				if soil then
+					worldPos = soil.Position
+				end
+			end
+			VFXController.SpawnHarvestBurst(worldPos, tier)
+
+			-- Toast and Rare Popup
+			NotificationUI.ShowHarvest(harvestResult)
+		end
+
+		WorldController.UpdatePlantVisual(plotIndex, nil)
+		UIController.Update(playerData)
+
+	elseif action == "PlotUnlocked" then
+		if playerData.Garden and playerData.Garden[plotIndex] then
+			playerData.Garden[plotIndex].Unlocked = true
+		end
+		SoundController.Play("PlantReady")
+		WorldController.Update(playerData)
+		UIController.Update(playerData)
+	end
+end)
+
+-- ============================================================
+-- WEATHER & ATMOSPHERE LISTENER
 -- ============================================================
 local weatherChanged = ReplicatedStorage:WaitForChild("WeatherChanged") :: RemoteEvent
 
 weatherChanged.OnClientEvent:Connect(function(isActive: boolean)
+	UIController.SetWeather(isActive)
 	if isActive then
-		print("[Weather] ⚡ MUTATION STORM! All mutation chances doubled!")
-		-- TODO: Start storm visual effects (particles, lighting changes)
-	else
-		print("[Weather] Storm has passed.")
-		-- TODO: Stop storm visual effects
+		VFXController.AddCameraTrauma(0.4)
+		VFXController.FlashScreen(Color3.fromRGB(168, 85, 247), 0.5, 1.0)
 	end
 end)
 
@@ -83,8 +169,11 @@ end)
 local announcement = ReplicatedStorage:WaitForChild("ServerAnnouncement") :: RemoteEvent
 
 announcement.OnClientEvent:Connect(function(message: string, tier: string)
-	print(`[Announce] {message}`)
-	-- TODO: Show in-game announcement banner with tier-colored text
+	NotificationUI.ShowAnnouncement(message, tier)
+	if tier == "Celestial" or tier == "Primordial" then
+		SoundController.Play("HarvestRare")
+		VFXController.AddCameraTrauma(0.2)
+	end
 end)
 
 -- ============================================================
@@ -95,78 +184,36 @@ local shopUpdate = ReplicatedStorage:WaitForChild("ShopUpdate") :: RemoteEvent
 shopUpdate.OnClientEvent:Connect(function(action: string, ...)
 	if action == "GamepassPurchased" then
 		local passName = ...
-		print(`[Shop] Gamepass purchased: {passName} ✅`)
-		-- TODO: Show purchase confirmation, update UI flags
-
+		NotificationUI.ShowToast(`⭐ Gamepass Unlocked: {passName}!`, Color3.fromRGB(22, 101, 52), 4)
+		SoundController.Play("RebirthAscend")
 	elseif action == "MysterySeedResult" then
 		local seedId, count = ...
-		print(`[Shop] Mystery Seed Box: Got {count}x {seedId}! 🎁`)
-		-- TODO: Show seed reveal animation
+		NotificationUI.ShowToast(`🎁 Mystery Box: Unveiled {count}x {seedId}!`, Color3.fromRGB(126, 34, 206), 4)
+		SoundController.Play("HarvestRare")
 	end
 end)
 
 -- ============================================================
--- REBIRTH
+-- TRANSCENDENCE / REBIRTH
 -- ============================================================
 local rebirthComplete = ReplicatedStorage:WaitForChild("RebirthComplete") :: RemoteEvent
 
 rebirthComplete.OnClientEvent:Connect(function(rebirthData: any)
-	print(`[Rebirth] ✨ TRANSCENDED to Level {rebirthData.NewLevel}!`)
-	print(`  Cosmic Multiplier: {rebirthData.CosmicMultiplier}x`)
-	print(`  Constellation Points: {rebirthData.ConstellationPoints}`)
-	print(`  Starlight Reward: {rebirthData.StarlightReward}`)
-	-- TODO: Play epic transcendence animation, screen effects
+	if not playerData then return end
+
+	playerData.Rebirth.Level = rebirthData.NewLevel
+	playerData.Rebirth.CosmicMultiplier = rebirthData.CosmicMultiplier
+	playerData.Rebirth.ConstellationPoints = rebirthData.ConstellationPoints
+	playerData.Starlight = (playerData.Starlight or 0) + (rebirthData.StarlightReward or 0)
+
+	-- Reset active crops
+	if playerData.Garden then
+		for _, plot in playerData.Garden do
+			plot.Plant = nil
+		end
+	end
+
+	NotificationUI.ShowToast(`✨ ASCENDED TO REBIRTH LEVEL {rebirthData.NewLevel}!`, Color3.fromRGB(190, 24, 93), 6)
+	WorldController.Update(playerData)
+	UIController.Update(playerData)
 end)
-
--- ============================================================
--- CONVENIENCE: API FOR UI CONTROLLERS
--- ============================================================
-local ClientAPI = {}
-
-function ClientAPI.PlantSeed(plotIndex: number, seedId: string)
-	local gardenRequest = ReplicatedStorage:WaitForChild("GardenRequest") :: RemoteFunction
-	return gardenRequest:InvokeServer("Plant", plotIndex, seedId)
-end
-
-function ClientAPI.HarvestPlant(plotIndex: number)
-	local gardenRequest = ReplicatedStorage:WaitForChild("GardenRequest") :: RemoteFunction
-	return gardenRequest:InvokeServer("Harvest", plotIndex)
-end
-
-function ClientAPI.UnlockPlot(plotIndex: number)
-	local gardenRequest = ReplicatedStorage:WaitForChild("GardenRequest") :: RemoteFunction
-	return gardenRequest:InvokeServer("UnlockPlot", plotIndex)
-end
-
-function ClientAPI.BuySeed(seedId: string, count: number)
-	local gardenRequest = ReplicatedStorage:WaitForChild("GardenRequest") :: RemoteFunction
-	return gardenRequest:InvokeServer("BuySeed", seedId, count)
-end
-
-function ClientAPI.Rebirth()
-	local economyRequest = ReplicatedStorage:WaitForChild("EconomyRequest") :: RemoteFunction
-	return economyRequest:InvokeServer("Rebirth")
-end
-
-function ClientAPI.UpgradeConstellation(upgradeId: string)
-	local economyRequest = ReplicatedStorage:WaitForChild("EconomyRequest") :: RemoteFunction
-	return economyRequest:InvokeServer("UpgradeConstellation", upgradeId)
-end
-
-function ClientAPI.ClaimLoginReward()
-	local economyRequest = ReplicatedStorage:WaitForChild("EconomyRequest") :: RemoteFunction
-	return economyRequest:InvokeServer("ClaimLogin")
-end
-
-function ClientAPI.GetData()
-	return playerData
-end
-
--- Make API available to other client modules
-local apiModule = Instance.new("ModuleScript")
-apiModule.Name = "ClientAPI"
-apiModule.Parent = script
--- Note: In production, this would be a proper ModuleScript in the client folder.
--- For now, other client scripts can require this module.
-
-print("[Client] Starweave client initialized ✨")
