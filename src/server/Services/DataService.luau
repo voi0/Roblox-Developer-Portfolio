@@ -12,8 +12,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
-local ProfileService = require(game:GetService("ServerScriptService"):FindFirstChild("ProfileService", true)
-	or error("ProfileService not found! Install via Wally."))
+local ProfileService = require(game:GetService("ServerScriptService").ServerPackages.ProfileService)
 
 local Config = require(ReplicatedStorage.Shared.Config)
 
