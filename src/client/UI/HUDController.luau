@@ -220,8 +220,8 @@ function HUDController.Create()
 	-- ============================================================
 	local dock = Instance.new("Frame")
 	dock.Name = "NavigationDock"
-	dock.Size = UDim2.new(0, 460, 0, 52)
-	dock.Position = UDim2.new(0.5, -230, 1, -62)
+	dock.Size = UDim2.new(0, 590, 0, 52)
+	dock.Position = UDim2.new(0.5, -295, 1, -62)
 	dock.BackgroundColor3 = Color3.fromRGB(15, 11, 28)
 	dock.BackgroundTransparency = 0.15
 	dock.BorderSizePixel = 0
@@ -240,11 +240,13 @@ function HUDController.Create()
 	dockLayout.FillDirection = Enum.FillDirection.Horizontal
 	dockLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 	dockLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-	dockLayout.Padding = UDim.new(0, 12)
+	dockLayout.Padding = UDim.new(0, 8)
 	dockLayout.Parent = dock
 
 	HUDController._createDockButton(dock, "🌱 Market", "OpenShop", Color3.fromRGB(22, 101, 52))
 	HUDController._createDockButton(dock, "🔮 Forge", "OpenForge", Color3.fromRGB(126, 34, 206))
+	HUDController._createDockButton(dock, "🐾 Pets", "OpenPets", Color3.fromRGB(180, 83, 9))
+	HUDController._createDockButton(dock, "🌌 Stars", "OpenConstellation", Color3.fromRGB(147, 51, 234))
 	HUDController._createDockButton(dock, "📚 Logbook", "OpenCollection", Color3.fromRGB(3, 105, 161))
 	HUDController._createDockButton(dock, "✨ Transcend", "OpenRebirth", Color3.fromRGB(190, 24, 93))
 end
@@ -377,6 +379,11 @@ function HUDController.RefreshSeedBar(data: any)
 			pill.MouseButton1Click:Connect(function()
 				SoundController.Play("ButtonClick")
 				WorldController.SetSelectedSeed(seedId)
+				local tut = script.Parent.Parent.Controllers:FindFirstChild("TutorialController")
+				if tut then
+					local tModule = require(tut :: ModuleScript)
+					tModule.OnSeedSelected()
+				end
 				-- Highlight active selection
 				for _, other in bar:GetChildren() do
 					if other:IsA("TextButton") then

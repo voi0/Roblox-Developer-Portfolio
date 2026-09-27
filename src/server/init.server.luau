@@ -12,6 +12,7 @@ local DataService = require(ServerScriptService.Server.Services.DataService)
 local MutationService = require(ServerScriptService.Server.Services.MutationService)
 local GardenService = require(ServerScriptService.Server.Services.GardenService)
 local EconomyService = require(ServerScriptService.Server.Services.EconomyService)
+local PetService = require(ServerScriptService.Server.Services.PetService)
 
 -- Boot sequence
 print("========================================")
@@ -22,6 +23,7 @@ DataService.Init()
 MutationService.Init()
 GardenService.Init()
 EconomyService.Init()
+PetService.Init()
 
 print("========================================")
 print("  ✅ STARWEAVE Server Online!")

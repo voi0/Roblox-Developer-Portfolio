@@ -16,6 +16,8 @@ local ShopModal = require(script.Parent.Parent.UI.ShopModal)
 local CollectionModal = require(script.Parent.Parent.UI.CollectionModal)
 local RebirthModal = require(script.Parent.Parent.UI.RebirthModal)
 local ForgeModal = require(script.Parent.Parent.UI.ForgeModal)
+local ConstellationModal = require(script.Parent.Parent.UI.ConstellationModal)
+local PetModal = require(script.Parent.Parent.UI.PetModal)
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
@@ -45,6 +47,8 @@ function UIController.Init()
 		CollectionModal.Create(mainGui)
 		RebirthModal.Create(mainGui)
 		ForgeModal.Create(mainGui)
+		ConstellationModal.Create(mainGui)
+		PetModal.Create(mainGui)
 	end
 
 	-- Listen for Dock Action Triggers
@@ -65,6 +69,10 @@ function UIController.HandleDockAction(actionName: string)
 		UIController.ToggleModal("Collection")
 	elseif actionName == "OpenRebirth" then
 		UIController.ToggleModal("Rebirth")
+	elseif actionName == "OpenConstellation" then
+		UIController.ToggleModal("Constellation")
+	elseif actionName == "OpenPets" then
+		UIController.ToggleModal("Pets")
 	end
 end
 
@@ -90,6 +98,10 @@ function UIController.ToggleModal(modalName: string)
 		CollectionModal.Open()
 	elseif modalName == "Rebirth" then
 		RebirthModal.Open()
+	elseif modalName == "Constellation" then
+		ConstellationModal.Open()
+	elseif modalName == "Pets" then
+		PetModal.Open()
 	end
 end
 
@@ -98,6 +110,8 @@ function UIController.CloseAllModals()
 	if UIController._currentOpenModal == "Forge" then ForgeModal.Close() end
 	if UIController._currentOpenModal == "Collection" then CollectionModal.Close() end
 	if UIController._currentOpenModal == "Rebirth" then RebirthModal.Close() end
+	if UIController._currentOpenModal == "Constellation" then ConstellationModal.Close() end
+	if UIController._currentOpenModal == "Pets" then PetModal.Close() end
 
 	UIController._currentOpenModal = nil
 
@@ -112,6 +126,8 @@ function UIController.Update(playerData: any)
 	CollectionModal.Update(playerData)
 	RebirthModal.Update(playerData)
 	ForgeModal.Update(playerData)
+	ConstellationModal.Update(playerData)
+	PetModal.Update(playerData)
 end
 
 function UIController.SetWeather(isActive: boolean)

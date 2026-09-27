@@ -382,6 +382,54 @@ function GardenService.BuySeed(player: Player, seedId: string, count: number): (
 end
 
 -- ============================================================
+-- SEED FORGE (Combine 3 identical seeds into higher tier)
+-- ============================================================
+
+local TIER_UPGRADE_MAP: { [string]: string } = {
+	Common = "Uncommon",
+	Uncommon = "Rare",
+	Rare = "Epic",
+	Epic = "Legendary",
+	Legendary = "Celestial",
+	Celestial = "Void",
+}
+
+function GardenService.ForgeSeed(player: Player, seedId: string): (boolean, string, string?)
+	local data = DataService.GetData(player)
+	if not data then return false, "Data not loaded.", nil end
+
+	local seed = SeedData.GetSeed(seedId)
+	if not seed then return false, "Invalid seed.", nil end
+
+	local currentCount = DataService.GetSeedCount(player, seedId)
+	if currentCount < 3 then
+		return false, "You need at least 3 identical seeds to forge!", nil
+	end
+
+	local nextTier = TIER_UPGRADE_MAP[seed.Tier]
+	if not nextTier then
+		return false, "This seed tier has reached maximum ascension!", nil
+	end
+
+	local possibleNextSeeds = SeedData.GetSeedsByTier(nextTier)
+	if #possibleNextSeeds == 0 then
+		return false, "No next-tier seeds available.", nil
+	end
+
+	local nextSeed = possibleNextSeeds[math.random(#possibleNextSeeds)]
+
+	-- Consume 3 input seeds
+	if not DataService.RemoveSeed(player, seedId, 3) then
+		return false, "Failed to consume seeds.", nil
+	end
+
+	-- Grant upgraded seed
+	DataService.AddSeeds(player, nextSeed.Id, 1)
+
+	return true, `Successfully forged 3x {seed.Name} into 1x {nextSeed.Name}!`, nextSeed.Id
+end
+
+-- ============================================================
 -- SKIP GROWTH (DevProduct)
 -- ============================================================
 
@@ -507,6 +555,11 @@ function GardenService.Init()
 			local plotIndex = ...
 			local success, message = GardenService.SkipGrowth(player, plotIndex :: number)
 			return { Success = success, Message = message }
+
+		elseif action == "Forge" then
+			local seedId = ...
+			local success, message, newSeedId = GardenService.ForgeSeed(player, seedId :: string)
+			return { Success = success, Message = message, NewSeedId = newSeedId }
 		end
 
 		return { Success = false, Message = "Unknown action." }

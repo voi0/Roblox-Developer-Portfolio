@@ -14,6 +14,8 @@ local SoundController = require(script.Controllers.SoundController)
 local VFXController = require(script.Controllers.VFXController)
 local WorldController = require(script.Controllers.WorldController)
 local UIController = require(script.Controllers.UIController)
+local PetController = require(script.Controllers.PetController)
+local TutorialController = require(script.Controllers.TutorialController)
 local NotificationUI = require(script.UI.NotificationUI)
 
 local player = Players.LocalPlayer
@@ -29,6 +31,7 @@ local function initializeGame(data: any)
 		playerData = data
 		UIController.Update(data)
 		WorldController.Update(data)
+		PetController.Update(data)
 		return
 	end
 
@@ -43,10 +46,14 @@ local function initializeGame(data: any)
 	VFXController.Init()
 	WorldController.Init()
 	WorldController.StartRenderLoop()
+	PetController.Init()
+	TutorialController.Init()
 	UIController.Init()
 
 	UIController.Update(data)
 	WorldController.Update(data)
+	PetController.Update(data)
+	TutorialController.CheckStart(data)
 
 	print("========================================")
 	print("  ✅ STARWEAVE Sanctuary Loaded!")
@@ -86,6 +93,7 @@ gardenUpdate.OnClientEvent:Connect(function(action: string, plotIndex: number, d
 		end
 		WorldController.UpdatePlantVisual(plotIndex, data)
 		UIController.Update(playerData)
+		TutorialController.OnPlantPlanted(plotIndex)
 
 	elseif action == "Ready" then
 		if playerData.Garden and playerData.Garden[plotIndex] then
@@ -135,6 +143,7 @@ gardenUpdate.OnClientEvent:Connect(function(action: string, plotIndex: number, d
 
 			-- Toast and Rare Popup
 			NotificationUI.ShowHarvest(harvestResult)
+			TutorialController.OnPlantHarvested(plotIndex)
 		end
 
 		WorldController.UpdatePlantVisual(plotIndex, nil)
