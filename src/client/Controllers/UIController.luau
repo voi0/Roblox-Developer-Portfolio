@@ -18,6 +18,7 @@ local RebirthModal = require(script.Parent.Parent.UI.RebirthModal)
 local ForgeModal = require(script.Parent.Parent.UI.ForgeModal)
 local ConstellationModal = require(script.Parent.Parent.UI.ConstellationModal)
 local PetModal = require(script.Parent.Parent.UI.PetModal)
+local QuestModal = require(script.Parent.Parent.UI.QuestModal)
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
@@ -49,6 +50,7 @@ function UIController.Init()
 		ForgeModal.Create(mainGui)
 		ConstellationModal.Create(mainGui)
 		PetModal.Create(mainGui)
+		QuestModal.Create(mainGui)
 	end
 
 	-- Listen for Dock Action Triggers
@@ -65,14 +67,16 @@ function UIController.HandleDockAction(actionName: string)
 		UIController.ToggleModal("Shop")
 	elseif actionName == "OpenForge" then
 		UIController.ToggleModal("Forge")
+	elseif actionName == "OpenQuests" then
+		UIController.ToggleModal("Quests")
+	elseif actionName == "OpenPets" then
+		UIController.ToggleModal("Pets")
+	elseif actionName == "OpenConstellation" then
+		UIController.ToggleModal("Constellation")
 	elseif actionName == "OpenCollection" then
 		UIController.ToggleModal("Collection")
 	elseif actionName == "OpenRebirth" then
 		UIController.ToggleModal("Rebirth")
-	elseif actionName == "OpenConstellation" then
-		UIController.ToggleModal("Constellation")
-	elseif actionName == "OpenPets" then
-		UIController.ToggleModal("Pets")
 	end
 end
 
@@ -94,6 +98,8 @@ function UIController.ToggleModal(modalName: string)
 		ShopModal.Open()
 	elseif modalName == "Forge" then
 		ForgeModal.Open()
+	elseif modalName == "Quests" then
+		QuestModal.Open()
 	elseif modalName == "Collection" then
 		CollectionModal.Open()
 	elseif modalName == "Rebirth" then
@@ -108,6 +114,7 @@ end
 function UIController.CloseAllModals()
 	if UIController._currentOpenModal == "Shop" then ShopModal.Close() end
 	if UIController._currentOpenModal == "Forge" then ForgeModal.Close() end
+	if UIController._currentOpenModal == "Quests" then QuestModal.Close() end
 	if UIController._currentOpenModal == "Collection" then CollectionModal.Close() end
 	if UIController._currentOpenModal == "Rebirth" then RebirthModal.Close() end
 	if UIController._currentOpenModal == "Constellation" then ConstellationModal.Close() end
@@ -128,6 +135,7 @@ function UIController.Update(playerData: any)
 	ForgeModal.Update(playerData)
 	ConstellationModal.Update(playerData)
 	PetModal.Update(playerData)
+	QuestModal.Update(playerData)
 end
 
 function UIController.SetWeather(isActive: boolean)

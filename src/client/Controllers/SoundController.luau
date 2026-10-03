@@ -2,16 +2,19 @@
 --[[
 	SoundController.luau — Audio and Acoustic Experience for STARWEAVE
 	Handles sound effects for UI micro-interactions, planting, harvesting,
-	rare mutation fanfares, and ambient celestial tone.
+	rare mutation fanfares, ambient celestial tone, and looping BGM.
 	Located in: StarterPlayerScripts.Client.Controllers.SoundController
 ]]
 
 local SoundService = game:GetService("SoundService")
 local ContentProvider = game:GetService("ContentProvider")
+local TweenService = game:GetService("TweenService")
 
 local SoundController = {}
 SoundController._sounds = {} :: { [string]: Sound }
 SoundController._soundGroup = nil :: SoundGroup?
+SoundController._bgmSound = nil :: Sound?
+SoundController._isMuted = false
 
 -- Curated Roblox universal sound assets for crisp, satisfying game feel
 local SOUND_CONFIG = {
@@ -62,6 +65,9 @@ local SOUND_CONFIG = {
 	},
 }
 
+-- Ethereal cosmic soundtrack
+local BGM_ASSET_ID = "rbxassetid://1843404009"
+
 function SoundController.Init()
 	local soundGroup = Instance.new("SoundGroup")
 	soundGroup.Name = "StarweaveAudio"
@@ -82,14 +88,31 @@ function SoundController.Init()
 		table.insert(soundsToPreload, sound)
 	end
 
+	-- Ambient Looping BGM
+	local bgm = Instance.new("Sound")
+	bgm.Name = "CosmicAmbianceBGM"
+	bgm.SoundId = BGM_ASSET_ID
+	bgm.Volume = 0.28
+	bgm.Looped = true
+	bgm.SoundGroup = soundGroup
+	bgm.Parent = soundGroup
+	SoundController._bgmSound = bgm
+	table.insert(soundsToPreload, bgm)
+
 	task.spawn(function()
 		pcall(function()
 			ContentProvider:PreloadAsync(soundsToPreload)
 		end)
+		-- Start soft BGM fade-in
+		if SoundController._bgmSound and not SoundController._isMuted then
+			SoundController._bgmSound:Play()
+		end
 	end)
 end
 
 function SoundController.Play(name: string, customPitch: number?)
+	if SoundController._isMuted then return end
+
 	local sound = SoundController._sounds[name]
 	if not sound then return end
 
@@ -109,6 +132,20 @@ function SoundController.Play(name: string, customPitch: number?)
 	soundInstance.Ended:Once(function()
 		soundInstance:Destroy()
 	end)
+end
+
+function SoundController.ToggleMute(): boolean
+	SoundController._isMuted = not SoundController._isMuted
+	if SoundController._soundGroup then
+		SoundController._soundGroup.Volume = SoundController._isMuted and 0 or 0.85
+	end
+	return SoundController._isMuted
+end
+
+function SoundController.SetBGMVolume(volume: number)
+	if SoundController._bgmSound then
+		SoundController._bgmSound.Volume = math.clamp(volume, 0, 1)
+	end
 end
 
 return SoundController

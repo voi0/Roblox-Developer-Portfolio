@@ -57,6 +57,8 @@ local DATA_TEMPLATE = {
 	LoginStreak = 0,
 	LastLoginDate = "",
 	DailyQuestsCompleted = {},
+	ActiveQuests = {}, -- { [string]: { Id: string, Current: number, Target: number, Completed: boolean, Claimed: boolean } }
+	RedeemedCodes = {}, -- { [string]: boolean }
 	PlayTimeSeconds = 0,
 
 	-- Monetization flags
@@ -394,6 +396,36 @@ function DataService.HasGamepass(player: Player, flag: string): boolean
 	local data = DataService.GetData(player)
 	if not data then return false end
 	return data[flag] == true
+end
+
+-- ============================================================
+-- QUEST & PROMO CODE OPERATIONS
+-- ============================================================
+
+function DataService.GetActiveQuests(player: Player): any?
+	local data = DataService.GetData(player)
+	if not data then return nil end
+	if not data.ActiveQuests then data.ActiveQuests = {} end
+	return data.ActiveQuests
+end
+
+function DataService.SetActiveQuests(player: Player, quests: any)
+	local data = DataService.GetData(player)
+	if not data then return end
+	data.ActiveQuests = quests
+end
+
+function DataService.HasRedeemedCode(player: Player, code: string): boolean
+	local data = DataService.GetData(player)
+	if not data or not data.RedeemedCodes then return false end
+	return data.RedeemedCodes[string.upper(code)] == true
+end
+
+function DataService.MarkCodeRedeemed(player: Player, code: string)
+	local data = DataService.GetData(player)
+	if not data then return end
+	if not data.RedeemedCodes then data.RedeemedCodes = {} end
+	data.RedeemedCodes[string.upper(code)] = true
 end
 
 -- ============================================================

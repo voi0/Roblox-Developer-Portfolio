@@ -19,6 +19,7 @@ local MutationData = require(ReplicatedStorage.Shared.MutationData)
 -- These will be required after Init to avoid circular deps
 local DataService: any = nil
 local MutationService: any = nil
+local QuestService: any = nil
 
 -- ============================================================
 -- SERVICE
@@ -154,6 +155,11 @@ function GardenService.PlantSeed(player: Player, plotIndex: number, seedId: stri
 	local gardenEvent = ReplicatedStorage:FindFirstChild("GardenUpdate")
 	if gardenEvent and gardenEvent:IsA("RemoteEvent") then
 		gardenEvent:FireClient(player, "Planted", plotIndex, plant)
+	end
+
+	-- Track daily quest
+	if QuestService then
+		QuestService.TrackProgress(player, "plant_crops", 1)
 	end
 
 	return true, "Planted!"
@@ -294,6 +300,16 @@ function GardenService.HarvestPlant(player: Player, plotIndex: number): (boolean
 		end
 	end
 
+	-- Track daily quests
+	if QuestService then
+		if harvestResult.MutationTier and harvestResult.MutationTier ~= "None" then
+			QuestService.TrackProgress(player, "harvest_mutations", 1)
+		end
+		if harvestResult.FinalValue and harvestResult.FinalValue > 0 then
+			QuestService.TrackProgress(player, "earn_stardust", harvestResult.FinalValue)
+		end
+	end
+
 	return true, harvestResult
 end
 
@@ -426,6 +442,11 @@ function GardenService.ForgeSeed(player: Player, seedId: string): (boolean, stri
 	-- Grant upgraded seed
 	DataService.AddSeeds(player, nextSeed.Id, 1)
 
+	-- Track daily quest
+	if QuestService then
+		QuestService.TrackProgress(player, "forge_seeds", 1)
+	end
+
 	return true, `Successfully forged 3x {seed.Name} into 1x {nextSeed.Name}!`, nextSeed.Id
 end
 
@@ -515,6 +536,7 @@ function GardenService.Init()
 	local ServerScriptService = game:GetService("ServerScriptService")
 	DataService = require(ServerScriptService.Server.Services.DataService)
 	MutationService = require(ServerScriptService.Server.Services.MutationService)
+	QuestService = require(ServerScriptService.Server.Services.QuestService)
 
 	-- Create remote events
 	local gardenEvent = Instance.new("RemoteEvent")

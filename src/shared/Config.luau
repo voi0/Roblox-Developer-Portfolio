@@ -138,21 +138,168 @@ Config.Pets = {
 -- ============================================================
 Config.Monetization = {
 	Gamepasses = {
-		StarterPack = { Id = 0, Price = 49, Flag = "HasStarterPack" },
-		AutoHarvester = { Id = 0, Price = 499, Flag = "HasAutoHarvester" },
-		DoubleLuck = { Id = 0, Price = 899, Flag = "HasDoubleLuck" },
-		InstantGrow = { Id = 0, Price = 299, Flag = "HasInstantGrow" },
-		VIPGreenhouse = { Id = 0, Price = 699, Flag = "HasVIPGreenhouse" },
-		CosmicPass = { Id = 0, Price = 1499, Flag = "HasCosmicPass" },
+		StarterPack = {
+			Id = 0,
+			Price = 49,
+			Flag = "HasStarterPack",
+			Name = "Starter Pack",
+			Description = "5x Solar Ferns, 5x Crystal Vines, +2,000 SD bonus",
+			Icon = "SP",
+		},
+		AutoHarvester = {
+			Id = 0,
+			Price = 499,
+			Flag = "HasAutoHarvester",
+			Name = "Auto-Harvester",
+			Description = "Automatically harvests crops the exact second they bloom!",
+			Icon = "AH",
+		},
+		DoubleLuck = {
+			Id = 0,
+			Price = 899,
+			Flag = "HasDoubleLuck",
+			Name = "2x Cosmic Luck",
+			Description = "Permanent 2x multiplier to all rare mutation rolls!",
+			Icon = "2X",
+		},
+		InstantGrow = {
+			Id = 0,
+			Price = 299,
+			Flag = "HasInstantGrow",
+			Name = "Fast Metabolism",
+			Description = "All plant growth durations reduced by 35% permanently!",
+			Icon = "FG",
+		},
+		VIPGreenhouse = {
+			Id = 0,
+			Price = 699,
+			Flag = "HasVIPGreenhouse",
+			Name = "VIP Stargarden",
+			Description = "+50% Stardust sell multiplier & exclusive gold chat title",
+			Icon = "VIP",
+		},
+		CosmicPass = {
+			Id = 0,
+			Price = 1499,
+			Flag = "HasCosmicPass",
+			Name = "Cosmic All-Access",
+			Description = "Unlocks Auto-Harvester, 2x Luck, Fast Grow & VIP Greenhouse all in one!",
+			Icon = "ALL",
+		},
 	},
 
 	DevProducts = {
-		StardustPack = { Id = 0, Price = 25, Reward = { Currency = "Stardust", Amount = 5000 } },
-		MutationStorm = { Id = 0, Price = 49, Duration = 300 }, -- 5 min storm
-		SkipGrowth = { Id = 0, Price = 25 },
-		MysterySeedBox = { Id = 0, Price = 99 },
-		NebulaGemPack = { Id = 0, Price = 149, Reward = { Currency = "NebulaGems", Amount = 500 } },
-		InstantTranscend = { Id = 0, Price = 199 },
+		StardustPack = {
+			Id = 0,
+			Price = 25,
+			Name = "5,000 Stardust",
+			Description = "Instant infusion of cosmic currency",
+			Reward = { Currency = "Stardust", Amount = 5000 },
+			Icon = "SD",
+		},
+		MutationStorm = {
+			Id = 0,
+			Price = 49,
+			Name = "Summon Superstorm",
+			Description = "Summons a 5-minute 2x Luck Storm for the whole server!",
+			Duration = 300,
+			Icon = "ST",
+		},
+		SkipGrowth = {
+			Id = 0,
+			Price = 25,
+			Name = "Instant Bloom",
+			Description = "Instantly ripens your current growing crop",
+			Icon = "IB",
+		},
+		MysterySeedBox = {
+			Id = 0,
+			Price = 99,
+			Name = "Mystery Relic Box",
+			Description = "Drops 3x guaranteed Rare, Epic, or Celestial seeds!",
+			Icon = "MB",
+		},
+		NebulaGemPack = {
+			Id = 0,
+			Price = 149,
+			Name = "500 Nebula Gems",
+			Description = "Premium celestial crystals for rare pet summons & forging",
+			Reward = { Currency = "NebulaGems", Amount = 500 },
+			Icon = "NG",
+		},
+		InstantTranscend = {
+			Id = 0,
+			Price = 199,
+			Name = "Instant Transcend",
+			Description = "Instantly fulfill Stardust requirement for next Rebirth!",
+			Icon = "IT",
+		},
+	},
+}
+
+-- ============================================================
+-- DAILY QUESTS
+-- ============================================================
+Config.Quests = {
+	DailyPool = {
+		{
+			Id = "plant_crops",
+			Title = "Celestial Cultivator",
+			Description = "Plant {Target} seeds in your sanctuary",
+			Target = 15,
+			RewardStardust = 2500,
+			RewardGems = 25,
+		},
+		{
+			Id = "harvest_mutations",
+			Title = "Astral Botanist",
+			Description = "Harvest {Target} mutated plants",
+			Target = 5,
+			RewardStardust = 5000,
+			RewardGems = 50,
+		},
+		{
+			Id = "forge_seeds",
+			Title = "Transmutation Adept",
+			Description = "Combine seeds in the Celestial Forge {Target} time",
+			Target = 1,
+			RewardStardust = 4000,
+			RewardGems = 40,
+		},
+		{
+			Id = "earn_stardust",
+			Title = "Stardust Harvester",
+			Description = "Earn {Target} Stardust from harvests",
+			Target = 10000,
+			RewardStardust = 3000,
+			RewardGems = 35,
+		},
+	},
+}
+
+-- ============================================================
+-- PROMO CODES (For TikTok, Launch & Organic UA)
+-- ============================================================
+Config.PromoCodes = {
+	STARWEAVE = {
+		RewardStardust = 2500,
+		RewardGems = 50,
+		RewardSeeds = { starseed_basic = 10, lunar_sprout = 3 },
+	},
+	COSMIC = {
+		RewardStardust = 5000,
+		RewardGems = 100,
+		RewardSeeds = { solar_fern = 5 },
+	},
+	LAUNCH = {
+		RewardStardust = 10000,
+		RewardGems = 200,
+		RewardSeeds = { crystal_vine = 3 },
+	},
+	VOI0 = {
+		RewardStardust = 15000,
+		RewardGems = 500,
+		RewardSeeds = { nebula_moss = 2 },
 	},
 }
 
@@ -170,3 +317,4 @@ Config.Security = {
 }
 
 return Config
+

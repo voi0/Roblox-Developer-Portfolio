@@ -32,6 +32,7 @@ HUDController._weatherBadge = nil :: Frame?
 local DOCK_BUTTONS: { { Label: string, Action: string, Accent: Color3, Glyph: string } } = {
 	{ Label = "Market",    Action = "OpenShop",          Accent = Color3.fromRGB(74, 222, 128),  Glyph = "M" },
 	{ Label = "Forge",     Action = "OpenForge",         Accent = Color3.fromRGB(168, 85, 247),  Glyph = "F" },
+	{ Label = "Quests",    Action = "OpenQuests",        Accent = Color3.fromRGB(250, 204, 21),  Glyph = "Q" },
 	{ Label = "Pets",      Action = "OpenPets",          Accent = Color3.fromRGB(251, 191, 36),  Glyph = "P" },
 	{ Label = "Stars",     Action = "OpenConstellation", Accent = Color3.fromRGB(192, 132, 252), Glyph = "S" },
 	{ Label = "Logbook",   Action = "OpenCollection",    Accent = Color3.fromRGB(56, 189, 248),  Glyph = "L" },
@@ -239,8 +240,8 @@ function HUDController.Create()
 	-- ============================================================
 	local dock = Instance.new("Frame")
 	dock.Name = "NavigationDock"
-	dock.Size = UDim2.new(0, 560, 0, 52)
-	dock.Position = UDim2.new(0.5, -280, 1, -58)
+	dock.Size = UDim2.new(0, 646, 0, 52)
+	dock.Position = UDim2.new(0.5, -323, 1, -58)
 	dock.BackgroundColor3 = UILib.Colors.Surface0
 	dock.BackgroundTransparency = 0.08
 	dock.BorderSizePixel = 0
