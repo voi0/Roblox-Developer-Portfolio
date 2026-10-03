@@ -1,8 +1,8 @@
 --!strict
 --[[
 	WorldController.luau — 3D Spatial Garden & Cosmic Environment for STARWEAVE
-	Spawns physical 3D garden beds, glowing plots, animated crystal crop models,
-	floating 3D Billboard tags, and configures cinematic cosmic Lighting.
+	Spawns a mystical celestial floating island, textured slate planters,
+	atmospheric lighting, dynamic crystal crops, and clean growth indicators.
 	Located in: StarterPlayerScripts.Client.Controllers.WorldController
 ]]
 
@@ -15,63 +15,66 @@ local Workspace = game:GetService("Workspace")
 local SeedData = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("SeedData"))
 local MutationData = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("MutationData"))
 
-local SoundController = require(script.Parent.SoundController)
-local VFXController = require(script.Parent.VFXController)
+local SoundController: any = nil
+local VFXController: any = nil
 
 local player = Players.LocalPlayer
 
 local WorldController = {}
 WorldController._plotModels = {} :: { [number]: Model }
 WorldController._plotData = {} :: { [number]: any }
+WorldController._data = nil :: any
 WorldController._gardenFolder = nil :: Folder?
 WorldController._selectedSeedId = "starseed_basic"
-WorldController._data = nil :: any
+WorldController._rotatingCores = {} :: { BasePart }
 
-local PLOT_SPACING = 9
 local GRID_COLUMNS = 3
+local PLOT_SPACING = 9.5 -- slightly more breathing room
 
 local SEED_COLORS: { [string]: Color3 } = {
-	starseed_basic = Color3.fromRGB(192, 132, 252),
-	lunar_sprout = Color3.fromRGB(96, 165, 250),
-	dust_bloom = Color3.fromRGB(244, 114, 182),
-	solar_fern = Color3.fromRGB(251, 191, 36),
-	crystal_vine = Color3.fromRGB(45, 212, 191),
-	nebula_moss = Color3.fromRGB(167, 139, 250),
-	aurora_blossom = Color3.fromRGB(56, 189, 248),
-	gravity_root = Color3.fromRGB(129, 140, 248),
-	comet_tulip = Color3.fromRGB(251, 146, 60),
-	supernova_orchid = Color3.fromRGB(244, 63, 94),
-	quasar_lily = Color3.fromRGB(168, 85, 247),
-	blackhole_rose = Color3.fromRGB(30, 27, 75),
-	dimension_tree = Color3.fromRGB(13, 148, 136),
-	genesis_bloom = Color3.fromRGB(250, 204, 21),
-	void_singularity = Color3.fromRGB(15, 23, 42),
+	starseed_basic    = Color3.fromRGB(250, 204, 21),
+	lunar_sprout      = Color3.fromRGB(224, 231, 255),
+	solar_fern        = Color3.fromRGB(249, 115, 22),
+	crystal_vine      = Color3.fromRGB(56, 189, 248),
+	nebula_moss       = Color3.fromRGB(168, 85, 247),
+	stellar_lotus     = Color3.fromRGB(244, 114, 182),
+	aurora_dahlia     = Color3.fromRGB(52, 211, 153),
+	supernova_orchid  = Color3.fromRGB(239, 68, 68),
+	comet_tail_reed   = Color3.fromRGB(96, 165, 250),
+	plasma_cactus     = Color3.fromRGB(251, 146, 60),
+	eclipse_lily      = Color3.fromRGB(192, 132, 252),
+	astral_bamboo     = Color3.fromRGB(74, 222, 128),
+	quasar_bloom      = Color3.fromRGB(253, 224, 71),
+	black_hole_iris   = Color3.fromRGB(99, 102, 241),
+	cosmic_willow     = Color3.fromRGB(236, 72, 153),
+	void_singularity  = Color3.fromRGB(248, 250, 252),
 }
 
 -- ============================================================
--- COSMIC ENVIRONMENT SETUP
+-- COSMIC ENVIRONMENT & SKYBOX SETUP
 -- ============================================================
 function WorldController.SetupEnvironment()
-	Lighting.ClockTime = 22.5
-	Lighting.GeographicLatitude = 45
-	Lighting.Ambient = Color3.fromRGB(35, 25, 55)
-	Lighting.OutdoorAmbient = Color3.fromRGB(22, 16, 42)
-	Lighting.Brightness = 1.2
-	Lighting.ColorShift_Top = Color3.fromRGB(192, 132, 252)
-	Lighting.ColorShift_Bottom = Color3.fromRGB(30, 20, 50)
-	Lighting.FogColor = Color3.fromRGB(18, 12, 34)
-	Lighting.FogEnd = 350
-	Lighting.FogStart = 50
+	Lighting.ClockTime = 0 -- midnight
+	Lighting.GeographicLatitude = 35
+	Lighting.Ambient = Color3.fromRGB(48, 38, 68)
+	Lighting.OutdoorAmbient = Color3.fromRGB(32, 25, 52)
+	Lighting.Brightness = 1.0
+	Lighting.ColorShift_Top = Color3.fromRGB(216, 180, 254)
+	Lighting.ColorShift_Bottom = Color3.fromRGB(35, 25, 55)
+	Lighting.FogColor = Color3.fromRGB(15, 10, 26)
+	Lighting.FogEnd = 400
+	Lighting.FogStart = 80
 
+	-- Soft balanced Bloom (no blinding glare!)
 	local bloom = Lighting:FindFirstChildOfClass("BloomEffect")
 	if not bloom then
 		bloom = Instance.new("BloomEffect")
 		bloom.Name = "CosmicBloom"
 		bloom.Parent = Lighting
 	end
-	bloom.Intensity = 0.75
-	bloom.Size = 24
-	bloom.Threshold = 0.82
+	bloom.Intensity = 0.35
+	bloom.Size = 16
+	bloom.Threshold = 0.95
 
 	local colorCorrection = Lighting:FindFirstChildOfClass("ColorCorrectionEffect")
 	if not colorCorrection then
@@ -79,9 +82,53 @@ function WorldController.SetupEnvironment()
 		colorCorrection.Name = "CosmicGrade"
 		colorCorrection.Parent = Lighting
 	end
-	colorCorrection.Saturation = 0.25
-	colorCorrection.Contrast = 0.12
-	colorCorrection.TintColor = Color3.fromRGB(245, 235, 255)
+	colorCorrection.Saturation = 0.18
+	colorCorrection.Contrast = 0.08
+	colorCorrection.TintColor = Color3.fromRGB(250, 242, 255)
+
+	-- Cosmic Nebula Skybox
+	local existingSky = Lighting:FindFirstChildOfClass("Sky")
+	if not existingSky then
+		local sky = Instance.new("Sky")
+		sky.Name = "NebulaSky"
+		sky.SkyboxBk = "rbxassetid://159454299"
+		sky.SkyboxDn = "rbxassetid://159454296"
+		sky.SkyboxFt = "rbxassetid://159454293"
+		sky.SkyboxLf = "rbxassetid://159454286"
+		sky.SkyboxRt = "rbxassetid://159454300"
+		sky.SkyboxUp = "rbxassetid://159454288"
+		sky.StarCount = 5000
+		sky.CelestialBodiesShown = true
+		sky.Parent = Lighting
+	end
+
+	-- Hide default Baseplate so the sanctuary floats in the starry void
+	for _, child in Workspace:GetChildren() do
+		if child:IsA("BasePart") and string.find(string.lower(child.Name), "baseplate") then
+			child.Transparency = 1
+			child.CanCollide = false
+		end
+	end
+
+	-- Reposition and style spawn location directly at the sanctuary entrance
+	local spawn = Workspace:FindFirstChildOfClass("SpawnLocation")
+	if not spawn then
+		spawn = Instance.new("SpawnLocation")
+		spawn.Name = "SanctuarySpawn"
+		spawn.Parent = Workspace
+	end
+	spawn.Size = Vector3.new(8, 0.4, 8)
+	spawn.Position = Vector3.new(0, 0.2, 10.5)
+	spawn.Anchored = true
+	spawn.CanCollide = true
+	spawn.Material = Enum.Material.Slate
+	spawn.Color = Color3.fromRGB(24, 18, 38)
+	spawn.TopSurface = Enum.SurfaceType.Smooth
+	for _, child in spawn:GetChildren() do
+		if child:IsA("Decal") then
+			child:Destroy()
+		end
+	end
 end
 
 -- ============================================================
@@ -100,28 +147,149 @@ function WorldController.Init()
 	gardenFolder.Parent = Workspace
 	WorldController._gardenFolder = gardenFolder
 
-	local startOrigin = Vector3.new(0, 0, 25)
+	local startOrigin = Vector3.new(0, 0, 26)
 
-	-- Sanctuary Base Platform
-	local platform = Instance.new("Part")
-	platform.Name = "SanctuaryPlatform"
-	platform.Size = Vector3.new(36, 1.2, 36)
-	platform.Position = startOrigin - Vector3.new(0, 0.6, 0)
-	platform.Anchored = true
-	platform.Material = Enum.Material.SmoothPlastic
-	platform.Color = Color3.fromRGB(18, 14, 32)
-	platform.Parent = gardenFolder
+	-- Teleport player onto sanctuary terrace if currently stranded at (0, 0, 0)
+	task.spawn(function()
+		local char = player.Character or player.CharacterAdded:Wait()
+		local root = char:WaitForChild("HumanoidRootPart", 5) :: BasePart?
+		if root and root.Position.Z < 5 then
+			root.CFrame = CFrame.new(0, 2.5, 10.5) * CFrame.Angles(0, math.rad(0), 0)
+		end
+	end)
 
-	local platformBorder = Instance.new("Part")
-	platformBorder.Name = "PlatformNeonBorder"
-	platformBorder.Size = Vector3.new(36.8, 0.4, 36.8)
-	platformBorder.Position = startOrigin - Vector3.new(0, 0.1, 0)
-	platformBorder.Anchored = true
-	platformBorder.Material = Enum.Material.Neon
-	platformBorder.Color = Color3.fromRGB(147, 51, 234)
-	platformBorder.Transparency = 0.3
-	platformBorder.CanCollide = false
-	platformBorder.Parent = gardenFolder
+	-- Void Safety Floor (catches players if they jump off the island)
+	local safetyFloor = Instance.new("Part")
+	safetyFloor.Name = "SanctuarySafetyFloor"
+	safetyFloor.Size = Vector3.new(300, 2, 300)
+	safetyFloor.Position = Vector3.new(0, -25, 26)
+	safetyFloor.Anchored = true
+	safetyFloor.CanCollide = false
+	safetyFloor.Transparency = 1
+	safetyFloor.Parent = gardenFolder
+
+	safetyFloor.Touched:Connect(function(hit)
+		local hitChar = hit.Parent
+		if hitChar and hitChar == player.Character then
+			local root = hitChar:FindFirstChild("HumanoidRootPart") :: BasePart?
+			if root then
+				root.CFrame = CFrame.new(0, 2.5, 10.5)
+			end
+		end
+	end)
+
+	-- Spawn Portal Ring Graphic
+	local spawnPortal = Instance.new("Part")
+	spawnPortal.Name = "SpawnPortalRing"
+	spawnPortal.Shape = Enum.PartType.Cylinder
+	spawnPortal.Size = Vector3.new(0.08, 6, 6)
+	spawnPortal.Position = Vector3.new(0, 0.42, 10.5)
+	spawnPortal.Orientation = Vector3.new(0, 0, 90)
+	spawnPortal.Anchored = true
+	spawnPortal.Material = Enum.Material.Neon
+	spawnPortal.Color = Color3.fromRGB(168, 85, 247)
+	spawnPortal.Transparency = 0.75
+	spawnPortal.CanCollide = false
+	spawnPortal.Parent = gardenFolder
+
+	-- 1. Main Island Body (Dark Obsidian Stone)
+	local island = Instance.new("Part")
+	island.Name = "SanctuaryIsland"
+	island.Size = Vector3.new(38, 1.4, 38)
+	island.Position = startOrigin - Vector3.new(0, 0.7, 0)
+	island.Anchored = true
+	island.Material = Enum.Material.Slate
+	island.Color = Color3.fromRGB(16, 12, 26)
+	island.TopSurface = Enum.SurfaceType.Smooth
+	island.Parent = gardenFolder
+
+	-- Beveled Island Rim (Dark metallic stone)
+	local rim = Instance.new("Part")
+	rim.Name = "IslandRim"
+	rim.Size = Vector3.new(39.2, 0.6, 39.2)
+	rim.Position = startOrigin - Vector3.new(0, 1.1, 0)
+	rim.Anchored = true
+	rim.Material = Enum.Material.SmoothPlastic
+	rim.Color = Color3.fromRGB(24, 18, 38)
+	rim.CanCollide = false
+	rim.Parent = gardenFolder
+
+	-- Subtle floating stardust emitter
+	local stardustEmitter = Instance.new("ParticleEmitter")
+	stardustEmitter.Name = "AmbientStardust"
+	stardustEmitter.Rate = 18
+	stardustEmitter.Lifetime = NumberRange.new(4, 7)
+	stardustEmitter.Speed = NumberRange.new(0.5, 1.8)
+	stardustEmitter.SpreadAngle = Vector2.new(35, 35)
+	stardustEmitter.Size = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.1),
+		NumberSequenceKeypoint.new(0.5, 0.25),
+		NumberSequenceKeypoint.new(1, 0),
+	})
+	stardustEmitter.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 1),
+		NumberSequenceKeypoint.new(0.3, 0.2),
+		NumberSequenceKeypoint.new(0.8, 0.4),
+		NumberSequenceKeypoint.new(1, 1),
+	})
+	stardustEmitter.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(200, 160, 255)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(250, 204, 21)),
+	})
+	stardustEmitter.LightEmission = 0.8
+	stardustEmitter.Parent = island
+
+	-- 4 Corner Celestial Lanterns with gentle illumination
+	local cornerOffsets = {
+		Vector3.new(17, 0, 17),
+		Vector3.new(-17, 0, 17),
+		Vector3.new(17, 0, -17),
+		Vector3.new(-17, 0, -17),
+	}
+
+	for idx, offset in cornerOffsets do
+		local pillar = Instance.new("Part")
+		pillar.Name = `CornerLantern_{idx}`
+		pillar.Size = Vector3.new(1.2, 2.8, 1.2)
+		pillar.Position = startOrigin + offset + Vector3.new(0, 1.4, 0)
+		pillar.Anchored = true
+		pillar.Material = Enum.Material.Slate
+		pillar.Color = Color3.fromRGB(26, 20, 42)
+		pillar.Parent = gardenFolder
+
+		local gem = Instance.new("Part")
+		gem.Name = "LanternCrystal"
+		gem.Shape = Enum.PartType.Ball
+		gem.Size = Vector3.new(1.0, 1.0, 1.0)
+		gem.Position = pillar.Position + Vector3.new(0, 1.8, 0)
+		gem.Anchored = true
+		gem.Material = Enum.Material.Neon
+		gem.Color = Color3.fromRGB(192, 132, 252)
+		gem.Transparency = 0.2
+		gem.CanCollide = false
+		gem.Parent = gardenFolder
+
+		local light = Instance.new("PointLight")
+		light.Color = Color3.fromRGB(216, 180, 254)
+		light.Brightness = 1.2
+		light.Range = 18
+		light.Shadows = false
+		light.Parent = gem
+	end
+
+	-- Center Sacred Altar Runes
+	local centerRune = Instance.new("Part")
+	centerRune.Name = "CenterRune"
+	centerRune.Shape = Enum.PartType.Cylinder
+	centerRune.Size = Vector3.new(0.1, 4.5, 4.5)
+	centerRune.Position = startOrigin + Vector3.new(0, 0.05, 0)
+	centerRune.Orientation = Vector3.new(0, 0, 90)
+	centerRune.Anchored = true
+	centerRune.Material = Enum.Material.Neon
+	centerRune.Color = Color3.fromRGB(168, 85, 247)
+	centerRune.Transparency = 0.8
+	centerRune.CanCollide = false
+	centerRune.Parent = gardenFolder
 
 	-- Generate 9 Starting Plots (3x3)
 	for i = 1, 9 do
@@ -141,30 +309,40 @@ function WorldController._create3DPlot(index: number, position: Vector3, parent:
 	plotModel.Name = `Plot_{index}`
 	plotModel.Parent = parent
 
-	-- Soil Base
+	-- Raised Stone Planter Box (Clean dark frame)
+	local planter = Instance.new("Part")
+	planter.Name = "PlanterBox"
+	planter.Size = Vector3.new(6.8, 0.7, 6.8)
+	planter.Position = position + Vector3.new(0, 0.35, 0)
+	planter.Anchored = true
+	planter.Material = Enum.Material.Slate
+	planter.Color = Color3.fromRGB(24, 18, 38)
+	planter.Parent = plotModel
+
+	-- Rich Celestial Loam Soil
 	local soil = Instance.new("Part")
 	soil.Name = "Soil"
-	soil.Size = Vector3.new(6.5, 0.6, 6.5)
-	soil.Position = position + Vector3.new(0, 0.3, 0)
+	soil.Size = Vector3.new(5.8, 0.4, 5.8)
+	soil.Position = position + Vector3.new(0, 0.65, 0)
 	soil.Anchored = true
 	soil.Material = Enum.Material.Slate
-	soil.Color = Color3.fromRGB(24, 18, 36)
+	soil.Color = Color3.fromRGB(14, 10, 22)
 	soil.TopSurface = Enum.SurfaceType.Smooth
 	soil.Parent = plotModel
 
-	-- Neon Runic Frame
-	local border = Instance.new("Part")
-	border.Name = "NeonTrim"
-	border.Size = Vector3.new(6.8, 0.2, 6.8)
-	border.Position = position + Vector3.new(0, 0.55, 0)
-	border.Anchored = true
-	border.CanCollide = false
-	border.Material = Enum.Material.Neon
-	border.Color = Color3.fromRGB(126, 34, 206)
-	border.Transparency = 0.4
-	border.Parent = plotModel
+	-- Faint Runic Inset Ring (Non-blinding, soft accent)
+	local runeBorder = Instance.new("Part")
+	runeBorder.Name = "RuneTrim"
+	runeBorder.Size = Vector3.new(6.0, 0.05, 6.0)
+	runeBorder.Position = position + Vector3.new(0, 0.72, 0)
+	runeBorder.Anchored = true
+	runeBorder.Material = Enum.Material.SmoothPlastic
+	runeBorder.Color = Color3.fromRGB(88, 28, 135)
+	runeBorder.Transparency = 0.5
+	runeBorder.CanCollide = false
+	runeBorder.Parent = plotModel
 
-	-- Crop Holder
+	-- Crop Holder Folder
 	local cropFolder = Instance.new("Folder")
 	cropFolder.Name = "Crop"
 	cropFolder.Parent = plotModel
@@ -176,7 +354,7 @@ function WorldController._create3DPlot(index: number, position: Vector3, parent:
 	prompt.ObjectText = `Plot #{index}`
 	prompt.KeyboardKeyCode = Enum.KeyCode.E
 	prompt.HoldDuration = 0
-	prompt.MaxActivationDistance = 14
+	prompt.MaxActivationDistance = 12
 	prompt.RequiresLineOfSight = false
 	prompt.Parent = soil
 
@@ -184,20 +362,21 @@ function WorldController._create3DPlot(index: number, position: Vector3, parent:
 		WorldController._handlePlotInteraction(index)
 	end)
 
-	-- Floating 3D Billboard Badge
+	-- Modern Minimal Floating Badge (ONLY SHOWN WHEN CROP IS ACTIVE!)
 	local billboard = Instance.new("BillboardGui")
 	billboard.Name = "PlotBillboard"
-	billboard.Size = UDim2.new(0, 160, 0, 70)
-	billboard.StudsOffset = Vector3.new(0, 3.8, 0)
-	billboard.AlwaysOnTop = false
-	billboard.MaxDistance = 50
+	billboard.Size = UDim2.new(0, 140, 0, 48)
+	billboard.StudsOffset = Vector3.new(0, 3.2, 0)
+	billboard.AlwaysOnTop = false -- Respects 3D depth!
+	billboard.MaxDistance = 28 -- Only visible when reasonably close!
+	billboard.Enabled = false -- HIDDEN BY DEFAULT on empty plots!
 	billboard.Parent = soil
 
 	local badgeFrame = Instance.new("Frame")
 	badgeFrame.Name = "Badge"
 	badgeFrame.Size = UDim2.fromScale(1, 1)
-	badgeFrame.BackgroundColor3 = Color3.fromRGB(15, 11, 28)
-	badgeFrame.BackgroundTransparency = 0.2
+	badgeFrame.BackgroundColor3 = Color3.fromRGB(15, 11, 26)
+	badgeFrame.BackgroundTransparency = 0.15
 	badgeFrame.BorderSizePixel = 0
 	badgeFrame.Parent = billboard
 
@@ -207,37 +386,38 @@ function WorldController._create3DPlot(index: number, position: Vector3, parent:
 
 	local stroke = Instance.new("UIStroke")
 	stroke.Name = "BadgeStroke"
-	stroke.Color = Color3.fromRGB(147, 51, 234)
-	stroke.Thickness = 1.5
+	stroke.Color = Color3.fromRGB(168, 85, 247)
+	stroke.Thickness = 1.2
+	stroke.Transparency = 0.3
 	stroke.Parent = badgeFrame
 
 	local titleLabel = Instance.new("TextLabel")
 	titleLabel.Name = "StatusTitle"
-	titleLabel.Size = UDim2.new(1, -12, 0, 22)
+	titleLabel.Size = UDim2.new(1, -12, 0, 18)
 	titleLabel.Position = UDim2.new(0, 6, 0, 6)
 	titleLabel.BackgroundTransparency = 1
-	titleLabel.Text = "READY TO PLANT"
-	titleLabel.TextColor3 = Color3.fromRGB(216, 180, 254)
-	titleLabel.TextScaled = true
+	titleLabel.Text = ""
+	titleLabel.TextColor3 = Color3.fromRGB(244, 235, 255)
+	titleLabel.TextSize = 12
 	titleLabel.Font = Enum.Font.GothamBold
 	titleLabel.Parent = badgeFrame
 
 	local subLabel = Instance.new("TextLabel")
 	subLabel.Name = "SubInfo"
-	subLabel.Size = UDim2.new(1, -12, 0, 18)
-	subLabel.Position = UDim2.new(0, 6, 0, 30)
+	subLabel.Size = UDim2.new(1, -12, 0, 14)
+	subLabel.Position = UDim2.new(0, 6, 0, 24)
 	subLabel.BackgroundTransparency = 1
-	subLabel.Text = "Press [E]"
-	subLabel.TextColor3 = Color3.fromRGB(148, 163, 184)
-	subLabel.TextScaled = true
-	subLabel.Font = Enum.Font.Gotham
+	subLabel.Text = ""
+	subLabel.TextColor3 = Color3.fromRGB(192, 132, 252)
+	subLabel.TextSize = 10
+	subLabel.Font = Enum.Font.GothamMedium
 	subLabel.Parent = badgeFrame
 
 	local progressBarBg = Instance.new("Frame")
 	progressBarBg.Name = "ProgressBarBg"
-	progressBarBg.Size = UDim2.new(1, -16, 0, 6)
-	progressBarBg.Position = UDim2.new(0, 8, 1, -12)
-	progressBarBg.BackgroundColor3 = Color3.fromRGB(30, 24, 48)
+	progressBarBg.Size = UDim2.new(1, -16, 0, 4)
+	progressBarBg.Position = UDim2.new(0, 8, 1, -8)
+	progressBarBg.BackgroundColor3 = Color3.fromRGB(28, 20, 44)
 	progressBarBg.BorderSizePixel = 0
 	progressBarBg.Visible = false
 	progressBarBg.Parent = badgeFrame
@@ -267,24 +447,22 @@ function WorldController._handlePlotInteraction(plotIndex: number)
 	local data = WorldController._data
 	if not data then return end
 
-	local plot = data.Garden[plotIndex]
+	local plot = data.Garden and data.Garden[plotIndex]
 	if not plot then return end
 
 	local gardenRequest = ReplicatedStorage:FindFirstChild("GardenRequest") :: RemoteFunction?
 	if not gardenRequest then return end
 
 	if not plot.Unlocked then
-		SoundController.Play("ButtonClick")
 		gardenRequest:InvokeServer("UnlockPlot", plotIndex)
 		return
 	end
 
 	if plot.Plant == nil then
-		SoundController.Play("PlantSeed")
 		local plotModel = WorldController._plotModels[plotIndex]
 		if plotModel then
 			local soil = plotModel:FindFirstChild("Soil") :: BasePart?
-			if soil then
+			if soil and VFXController then
 				VFXController.CreatePlantingAura(soil.Position)
 			end
 		end
@@ -302,193 +480,180 @@ function WorldController.UpdatePlantVisual(plotIndex: number, plant: any?)
 	if not plotModel then return end
 
 	local soil = plotModel:FindFirstChild("Soil") :: BasePart?
-	local border = plotModel:FindFirstChild("NeonTrim") :: BasePart?
 	local cropFolder = plotModel:FindFirstChild("Crop") :: Folder?
 	local prompt = soil and soil:FindFirstChildOfClass("ProximityPrompt")
 	local billboard = soil and soil:FindFirstChild("PlotBillboard") :: BillboardGui?
 
-	if not (soil and border and cropFolder and prompt and billboard) then return end
+	if not (soil and cropFolder and prompt and billboard) then return end
 
 	local badge = billboard:FindFirstChild("Badge") :: Frame?
 	local titleLabel = badge and badge:FindFirstChild("StatusTitle") :: TextLabel?
 	local subLabel = badge and badge:FindFirstChild("SubInfo") :: TextLabel?
 	local progressBg = badge and badge:FindFirstChild("ProgressBarBg") :: Frame?
-	local progressFill = progressBg and progressBg:FindFirstChild("Fill") :: Frame?
 	local stroke = badge and badge:FindFirstChild("BadgeStroke") :: UIStroke?
 
 	cropFolder:ClearAllChildren()
 
+	-- 1. EMPTY PLOT: Completely clean, NO cluttering billboard!
 	if not plant then
-		-- Plot is empty
 		prompt.Enabled = true
 		prompt.ActionText = "Plant Seed"
 		prompt.ObjectText = `Plot #{plotIndex}`
-		border.Color = Color3.fromRGB(126, 34, 206)
-		border.Transparency = 0.6
-
-		if titleLabel and subLabel and progressBg and stroke then
-			titleLabel.Text = "READY TO PLANT"
-			titleLabel.TextColor3 = Color3.fromRGB(216, 180, 254)
-			subLabel.Text = "Press [E]"
-			subLabel.TextColor3 = Color3.fromRGB(148, 163, 184)
-			progressBg.Visible = false
-			stroke.Color = Color3.fromRGB(126, 34, 206)
-		end
+		billboard.Enabled = false -- Clean!
 		return
 	end
 
 	local seedDef = SeedData.GetSeed(plant.SeedId)
 	local seedColor = SEED_COLORS[plant.SeedId] or Color3.fromRGB(168, 85, 247)
 
+	-- 2. GROWING PLOT: Shows neat progress countdown
 	if plant.State == "Growing" then
 		prompt.Enabled = false
-		border.Color = seedColor
-		border.Transparency = 0.3
+		billboard.Enabled = true
 
-		if titleLabel and subLabel and progressBg and progressFill and stroke then
-			titleLabel.Text = string.upper(seedDef and seedDef.Name or plant.SeedId)
-			titleLabel.TextColor3 = seedColor
+		if titleLabel and subLabel and progressBg and stroke then
+			titleLabel.Text = seedDef and seedDef.Name or plant.SeedId
+			titleLabel.TextColor3 = Color3.fromRGB(244, 235, 255)
+			subLabel.Text = "Growing..."
+			subLabel.TextColor3 = seedColor
 			progressBg.Visible = true
 			stroke.Color = seedColor
 		end
 
-		-- Spawn Crystal Sprout Mesh/Part
+		-- Elegant Sprout Stem
 		local stem = Instance.new("Part")
 		stem.Name = "SproutStem"
-		stem.Size = Vector3.new(0.4, 1.8, 0.4)
-		stem.Position = soil.Position + Vector3.new(0, 1.2, 0)
+		stem.Size = Vector3.new(0.3, 1.4, 0.3)
+		stem.Position = soil.Position + Vector3.new(0, 1.0, 0)
 		stem.Anchored = true
-		stem.CanCollide = false
-		stem.Material = Enum.Material.Neon
-		stem.Color = seedColor
+		stem.Material = Enum.Material.SmoothPlastic
+		stem.Color = Color3.fromRGB(52, 211, 153)
 		stem.Parent = cropFolder
 
-		local crystalBulb = Instance.new("Part")
-		crystalBulb.Name = "CrystalBulb"
-		crystalBulb.Shape = Enum.PartType.Ball
-		crystalBulb.Size = Vector3.new(1.2, 1.2, 1.2)
-		crystalBulb.Position = stem.Position + Vector3.new(0, 1.1, 0)
-		crystalBulb.Anchored = true
-		crystalBulb.CanCollide = false
-		crystalBulb.Material = Enum.Material.Neon
-		crystalBulb.Color = Color3.fromRGB(255, 255, 255)
-		crystalBulb.Parent = cropFolder
+		local bulb = Instance.new("Part")
+		bulb.Name = "SproutBulb"
+		bulb.Shape = Enum.PartType.Ball
+		bulb.Size = Vector3.new(0.9, 0.9, 0.9)
+		bulb.Position = stem.Position + Vector3.new(0, 0.9, 0)
+		bulb.Anchored = true
+		bulb.Material = Enum.Material.Neon
+		bulb.Color = seedColor
+		bulb.Transparency = 0.2
+		bulb.Parent = cropFolder
 
+	-- 3. READY TO HARVEST: Golden bloom
 	elseif plant.State == "Ready" then
 		prompt.Enabled = true
 		prompt.ActionText = "Harvest!"
 		prompt.ObjectText = seedDef and seedDef.Name or "Cosmic Bloom"
-
-		local mutDef = MutationData.GetByTier(plant.MutationTier)
-		local mutColor = mutDef and Color3.fromRGB(mutDef.ParticleColor.R, mutDef.ParticleColor.G, mutDef.ParticleColor.B) or Color3.fromRGB(250, 204, 21)
-
-		border.Color = mutColor
-		border.Transparency = 0.1
+		billboard.Enabled = true
 
 		if titleLabel and subLabel and progressBg and stroke then
-			titleLabel.Text = "✨ READY TO HARVEST!"
-			titleLabel.TextColor3 = mutColor
-			subLabel.Text = `Tier: {plant.MutationTier} ({plant.MutationMultiplier}x)`
-			subLabel.TextColor3 = Color3.fromRGB(254, 240, 138)
+			titleLabel.Text = "READY TO HARVEST"
+			titleLabel.TextColor3 = Color3.fromRGB(250, 204, 21)
+			subLabel.Text = "[E] Harvest"
+			subLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 			progressBg.Visible = false
-			stroke.Color = mutColor
+			stroke.Color = Color3.fromRGB(250, 204, 21)
 		end
 
-		-- Spawn Bloom Crystal Model with Orbital Ring
-		local bloomCore = Instance.new("Part")
-		bloomCore.Name = "BloomCore"
-		bloomCore.Size = Vector3.new(1.6, 2.8, 1.6)
-		bloomCore.Position = soil.Position + Vector3.new(0, 1.9, 0)
-		bloomCore.Anchored = true
-		bloomCore.CanCollide = false
-		bloomCore.Material = Enum.Material.Neon
-		bloomCore.Color = mutColor
-		bloomCore.Parent = cropFolder
+		-- Full Blooming Crystal Flower
+		local stalk = Instance.new("Part")
+		stalk.Name = "Stalk"
+		stalk.Size = Vector3.new(0.35, 2.2, 0.35)
+		stalk.Position = soil.Position + Vector3.new(0, 1.4, 0)
+		stalk.Anchored = true
+		stalk.Material = Enum.Material.SmoothPlastic
+		stalk.Color = Color3.fromRGB(46, 160, 115)
+		stalk.Parent = cropFolder
 
-		local orbitRing = Instance.new("Part")
-		orbitRing.Shape = Enum.PartType.Cylinder
-		orbitRing.Size = Vector3.new(0.15, 3.2, 3.2)
-		orbitRing.CFrame = CFrame.new(bloomCore.Position) * CFrame.Angles(0, 0, math.rad(90))
-		orbitRing.Anchored = true
-		orbitRing.CanCollide = false
-		orbitRing.Material = Enum.Material.Neon
-		orbitRing.Color = Color3.fromRGB(255, 255, 255)
-		orbitRing.Transparency = 0.3
-		orbitRing.Parent = cropFolder
+		local core = Instance.new("Part")
+		core.Name = "BloomCore"
+		core.Shape = Enum.PartType.Ball
+		core.Size = Vector3.new(1.6, 1.6, 1.6)
+		core.Position = stalk.Position + Vector3.new(0, 1.3, 0)
+		core.Anchored = true
+		core.Material = Enum.Material.Neon
+		core.Color = seedColor
+		core.Transparency = 0.15
+		core.Parent = cropFolder
+		table.insert(WorldController._rotatingCores, core)
 
-		-- Subtle spinning tween for the orbital ring
-		task.spawn(function()
-			while orbitRing.Parent do
-				orbitRing.CFrame = orbitRing.CFrame * CFrame.Angles(0.04, 0.03, 0)
-				task.wait(0.03)
-			end
-		end)
+		-- Soft Harvest Glow
+		local bloomLight = Instance.new("PointLight")
+		bloomLight.Color = seedColor
+		bloomLight.Brightness = 1.4
+		bloomLight.Range = 10
+		bloomLight.Parent = core
 	end
 end
 
 -- ============================================================
--- REALTIME GROWTH TIMER SYNC
+-- CONTINUOUS RENDER LOOP (Crop timers & rotation)
 -- ============================================================
 function WorldController.StartRenderLoop()
 	task.spawn(function()
 		while true do
-			task.wait(0.5)
-			local data = WorldController._data
-			if not data then continue end
-
 			local now = os.time()
-			for i = 1, 9 do
-				local plot = data.Garden[i]
-				if plot and plot.Plant and plot.Plant.State == "Growing" then
-					local plant = plot.Plant
-					local seed = SeedData.GetSeed(plant.SeedId)
-					local totalDuration = seed and seed.GrowthTime or 15
-					local remaining = plant.GrowthEndAt - now
+			local data = WorldController._data
 
-					local plotModel = WorldController._plotModels[i]
-					if plotModel then
-						local soil = plotModel:FindFirstChild("Soil") :: BasePart?
-						local billboard = soil and soil:FindFirstChild("PlotBillboard") :: BillboardGui?
-						local badge = billboard and billboard:FindFirstChild("Badge")
-						local subLabel = badge and badge:FindFirstChild("SubInfo") :: TextLabel?
-						local progressBg = badge and badge:FindFirstChild("ProgressBarBg")
-						local progressFill = progressBg and progressBg:FindFirstChild("Fill") :: Frame?
+			if data and data.Garden then
+				for plotIndex, plot in data.Garden do
+					if plot.Plant and plot.Plant.State == "Growing" then
+						local endAt = plot.Plant.GrowthEndAt or (now + 10)
+						local totalDur = (plot.Plant.GrowthEndAt - plot.Plant.PlantedAt)
+						if totalDur <= 0 then totalDur = 10 end
+						local remaining = math.max(0, endAt - now)
+						local progressPct = math.clamp(1 - (remaining / totalDur), 0, 1)
 
-						if remaining <= 0 then
-							if subLabel then subLabel.Text = "Blooming..." end
-							if progressFill then progressFill.Size = UDim2.fromScale(1, 1) end
-						else
-							local progress = math.clamp(1 - (remaining / totalDuration), 0, 1)
-							if progressFill then
-								progressFill.Size = UDim2.fromScale(progress, 1)
-							end
+						local plotModel = WorldController._plotModels[plotIndex]
+						if plotModel then
+							local soil = plotModel:FindFirstChild("Soil")
+							local billboard = soil and soil:FindFirstChild("PlotBillboard") :: BillboardGui?
+							local badge = billboard and billboard:FindFirstChild("Badge")
+							local subLabel = badge and badge:FindFirstChild("SubInfo") :: TextLabel?
+							local progressBg = badge and badge:FindFirstChild("ProgressBarBg")
+							local fill = progressBg and progressBg:FindFirstChild("Fill") :: Frame?
+
 							if subLabel then
-								local m = math.floor(remaining / 60)
-								local s = remaining % 60
-								subLabel.Text = string.format("Growing: %02d:%02d", m, s)
+								subLabel.Text = string.format("%02ds remaining", remaining)
+							end
+							if fill then
+								fill.Size = UDim2.fromScale(progressPct, 1)
 							end
 						end
 					end
 				end
 			end
+
+			-- Smooth Core Rotation
+			for i = #WorldController._rotatingCores, 1, -1 do
+				local core = WorldController._rotatingCores[i]
+				if core and core.Parent then
+					core.CFrame = core.CFrame * CFrame.Angles(0, math.rad(1.2), 0)
+				else
+					table.remove(WorldController._rotatingCores, i)
+				end
+			end
+
+			task.wait(0.1)
 		end
 	end)
 end
 
-function WorldController.SetSelectedSeed(seedId: string)
-	WorldController._selectedSeedId = seedId
-end
+function WorldController.Update(data: any)
+	if not data then return end
+	WorldController._data = data
 
-function WorldController.Update(playerData: any)
-	WorldController._data = playerData
-	if not playerData or not playerData.Garden then return end
-
-	for i = 1, 9 do
-		local plot = playerData.Garden[i]
-		if plot then
-			WorldController.UpdatePlantVisual(i, plot.Plant)
+	if data.Garden then
+		for index, plot in data.Garden do
+			WorldController.UpdatePlantVisual(index, plot.Plant)
 		end
 	end
+end
+
+function WorldController.SetSelectedSeed(seedId: string)
+	WorldController._selectedSeedId = seedId
 end
 
 return WorldController

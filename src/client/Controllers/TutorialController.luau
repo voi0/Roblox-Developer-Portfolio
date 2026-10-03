@@ -56,12 +56,12 @@ function TutorialController.Init()
 	screenGui.Parent = playerGui
 	TutorialController._gui = screenGui
 
-	-- Floating Guide Banner (Top Center)
+	-- Floating Guide Banner (Sleek Compact Pill under TopBar)
 	local banner = Instance.new("Frame")
 	banner.Name = "GuideBanner"
-	banner.Size = UDim2.new(0, 420, 0, 68)
-	banner.Position = UDim2.new(0.5, -210, 0, 74)
-	banner.BackgroundColor3 = Color3.fromRGB(15, 11, 28)
+	banner.Size = UDim2.new(0, 360, 0, 36)
+	banner.Position = UDim2.new(0.5, -180, 0, 66)
+	banner.BackgroundColor3 = Color3.fromRGB(15, 11, 26)
 	banner.BackgroundTransparency = 0.15
 	banner.BorderSizePixel = 0
 	banner.Visible = false
@@ -69,35 +69,36 @@ function TutorialController.Init()
 	TutorialController._banner = banner
 
 	local bCorner = Instance.new("UICorner")
-	bCorner.CornerRadius = UDim.new(0, 12)
+	bCorner.CornerRadius = UDim.new(1, 0)
 	bCorner.Parent = banner
 
 	local bStroke = Instance.new("UIStroke")
 	bStroke.Color = Color3.fromRGB(250, 204, 21)
-	bStroke.Thickness = 1.5
+	bStroke.Thickness = 1.0
+	bStroke.Transparency = 0.35
 	bStroke.Parent = banner
 
 	local stepTitle = Instance.new("TextLabel")
 	stepTitle.Name = "StepTitle"
-	stepTitle.Size = UDim2.new(1, -24, 0, 20)
-	stepTitle.Position = UDim2.new(0, 12, 0, 10)
+	stepTitle.Size = UDim2.new(1, -24, 0, 14)
+	stepTitle.Position = UDim2.new(0, 12, 0, 4)
 	stepTitle.BackgroundTransparency = 1
 	stepTitle.Text = "STEP 1: SELECT YOUR SEED"
 	stepTitle.TextColor3 = Color3.fromRGB(250, 204, 21)
-	stepTitle.TextScaled = true
+	stepTitle.TextSize = 11
 	stepTitle.Font = Enum.Font.GothamBold
 	stepTitle.TextXAlignment = Enum.TextXAlignment.Center
 	stepTitle.Parent = banner
 
 	local stepDesc = Instance.new("TextLabel")
 	stepDesc.Name = "StepDesc"
-	stepDesc.Size = UDim2.new(1, -24, 0, 26)
-	stepDesc.Position = UDim2.new(0, 12, 0, 32)
+	stepDesc.Size = UDim2.new(1, -24, 0, 14)
+	stepDesc.Position = UDim2.new(0, 12, 0, 18)
 	stepDesc.BackgroundTransparency = 1
 	stepDesc.Text = "Click on your 'Basic Starseed' on the seed bar below."
-	stepDesc.TextColor3 = Color3.fromRGB(241, 245, 249)
-	stepDesc.TextScaled = true
-	stepDesc.Font = Enum.Font.Gotham
+	stepDesc.TextColor3 = Color3.fromRGB(226, 232, 240)
+	stepDesc.TextSize = 10
+	stepDesc.Font = Enum.Font.GothamMedium
 	stepDesc.TextXAlignment = Enum.TextXAlignment.Center
 	stepDesc.Parent = banner
 end
@@ -127,17 +128,15 @@ function TutorialController.SetStep(stepIndex: number)
 	if descLabel then descLabel.Text = stepData.Description end
 
 	banner.Visible = true
-	banner.Position = UDim2.new(0.5, -210, 0, 60)
-	TweenService:Create(banner, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-		Position = UDim2.new(0.5, -210, 0, 74),
+	banner.Position = UDim2.new(0.5, -180, 0, 56)
+	TweenService:Create(banner, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+		Position = UDim2.new(0.5, -180, 0, 66),
 	}):Play()
 
 	SoundController.Play("PlantReady")
 
-	if stepIndex == 2 then
-		TutorialController._spawnGuideBeacon(Vector3.new(-9, 0, 16))
-	elseif stepIndex == 3 then
-		TutorialController._spawnGuideBeacon(Vector3.new(-9, 0, 16))
+	if stepIndex == 2 or stepIndex == 3 then
+		TutorialController._spawnGuideBeacon(Vector3.new(-9.5, 0.7, 16.5))
 	else
 		TutorialController._clearBeacon()
 	end

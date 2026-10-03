@@ -70,31 +70,55 @@ local function initializeGame(data: any)
 	print("  [Client] Initializing subsystems...")
 
 	if SoundController then
-		pcall(function() SoundController.Init() end)
-		print("  [Client] SoundController ready ✓")
+		local s, err = pcall(function() SoundController.Init() end)
+		if s then
+			print("  [Client] SoundController ready ✓")
+		else
+			warn(`  [Client] SoundController Init error: {tostring(err)}`)
+		end
 	end
 	if VFXController then
-		pcall(function() VFXController.Init() end)
-		print("  [Client] VFXController ready ✓")
+		local s, err = pcall(function() VFXController.Init() end)
+		if s then
+			print("  [Client] VFXController ready ✓")
+		else
+			warn(`  [Client] VFXController Init error: {tostring(err)}`)
+		end
 	end
 	if WorldController then
-		pcall(function()
+		local s, err = pcall(function()
 			WorldController.Init()
 			WorldController.StartRenderLoop()
 		end)
-		print("  [Client] WorldController (3D Sanctuary) ready ✓")
+		if s then
+			print("  [Client] WorldController (3D Sanctuary) ready ✓")
+		else
+			warn(`  [Client] WorldController Init error: {tostring(err)}`)
+		end
 	end
 	if PetController then
-		pcall(function() PetController.Init() end)
-		print("  [Client] PetController ready ✓")
+		local s, err = pcall(function() PetController.Init() end)
+		if s then
+			print("  [Client] PetController ready ✓")
+		else
+			warn(`  [Client] PetController Init error: {tostring(err)}`)
+		end
 	end
 	if TutorialController then
-		pcall(function() TutorialController.Init() end)
-		print("  [Client] TutorialController ready ✓")
+		local s, err = pcall(function() TutorialController.Init() end)
+		if s then
+			print("  [Client] TutorialController ready ✓")
+		else
+			warn(`  [Client] TutorialController Init error: {tostring(err)}`)
+		end
 	end
 	if UIController then
-		pcall(function() UIController.Init() end)
-		print("  [Client] UIController (HUD & Modals) ready ✓")
+		local s, err = pcall(function() UIController.Init() end)
+		if s then
+			print("  [Client] UIController (HUD & Modals) ready ✓")
+		else
+			warn(`  [Client] UIController Init error: {tostring(err)}`)
+		end
 	end
 
 	-- Push initial data

@@ -11,7 +11,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 
-local PetData = require(ReplicatedStorage.Shared.PetData)
+local PetData = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("PetData"))
 
 local player = Players.LocalPlayer
 

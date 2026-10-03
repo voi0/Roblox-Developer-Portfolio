@@ -9,7 +9,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 
-local PetData = require(ReplicatedStorage.Shared.PetData)
+local PetData = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("PetData"))
 local SoundController = require(script.Parent.Parent.Controllers.SoundController)
 local VFXController = require(script.Parent.Parent.Controllers.VFXController)
 local UILib = require(script.Parent.UILib)

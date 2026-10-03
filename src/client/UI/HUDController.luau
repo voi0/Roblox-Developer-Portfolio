@@ -12,12 +12,23 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 
 local SeedData = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("SeedData"))
-local SoundController = require(script.Parent.Parent.Controllers.SoundController)
-local WorldController = require(script.Parent.Parent.Controllers.WorldController)
 local UILib = require(script.Parent.UILib)
 
 local player = Players.LocalPlayer
-local playerGui = player:WaitForChild("PlayerGui")
+
+local function getSoundController(): any?
+	local ctrl = script.Parent.Parent:FindFirstChild("Controllers")
+	local sc = ctrl and ctrl:FindFirstChild("SoundController")
+	if sc then return require(sc :: ModuleScript) end
+	return nil
+end
+
+local function getWorldController(): any?
+	local ctrl = script.Parent.Parent:FindFirstChild("Controllers")
+	local wc = ctrl and ctrl:FindFirstChild("WorldController")
+	if wc then return require(wc :: ModuleScript) end
+	return nil
+end
 
 local HUDController = {}
 HUDController._gui = nil :: ScreenGui?
@@ -40,91 +51,90 @@ local DOCK_BUTTONS: { { Label: string, Action: string, Accent: Color3, Glyph: st
 }
 
 function HUDController.Create()
+	local playerGui = player:FindFirstChildOfClass("PlayerGui") or player:WaitForChild("PlayerGui", 10)
+	if not playerGui then
+		warn("[HUDController] Could not find PlayerGui!")
+		return
+	end
+
+	local existing = playerGui:FindFirstChild("STARWEAVE_HUD")
+	if existing then existing:Destroy() end
+
 	local gui = Instance.new("ScreenGui")
 	gui.Name = "STARWEAVE_HUD"
 	gui.IgnoreGuiInset = true
+	gui.DisplayOrder = 10
 	gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 	gui.ResetOnSpawn = false
+	gui.Enabled = true
 	gui.Parent = playerGui
 	HUDController._gui = gui
 
+	-- Pre-create UIAction bindable event
+	local actionEvent = Instance.new("BindableEvent")
+	actionEvent.Name = "UIAction"
+	actionEvent.Parent = gui
+
 	-- ============================================================
-	-- TOP BAR
+	-- TOP BAR (Clean floating translucent pill, not full screen stretch!)
 	-- ============================================================
 	local topBar = Instance.new("Frame")
 	topBar.Name = "TopBar"
-	topBar.Size = UDim2.new(1, 0, 0, 58)
-	topBar.Position = UDim2.fromScale(0, 0)
+	topBar.Size = UDim2.new(1, -32, 0, 48)
+	topBar.Position = UDim2.new(0, 16, 0, 10)
 	topBar.BackgroundColor3 = UILib.Colors.Surface0
-	topBar.BackgroundTransparency = 0.12
+	topBar.BackgroundTransparency = 0.18
 	topBar.BorderSizePixel = 0
 	topBar.ZIndex = 5
 	topBar.Parent = gui
-
-	-- Gradient depth on top bar
-	local topGrad = Instance.new("UIGradient")
-	topGrad.Color = ColorSequence.new({
-		ColorSequenceKeypoint.new(0, Color3.fromRGB(14, 10, 28)),
-		ColorSequenceKeypoint.new(1, Color3.fromRGB(8, 5, 18)),
-	})
-	topGrad.Rotation = 90
-	topGrad.Parent = topBar
-
-	-- Bottom accent line
-	local topDivider = Instance.new("Frame")
-	topDivider.Name = "Divider"
-	topDivider.Size = UDim2.new(1, 0, 0, 1)
-	topDivider.Position = UDim2.new(0, 0, 1, -1)
-	topDivider.BackgroundColor3 = UILib.Colors.Purple
-	topDivider.BackgroundTransparency = 0.55
-	topDivider.BorderSizePixel = 0
-	topDivider.ZIndex = 6
-	topDivider.Parent = topBar
+	UILib.ApplyPill(topBar)
+	UILib.ApplyStroke(topBar, UILib.Colors.PurpleDim, 1, 0.45)
 
 	-- ── Left: Player Profile Badge ──
 	local profileCard = Instance.new("Frame")
 	profileCard.Name = "ProfileCard"
-	profileCard.Size = UDim2.new(0, 200, 0, 42)
-	profileCard.Position = UDim2.new(0, 14, 0.5, -21)
+	profileCard.Size = UDim2.new(0, 180, 0, 36)
+	profileCard.Position = UDim2.new(0, 6, 0.5, -18)
 	profileCard.BackgroundColor3 = UILib.Colors.Surface2
-	profileCard.BackgroundTransparency = 0.25
+	profileCard.BackgroundTransparency = 0.3
 	profileCard.BorderSizePixel = 0
 	profileCard.ZIndex = 6
 	profileCard.Parent = topBar
-
 	UILib.ApplyPill(profileCard)
-	UILib.ApplyStroke(profileCard, UILib.Colors.PurpleDim, 1, 0.5)
 
-	-- Avatar
 	local avatarImg = Instance.new("ImageLabel")
 	avatarImg.Name = "Avatar"
-	avatarImg.Size = UDim2.new(0, 34, 0, 34)
-	avatarImg.Position = UDim2.new(0, 4, 0.5, -17)
+	avatarImg.Size = UDim2.new(0, 28, 0, 28)
+	avatarImg.Position = UDim2.new(0, 4, 0.5, -14)
 	avatarImg.BackgroundColor3 = UILib.Colors.Surface3
 	avatarImg.BorderSizePixel = 0
 	avatarImg.ZIndex = 7
 	avatarImg.Parent = profileCard
 	UILib.ApplyPill(avatarImg)
 
-	task.spawn(function()
-		local content, isReady = Players:GetUserThumbnailAsync(
-			player.UserId,
-			Enum.ThumbnailType.HeadShot,
-			Enum.ThumbnailSize.Size100x100
-		)
-		if isReady then
-			avatarImg.Image = content
-		end
-	end)
+	if player.UserId > 0 then
+		task.spawn(function()
+			pcall(function()
+				local content, isReady = Players:GetUserThumbnailAsync(
+					player.UserId,
+					Enum.ThumbnailType.HeadShot,
+					Enum.ThumbnailSize.Size100x100
+				)
+				if isReady then
+					avatarImg.Image = content
+				end
+			end)
+		end)
+	end
 
 	local nameLabel = Instance.new("TextLabel")
 	nameLabel.Name = "PlayerName"
-	nameLabel.Size = UDim2.new(0, 100, 0, 16)
-	nameLabel.Position = UDim2.new(0, 44, 0, 5)
+	nameLabel.Size = UDim2.new(1, -40, 0, 14)
+	nameLabel.Position = UDim2.new(0, 36, 0, 4)
 	nameLabel.BackgroundTransparency = 1
 	nameLabel.Text = player.DisplayName
 	nameLabel.TextColor3 = UILib.Colors.TextPrimary
-	nameLabel.TextSize = 13
+	nameLabel.TextSize = 12
 	nameLabel.Font = UILib.Fonts.Bold
 	nameLabel.TextXAlignment = Enum.TextXAlignment.Left
 	nameLabel.TextTruncate = Enum.TextTruncate.AtEnd
@@ -133,12 +143,12 @@ function HUDController.Create()
 
 	local levelLabel = Instance.new("TextLabel")
 	levelLabel.Name = "PlayerLevel"
-	levelLabel.Size = UDim2.new(0, 100, 0, 14)
-	levelLabel.Position = UDim2.new(0, 44, 0, 22)
+	levelLabel.Size = UDim2.new(1, -40, 0, 12)
+	levelLabel.Position = UDim2.new(0, 36, 0, 18)
 	levelLabel.BackgroundTransparency = 1
 	levelLabel.Text = "Level 1 Adept"
 	levelLabel.TextColor3 = UILib.Colors.PurpleLight
-	levelLabel.TextSize = 11
+	levelLabel.TextSize = 10
 	levelLabel.Font = UILib.Fonts.Medium
 	levelLabel.TextXAlignment = Enum.TextXAlignment.Left
 	levelLabel.ZIndex = 7
@@ -148,8 +158,8 @@ function HUDController.Create()
 	-- ── Center: Currency Capsules ──
 	local capsuleContainer = Instance.new("Frame")
 	capsuleContainer.Name = "CurrencyCapsules"
-	capsuleContainer.Size = UDim2.new(0, 500, 0, 38)
-	capsuleContainer.Position = UDim2.new(0.5, -250, 0.5, -19)
+	capsuleContainer.Size = UDim2.new(0, 460, 0, 32)
+	capsuleContainer.Position = UDim2.new(0.5, -230, 0.5, -16)
 	capsuleContainer.BackgroundTransparency = 1
 	capsuleContainer.ZIndex = 6
 	capsuleContainer.Parent = topBar
@@ -157,7 +167,7 @@ function HUDController.Create()
 	local capsuleLayout = Instance.new("UIListLayout")
 	capsuleLayout.FillDirection = Enum.FillDirection.Horizontal
 	capsuleLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-	capsuleLayout.Padding = UDim.new(0, 8)
+	capsuleLayout.Padding = UDim.new(0, 6)
 	capsuleLayout.Parent = capsuleContainer
 
 	HUDController._labels.Stardust = HUDController._createCapsule(capsuleContainer, "Stardust", "SD", UILib.Colors.Gold, "0")
@@ -168,8 +178,8 @@ function HUDController.Create()
 	-- ── Right: Weather Badge ──
 	local weatherBadge = Instance.new("Frame")
 	weatherBadge.Name = "WeatherBadge"
-	weatherBadge.Size = UDim2.new(0, 160, 0, 34)
-	weatherBadge.Position = UDim2.new(1, -174, 0.5, -17)
+	weatherBadge.Size = UDim2.new(0, 140, 0, 28)
+	weatherBadge.Position = UDim2.new(1, -150, 0.5, -14)
 	weatherBadge.BackgroundColor3 = UILib.Colors.Surface2
 	weatherBadge.BackgroundTransparency = 0.2
 	weatherBadge.BorderSizePixel = 0
@@ -178,45 +188,26 @@ function HUDController.Create()
 	weatherBadge.Parent = topBar
 	HUDController._weatherBadge = weatherBadge
 	UILib.ApplyPill(weatherBadge)
-	UILib.ApplyStroke(weatherBadge, UILib.Colors.Gold, 1.5, 0.2)
+	UILib.ApplyStroke(weatherBadge, UILib.Colors.Gold, 1.2, 0.2)
 
 	local wText = Instance.new("TextLabel")
 	wText.Name = "WeatherText"
-	wText.Size = UDim2.new(1, -16, 1, 0)
-	wText.Position = UDim2.new(0, 8, 0, 0)
+	wText.Size = UDim2.fromScale(1, 1)
 	wText.BackgroundTransparency = 1
 	wText.Text = "2x LUCK STORM"
 	wText.TextColor3 = UILib.Colors.Gold
-	wText.TextSize = 13
+	wText.TextSize = 11
 	wText.Font = UILib.Fonts.Bold
 	wText.ZIndex = 7
 	wText.Parent = weatherBadge
-
-	-- Pulse animation for weather badge
-	task.spawn(function()
-		while weatherBadge.Parent do
-			if weatherBadge.Visible then
-				TweenService:Create(weatherBadge, TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
-					BackgroundTransparency = 0.35,
-				}):Play()
-				task.wait(0.8)
-				TweenService:Create(weatherBadge, TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
-					BackgroundTransparency = 0.15,
-				}):Play()
-				task.wait(0.8)
-			else
-				task.wait(1)
-			end
-		end
-	end)
 
 	-- ============================================================
 	-- BOTTOM QUICK SEED BAR
 	-- ============================================================
 	local seedBar = Instance.new("Frame")
 	seedBar.Name = "SeedBar"
-	seedBar.Size = UDim2.new(0, 520, 0, 34)
-	seedBar.Position = UDim2.new(0.5, -260, 1, -100)
+	seedBar.Size = UDim2.new(0, 480, 0, 32)
+	seedBar.Position = UDim2.new(0.5, -240, 1, -94)
 	seedBar.BackgroundColor3 = UILib.Colors.Surface0
 	seedBar.BackgroundTransparency = 0.18
 	seedBar.BorderSizePixel = 0
@@ -224,7 +215,7 @@ function HUDController.Create()
 	seedBar.Parent = gui
 	HUDController._seedBar = seedBar
 	UILib.ApplyPill(seedBar)
-	UILib.ApplyStroke(seedBar, UILib.Colors.PurpleDim, 1, 0.55)
+	UILib.ApplyStroke(seedBar, UILib.Colors.PurpleDim, 1, 0.5)
 
 	local sbLayout = Instance.new("UIListLayout")
 	sbLayout.FillDirection = Enum.FillDirection.Horizontal
@@ -233,31 +224,22 @@ function HUDController.Create()
 	sbLayout.Padding = UDim.new(0, 6)
 	sbLayout.Parent = seedBar
 
-	UILib.ApplyPadding(seedBar, 3, 6, 3, 6)
+	UILib.ApplyPadding(seedBar, 2, 6, 2, 6)
 
 	-- ============================================================
 	-- FLOATING NAVIGATION DOCK
 	-- ============================================================
 	local dock = Instance.new("Frame")
 	dock.Name = "NavigationDock"
-	dock.Size = UDim2.new(0, 646, 0, 52)
-	dock.Position = UDim2.new(0.5, -323, 1, -58)
+	dock.Size = UDim2.new(0, 646, 0, 48)
+	dock.Position = UDim2.new(0.5, -323, 1, -54)
 	dock.BackgroundColor3 = UILib.Colors.Surface0
-	dock.BackgroundTransparency = 0.08
+	dock.BackgroundTransparency = 0.12
 	dock.BorderSizePixel = 0
 	dock.ZIndex = 5
 	dock.Parent = gui
 	UILib.ApplyCorner(dock, 14)
-	UILib.ApplyStroke(dock, UILib.Colors.PurpleDim, 1.5, 0.35)
-
-	-- Gradient for depth
-	local dockGrad = Instance.new("UIGradient")
-	dockGrad.Color = ColorSequence.new({
-		ColorSequenceKeypoint.new(0, Color3.fromRGB(16, 12, 30)),
-		ColorSequenceKeypoint.new(1, Color3.fromRGB(10, 7, 22)),
-	})
-	dockGrad.Rotation = 90
-	dockGrad.Parent = dock
+	UILib.ApplyStroke(dock, UILib.Colors.PurpleDim, 1.2, 0.4)
 
 	local dockLayout = Instance.new("UIListLayout")
 	dockLayout.FillDirection = Enum.FillDirection.Horizontal
@@ -277,21 +259,20 @@ end
 function HUDController._createCapsule(parent: Frame, name: string, icon: string, color: Color3, defaultValue: string): TextLabel
 	local capsule = Instance.new("Frame")
 	capsule.Name = name .. "Capsule"
-	capsule.Size = UDim2.new(0, 118, 1, 0)
+	capsule.Size = UDim2.new(0, 105, 1, 0)
 	capsule.BackgroundColor3 = UILib.Colors.Surface2
-	capsule.BackgroundTransparency = 0.3
+	capsule.BackgroundTransparency = 0.35
 	capsule.BorderSizePixel = 0
 	capsule.ZIndex = 7
 	capsule.Parent = parent
 	UILib.ApplyPill(capsule)
-	UILib.ApplyStroke(capsule, color, 1, 0.6)
+	UILib.ApplyStroke(capsule, color, 1, 0.5)
 
-	-- Icon circle
 	local iconBg = Instance.new("Frame")
-	iconBg.Size = UDim2.new(0, 24, 0, 24)
-	iconBg.Position = UDim2.new(0, 6, 0.5, -12)
+	iconBg.Size = UDim2.new(0, 20, 0, 20)
+	iconBg.Position = UDim2.new(0, 4, 0.5, -10)
 	iconBg.BackgroundColor3 = color
-	iconBg.BackgroundTransparency = 0.75
+	iconBg.BackgroundTransparency = 0.8
 	iconBg.BorderSizePixel = 0
 	iconBg.ZIndex = 8
 	iconBg.Parent = capsule
@@ -302,19 +283,19 @@ function HUDController._createCapsule(parent: Frame, name: string, icon: string,
 	iconLabel.BackgroundTransparency = 1
 	iconLabel.Text = icon
 	iconLabel.TextColor3 = color
-	iconLabel.TextSize = 10
+	iconLabel.TextSize = 9
 	iconLabel.Font = UILib.Fonts.Black
 	iconLabel.ZIndex = 9
 	iconLabel.Parent = iconBg
 
 	local valLabel = Instance.new("TextLabel")
 	valLabel.Name = "Value"
-	valLabel.Size = UDim2.new(1, -38, 1, 0)
-	valLabel.Position = UDim2.new(0, 34, 0, 0)
+	valLabel.Size = UDim2.new(1, -30, 1, 0)
+	valLabel.Position = UDim2.new(0, 28, 0, 0)
 	valLabel.BackgroundTransparency = 1
 	valLabel.Text = defaultValue
 	valLabel.TextColor3 = color
-	valLabel.TextSize = 14
+	valLabel.TextSize = 12
 	valLabel.Font = UILib.Fonts.Bold
 	valLabel.TextXAlignment = Enum.TextXAlignment.Left
 	valLabel.ZIndex = 8
@@ -329,40 +310,37 @@ end
 function HUDController._createDockButton(parent: Frame, label: string, actionName: string, accentColor: Color3, glyph: string)
 	local btn = Instance.new("TextButton")
 	btn.Name = actionName
-	btn.Size = UDim2.new(0, 84, 0, 38)
-	btn.BackgroundColor3 = UILib.Colors.Surface3
+	btn.Size = UDim2.new(0, 84, 0, 36)
+	btn.BackgroundColor3 = UILib.Colors.Surface2
 	btn.BorderSizePixel = 0
 	btn.Text = ""
 	btn.ZIndex = 6
 	btn.Parent = parent
 	UILib.ApplyCorner(btn, 10)
 
-	-- Colored left indicator bar
 	local indicator = Instance.new("Frame")
-	indicator.Size = UDim2.new(0, 3, 0, 18)
-	indicator.Position = UDim2.new(0, 4, 0.5, -9)
+	indicator.Size = UDim2.new(0, 3, 0, 16)
+	indicator.Position = UDim2.new(0, 4, 0.5, -8)
 	indicator.BackgroundColor3 = accentColor
 	indicator.BorderSizePixel = 0
 	indicator.ZIndex = 7
 	indicator.Parent = btn
 	UILib.ApplyPill(indicator)
 
-	-- Glyph icon
 	local glyphLabel = Instance.new("TextLabel")
-	glyphLabel.Size = UDim2.new(0, 16, 0, 16)
-	glyphLabel.Position = UDim2.new(0, 12, 0, 4)
+	glyphLabel.Size = UDim2.new(0, 16, 0, 14)
+	glyphLabel.Position = UDim2.new(0, 10, 0, 3)
 	glyphLabel.BackgroundTransparency = 1
 	glyphLabel.Text = glyph
 	glyphLabel.TextColor3 = accentColor
-	glyphLabel.TextSize = 12
+	glyphLabel.TextSize = 11
 	glyphLabel.Font = UILib.Fonts.Black
 	glyphLabel.ZIndex = 7
 	glyphLabel.Parent = btn
 
-	-- Text label
 	local textLabel = Instance.new("TextLabel")
-	textLabel.Size = UDim2.new(1, -14, 0, 12)
-	textLabel.Position = UDim2.new(0, 7, 1, -16)
+	textLabel.Size = UDim2.new(1, -12, 0, 12)
+	textLabel.Position = UDim2.new(0, 6, 1, -15)
 	textLabel.BackgroundTransparency = 1
 	textLabel.Text = label
 	textLabel.TextColor3 = UILib.Colors.TextSecondary
@@ -371,48 +349,39 @@ function HUDController._createDockButton(parent: Frame, label: string, actionNam
 	textLabel.ZIndex = 7
 	textLabel.Parent = btn
 
-	-- Hover / Press
-	local originalBg = btn.BackgroundColor3
 	btn.MouseEnter:Connect(function()
-		SoundController.Play("ButtonHover")
+		local sc = getSoundController()
+		if sc then sc.Play("ButtonHover") end
 		TweenService:Create(btn, UILib.Timing.Fast, {
-			BackgroundColor3 = UILib.Colors.Surface4,
-			Size = UDim2.new(0, 88, 0, 40),
-		}):Play()
-		TweenService:Create(indicator, UILib.Timing.Fast, {
-			Size = UDim2.new(0, 3, 0, 24),
+			BackgroundColor3 = UILib.Colors.Surface3,
+			Size = UDim2.new(0, 86, 0, 38),
 		}):Play()
 	end)
 
 	btn.MouseLeave:Connect(function()
 		TweenService:Create(btn, UILib.Timing.Fast, {
-			BackgroundColor3 = originalBg,
-			Size = UDim2.new(0, 84, 0, 38),
-		}):Play()
-		TweenService:Create(indicator, UILib.Timing.Fast, {
-			Size = UDim2.new(0, 3, 0, 18),
+			BackgroundColor3 = UILib.Colors.Surface2,
+			Size = UDim2.new(0, 84, 0, 36),
 		}):Play()
 	end)
 
 	btn.MouseButton1Click:Connect(function()
-		SoundController.Play("ButtonClick")
-		-- Press feedback
-		TweenService:Create(btn, TweenInfo.new(0.08), {
-			Size = UDim2.new(0, 82, 0, 36),
+		local sc = getSoundController()
+		if sc then sc.Play("ButtonClick") end
+
+		TweenService:Create(btn, TweenInfo.new(0.06), {
+			Size = UDim2.new(0, 80, 0, 34),
 		}):Play()
-		task.delay(0.08, function()
+		task.delay(0.07, function()
 			TweenService:Create(btn, UILib.Timing.Fast, {
-				Size = UDim2.new(0, 84, 0, 38),
+				Size = UDim2.new(0, 84, 0, 36),
 			}):Play()
 		end)
 
-		local actionEvent = HUDController._gui and HUDController._gui:FindFirstChild("UIAction")
-		if not actionEvent then
-			actionEvent = Instance.new("BindableEvent")
-			actionEvent.Name = "UIAction"
-			actionEvent.Parent = HUDController._gui
+		local actionEvent = HUDController._gui and HUDController._gui:FindFirstChild("UIAction") :: BindableEvent?
+		if actionEvent then
+			actionEvent:Fire(actionName)
 		end
-		(actionEvent :: BindableEvent):Fire(actionName)
 	end)
 end
 
@@ -430,14 +399,17 @@ function HUDController.RefreshSeedBar(data: any)
 	end
 
 	local inv = data and data.SeedInventory or {}
+	local hasAnySeeds = false
+
 	for seedId, count in inv do
 		if count > 0 then
+			hasAnySeeds = true
 			local seedDef = SeedData.GetSeed(seedId)
 			local tierColor = seedDef and UILib.TierColor[seedDef.Tier] or UILib.Colors.Purple
 
 			local pill = Instance.new("TextButton")
 			pill.Name = seedId
-			pill.Size = UDim2.new(0, 105, 0, 26)
+			pill.Size = UDim2.new(0, 115, 0, 24)
 			pill.BackgroundColor3 = UILib.Colors.Surface2
 			pill.BorderSizePixel = 0
 			pill.Text = ""
@@ -447,38 +419,31 @@ function HUDController.RefreshSeedBar(data: any)
 			UILib.ApplyStroke(pill, tierColor, 1, 0.5)
 
 			local pillText = Instance.new("TextLabel")
-			pillText.Size = UDim2.new(1, -10, 1, 0)
-			pillText.Position = UDim2.new(0, 5, 0, 0)
+			pillText.Size = UDim2.new(1, -8, 1, 0)
+			pillText.Position = UDim2.new(0, 4, 0, 0)
 			pillText.BackgroundTransparency = 1
 			pillText.Text = string.format("%s (%d)", seedDef and seedDef.Name or seedId, count)
 			pillText.TextColor3 = tierColor
-			pillText.TextSize = 11
+			pillText.TextSize = 10
 			pillText.Font = UILib.Fonts.Bold
 			pillText.TextTruncate = Enum.TextTruncate.AtEnd
 			pillText.ZIndex = 7
 			pillText.Parent = pill
 
-			-- Hover state
-			pill.MouseEnter:Connect(function()
-				TweenService:Create(pill, UILib.Timing.Fast, {
-					BackgroundColor3 = UILib.Colors.Surface3,
-				}):Play()
-			end)
-			pill.MouseLeave:Connect(function()
-				TweenService:Create(pill, UILib.Timing.Fast, {
-					BackgroundColor3 = UILib.Colors.Surface2,
-				}):Play()
-			end)
-
 			pill.MouseButton1Click:Connect(function()
-				SoundController.Play("ButtonClick")
-				WorldController.SetSelectedSeed(seedId)
+				local sc = getSoundController()
+				if sc then sc.Play("ButtonClick") end
+
+				local wc = getWorldController()
+				if wc then wc.SetSelectedSeed(seedId) end
+
 				local tut = script.Parent.Parent.Controllers:FindFirstChild("TutorialController")
 				if tut then
-					local tModule = require(tut :: ModuleScript)
-					tModule.OnSeedSelected()
+					pcall(function()
+						require(tut :: ModuleScript).OnSeedSelected()
+					end)
 				end
-				-- Highlight active
+
 				for _, other in bar:GetChildren() do
 					if other:IsA("TextButton") then
 						other.BackgroundColor3 = UILib.Colors.Surface2
@@ -487,6 +452,19 @@ function HUDController.RefreshSeedBar(data: any)
 				pill.BackgroundColor3 = UILib.Colors.Surface4
 			end)
 		end
+	end
+
+	-- If player has 0 seeds in inventory, give them a prompt to visit market
+	if not hasAnySeeds then
+		local emptyMsg = Instance.new("TextLabel")
+		emptyMsg.Size = UDim2.fromScale(1, 1)
+		emptyMsg.BackgroundTransparency = 1
+		emptyMsg.Text = "No seeds equipped — Open Market [M] to buy seeds"
+		emptyMsg.TextColor3 = UILib.Colors.TextMuted
+		emptyMsg.TextSize = 11
+		emptyMsg.Font = UILib.Fonts.Medium
+		emptyMsg.ZIndex = 6
+		emptyMsg.Parent = bar
 	end
 end
 
@@ -521,7 +499,8 @@ function HUDController.SetWeatherVisible(isVisible: boolean)
 	if HUDController._weatherBadge then
 		HUDController._weatherBadge.Visible = isVisible
 		if isVisible then
-			SoundController.Play("StormAlert")
+			local sc = getSoundController()
+			if sc then sc.Play("StormAlert") end
 		end
 	end
 end
