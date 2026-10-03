@@ -11,8 +11,15 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local ServerScriptService = game:GetService("ServerScriptService")
 
-local ProfileService = require(game:GetService("ServerScriptService").ServerPackages.ProfileService)
+local ServerPackages = ServerScriptService:WaitForChild("ServerPackages", 15)
+local ProfileService: any = nil
+if ServerPackages then
+	ProfileService = require(ServerPackages:WaitForChild("ProfileService", 10) :: ModuleScript)
+else
+	ProfileService = require(ServerScriptService.ServerPackages.ProfileService)
+end
 
 local Config = require(ReplicatedStorage.Shared.Config)
 
@@ -80,7 +87,8 @@ local DATA_TEMPLATE = {
 -- PROFILE STORE
 -- ============================================================
 local PROFILE_STORE_NAME = "StarweavePlayerData_v1"
-local ProfileStore = ProfileService.GetProfileStore(PROFILE_STORE_NAME, DATA_TEMPLATE)
+local BaseProfileStore = ProfileService.GetProfileStore(PROFILE_STORE_NAME, DATA_TEMPLATE)
+local ProfileStore = if RunService:IsStudio() then BaseProfileStore.Mock else BaseProfileStore
 
 -- ============================================================
 -- SERVICE
@@ -165,14 +173,30 @@ end
 -- ============================================================
 
 function DataService.OnPlayerAdded(player: Player)
-	local profile = ProfileStore:LoadProfileAsync(
-		"Player_" .. player.UserId,
-		"ForceLoad" -- Safe: kicks old sessions if they exist
-	)
+	local profile: any = nil
+	local success, err = pcall(function()
+		profile = ProfileStore:LoadProfileAsync(
+			"Player_" .. player.UserId,
+			"ForceLoad" -- Safe: kicks old sessions if they exist
+		)
+	end)
+
+	if not success or profile == nil then
+		warn(`[DataService] Could not load cloud ProfileStore for {player.Name}: {tostring(err)}. Falling back to Mock store.`)
+		pcall(function()
+			profile = BaseProfileStore.Mock:LoadProfileAsync("Player_" .. player.UserId, "ForceLoad")
+		end)
+	end
 
 	if profile == nil then
-		-- Data failed to load, kick to prevent data corruption
-		player:Kick("Unable to load your data. Please rejoin.")
+		warn(`[DataService] Using emergency session data for {player.Name}`)
+		local memData = table.clone(DATA_TEMPLATE)
+		_initializeGarden(memData)
+		DataService._profiles[player] = { Data = memData, Release = function() end }
+		local dataReadyEvent = ReplicatedStorage:FindFirstChild("DataReady")
+		if dataReadyEvent and dataReadyEvent:IsA("RemoteEvent") then
+			dataReadyEvent:FireClient(player, memData)
+		end
 		return
 	end
 

@@ -415,27 +415,34 @@ task.spawn(function()
 
 	-- Wait for player data
 	local ReplicatedStorage = game:GetService("ReplicatedStorage")
-	local dataReady = ReplicatedStorage:WaitForChild("DataReady", 30)
+	local dataReady = ReplicatedStorage:WaitForChild("DataReady", 15) :: RemoteEvent?
 
+	local received = false
 	if dataReady then
-		local received = false
 		dataReady.OnClientEvent:Once(function()
 			received = true
 		end)
+	end
 
-		local waitStart = os.clock()
-		while not received and (os.clock() - waitStart) < 15 do
-			-- Slowly increment bar while waiting
-			local elapsed = os.clock() - waitStart
-			local waitPct = 0.75 + math.min(elapsed / 15, 1) * 0.2
-			barFill.Size = UDim2.fromScale(math.clamp(waitPct, 0, 0.95), 1)
-			pctText.Text = string.format("%d%%", math.floor(waitPct * 100))
-			task.wait(0.2)
-		end
+	local getData = ReplicatedStorage:FindFirstChild("GetData") :: RemoteFunction?
+	if getData then
+		task.spawn(function()
+			local d = getData:InvokeServer()
+			if d then received = true end
+		end)
+	end
+
+	local waitStart = os.clock()
+	while not received and (os.clock() - waitStart) < 3.0 do
+		local elapsed = os.clock() - waitStart
+		local waitPct = 0.75 + math.min(elapsed / 3.0, 1) * 0.24
+		barFill.Size = UDim2.fromScale(math.clamp(waitPct, 0, 0.98), 1)
+		pctText.Text = string.format("%d%%", math.floor(waitPct * 100))
+		task.wait(0.15)
 	end
 
 	setProgress(1.0, "Welcome, Gardener")
-	task.wait(1.0)
+	task.wait(0.6)
 
 	-- ============================================================
 	-- FADE OUT SEQUENCE
