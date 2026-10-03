@@ -1,35 +1,65 @@
 --!strict
 --[[
 	Server Boot Script — STARWEAVE
-	Initializes all server services in the correct order.
+	Initializes all server services in the correct order with error protection.
 	Located in: ServerScriptService.Server
 ]]
 
 local ServerScriptService = game:GetService("ServerScriptService")
 
--- Service initialization order matters (dependencies first)
-local DataService = require(ServerScriptService.Server.Services.DataService)
-local MutationService = require(ServerScriptService.Server.Services.MutationService)
-local GardenService = require(ServerScriptService.Server.Services.GardenService)
-local EconomyService = require(ServerScriptService.Server.Services.EconomyService)
-local PetService = require(ServerScriptService.Server.Services.PetService)
-local QuestService = require(ServerScriptService.Server.Services.QuestService)
-local CodeService = require(ServerScriptService.Server.Services.CodeService)
+local servicesFolder = script:WaitForChild("Services", 15) :: Folder
+if not servicesFolder then
+	error("[Server] Critical: Services folder not found in ServerScriptService.Server!")
+end
 
--- Boot sequence
 print("========================================")
 print("  🌟 STARWEAVE Server Booting...")
 print("========================================")
 
-DataService.Init()
-MutationService.Init()
-GardenService.Init()
-EconomyService.Init()
-PetService.Init()
-QuestService.Init()
-CodeService.Init()
+local serviceNames = {
+	"DataService",
+	"MutationService",
+	"GardenService",
+	"EconomyService",
+	"PetService",
+	"QuestService",
+	"CodeService",
+}
+
+local loadedServices: { [string]: any } = {}
+
+for _, name in serviceNames do
+	local module = servicesFolder:WaitForChild(name, 10) :: ModuleScript?
+	if module then
+		local success, result = pcall(function()
+			return require(module)
+		end)
+		if success and result then
+			loadedServices[name] = result
+			print(`  [Server] Required: {name} ✓`)
+		else
+			warn(`  [Server] FAILED to require {name}: {tostring(result)}`)
+		end
+	else
+		warn(`  [Server] Missing module: {name}`)
+	end
+end
+
+-- Initialize in strict dependency order
+for _, name in serviceNames do
+	local service = loadedServices[name]
+	if service and type(service.Init) == "function" then
+		local success, err = pcall(function()
+			service.Init()
+		end)
+		if success then
+			print(`  [Server] Initialized: {name} ✓`)
+		else
+			warn(`  [Server] FAILED to initialize {name}: {tostring(err)}`)
+		end
+	end
+end
 
 print("========================================")
 print("  ✅ STARWEAVE Server Online!")
-print(`  Seeds: {#(require(game:GetService("ReplicatedStorage").Shared.SeedData).GetUnlockedSeeds(0))} (base)`)
 print("========================================")
