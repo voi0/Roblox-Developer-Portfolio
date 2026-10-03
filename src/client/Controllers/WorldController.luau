@@ -102,16 +102,28 @@ function WorldController.SetupEnvironment()
 		sky.Parent = Lighting
 	end
 
-	-- Hide default Baseplate so the sanctuary floats in the starry void
-	for _, child in Workspace:GetChildren() do
+	-- Completely destroy default Baseplate and its textures
+	for _, child in Workspace:GetDescendants() do
 		if child:IsA("BasePart") and string.find(string.lower(child.Name), "baseplate") then
-			child.Transparency = 1
-			child.CanCollide = false
+			child:Destroy()
 		end
 	end
 
-	-- Reposition and style spawn location directly at the sanctuary entrance
-	local spawn = Workspace:FindFirstChildOfClass("SpawnLocation")
+	-- Clean up all existing default SpawnLocations
+	for _, desc in Workspace:GetDescendants() do
+		if desc:IsA("SpawnLocation") and desc.Name ~= "SanctuarySpawn" then
+			desc.Transparency = 1
+			desc.CanCollide = false
+			for _, d in desc:GetDescendants() do
+				if d:IsA("Decal") or d:IsA("Texture") then
+					d:Destroy()
+				end
+			end
+		end
+	end
+
+	-- Position clean celestial spawn location directly at the sanctuary entrance
+	local spawn = Workspace:FindFirstChild("SanctuarySpawn") :: SpawnLocation?
 	if not spawn then
 		spawn = Instance.new("SpawnLocation")
 		spawn.Name = "SanctuarySpawn"
@@ -125,7 +137,7 @@ function WorldController.SetupEnvironment()
 	spawn.Color = Color3.fromRGB(24, 18, 38)
 	spawn.TopSurface = Enum.SurfaceType.Smooth
 	for _, child in spawn:GetChildren() do
-		if child:IsA("Decal") then
+		if child:IsA("Decal") or child:IsA("Texture") then
 			child:Destroy()
 		end
 	end

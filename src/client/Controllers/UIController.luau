@@ -44,13 +44,25 @@ function UIController.Init()
 
 	local mainGui = HUDController._gui
 	if mainGui then
-		ShopModal.Create(mainGui)
-		CollectionModal.Create(mainGui)
-		RebirthModal.Create(mainGui)
-		ForgeModal.Create(mainGui)
-		ConstellationModal.Create(mainGui)
-		PetModal.Create(mainGui)
-		QuestModal.Create(mainGui)
+		local modalList = {
+			{ Name = "ShopModal", Mod = ShopModal },
+			{ Name = "CollectionModal", Mod = CollectionModal },
+			{ Name = "RebirthModal", Mod = RebirthModal },
+			{ Name = "ForgeModal", Mod = ForgeModal },
+			{ Name = "ConstellationModal", Mod = ConstellationModal },
+			{ Name = "PetModal", Mod = PetModal },
+			{ Name = "QuestModal", Mod = QuestModal },
+		}
+		for _, m in modalList do
+			local s, err = pcall(function()
+				m.Mod.Create(mainGui)
+			end)
+			if s then
+				print(`  [UIController] {m.Name} mounted ✓`)
+			else
+				warn(`  [UIController] Error mounting {m.Name}: {tostring(err)}`)
+			end
+		end
 	end
 
 	-- Listen for Dock Action Triggers
