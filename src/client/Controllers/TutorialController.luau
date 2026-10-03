@@ -136,7 +136,7 @@ function TutorialController.SetStep(stepIndex: number)
 	SoundController.Play("PlantReady")
 
 	if stepIndex == 2 or stepIndex == 3 then
-		TutorialController._spawnGuideBeacon(Vector3.new(-9.5, 0.7, 16.5))
+		TutorialController._spawnGuideBeacon(Vector3.new(-9.5, 0.7, -7.5))
 	else
 		TutorialController._clearBeacon()
 	end

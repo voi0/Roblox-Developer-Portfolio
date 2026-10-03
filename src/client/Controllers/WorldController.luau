@@ -130,7 +130,7 @@ function WorldController.SetupEnvironment()
 		spawn.Parent = Workspace
 	end
 	spawn.Size = Vector3.new(8, 0.4, 8)
-	spawn.Position = Vector3.new(0, 0.2, 10.5)
+	spawn.Position = Vector3.new(0, 0.2, -14)
 	spawn.Anchored = true
 	spawn.CanCollide = true
 	spawn.Material = Enum.Material.Slate
@@ -159,24 +159,24 @@ function WorldController.Init()
 	gardenFolder.Parent = Workspace
 	WorldController._gardenFolder = gardenFolder
 
-	local startOrigin = Vector3.new(0, 0, 26)
+	local startOrigin = Vector3.new(0, 0, 2)
 
-	-- Teleport player onto sanctuary terrace if currently stranded at (0, 0, 0)
+	-- Teleport player onto sanctuary terrace
 	task.spawn(function()
 		local char = player.Character or player.CharacterAdded:Wait()
 		local root = char:WaitForChild("HumanoidRootPart", 5) :: BasePart?
-		if root and root.Position.Z < 5 then
-			root.CFrame = CFrame.new(0, 2.5, 10.5) * CFrame.Angles(0, math.rad(0), 0)
+		if root then
+			root.CFrame = CFrame.new(0, 2.5, -14) * CFrame.Angles(0, 0, 0)
 		end
 	end)
 
-	-- Void Safety Floor (catches players if they jump off the island)
+	-- Void Safety Floor (Massive solid invisible boundary below island)
 	local safetyFloor = Instance.new("Part")
 	safetyFloor.Name = "SanctuarySafetyFloor"
-	safetyFloor.Size = Vector3.new(300, 2, 300)
-	safetyFloor.Position = Vector3.new(0, -25, 26)
+	safetyFloor.Size = Vector3.new(800, 4, 800)
+	safetyFloor.Position = Vector3.new(0, -18, 0)
 	safetyFloor.Anchored = true
-	safetyFloor.CanCollide = false
+	safetyFloor.CanCollide = true -- Solid floor so player can NEVER fall into the abyss
 	safetyFloor.Transparency = 1
 	safetyFloor.Parent = gardenFolder
 
@@ -185,7 +185,7 @@ function WorldController.Init()
 		if hitChar and hitChar == player.Character then
 			local root = hitChar:FindFirstChild("HumanoidRootPart") :: BasePart?
 			if root then
-				root.CFrame = CFrame.new(0, 2.5, 10.5)
+				root.CFrame = CFrame.new(0, 2.5, -14)
 			end
 		end
 	end)
@@ -195,7 +195,7 @@ function WorldController.Init()
 	spawnPortal.Name = "SpawnPortalRing"
 	spawnPortal.Shape = Enum.PartType.Cylinder
 	spawnPortal.Size = Vector3.new(0.08, 6, 6)
-	spawnPortal.Position = Vector3.new(0, 0.42, 10.5)
+	spawnPortal.Position = Vector3.new(0, 0.42, -14)
 	spawnPortal.Orientation = Vector3.new(0, 0, 90)
 	spawnPortal.Anchored = true
 	spawnPortal.Material = Enum.Material.Neon
@@ -204,32 +204,43 @@ function WorldController.Init()
 	spawnPortal.CanCollide = false
 	spawnPortal.Parent = gardenFolder
 
-	-- 1. Main Island Body (Dark Obsidian Stone)
+	-- 1. Main Island Body (Large Dark Obsidian Stone Foundation)
 	local island = Instance.new("Part")
 	island.Name = "SanctuaryIsland"
-	island.Size = Vector3.new(38, 1.4, 38)
-	island.Position = startOrigin - Vector3.new(0, 0.7, 0)
+	island.Size = Vector3.new(64, 2.0, 64)
+	island.Position = Vector3.new(0, -1.0, 0)
 	island.Anchored = true
 	island.Material = Enum.Material.Slate
 	island.Color = Color3.fromRGB(16, 12, 26)
 	island.TopSurface = Enum.SurfaceType.Smooth
 	island.Parent = gardenFolder
 
+	-- Raised Garden Terrace (Inner courtyard)
+	local terrace = Instance.new("Part")
+	terrace.Name = "GardenTerrace"
+	terrace.Size = Vector3.new(42, 0.4, 42)
+	terrace.Position = Vector3.new(0, 0.2, 2)
+	terrace.Anchored = true
+	terrace.Material = Enum.Material.Slate
+	terrace.Color = Color3.fromRGB(22, 16, 36)
+	terrace.TopSurface = Enum.SurfaceType.Smooth
+	terrace.Parent = gardenFolder
+
 	-- Beveled Island Rim (Dark metallic stone)
 	local rim = Instance.new("Part")
 	rim.Name = "IslandRim"
-	rim.Size = Vector3.new(39.2, 0.6, 39.2)
-	rim.Position = startOrigin - Vector3.new(0, 1.1, 0)
+	rim.Size = Vector3.new(65.6, 0.8, 65.6)
+	rim.Position = Vector3.new(0, -1.6, 0)
 	rim.Anchored = true
 	rim.Material = Enum.Material.SmoothPlastic
-	rim.Color = Color3.fromRGB(24, 18, 38)
+	rim.Color = Color3.fromRGB(28, 20, 44)
 	rim.CanCollide = false
 	rim.Parent = gardenFolder
 
 	-- Subtle floating stardust emitter
 	local stardustEmitter = Instance.new("ParticleEmitter")
 	stardustEmitter.Name = "AmbientStardust"
-	stardustEmitter.Rate = 18
+	stardustEmitter.Rate = 22
 	stardustEmitter.Lifetime = NumberRange.new(4, 7)
 	stardustEmitter.Speed = NumberRange.new(0.5, 1.8)
 	stardustEmitter.SpreadAngle = Vector2.new(35, 35)
@@ -249,14 +260,14 @@ function WorldController.Init()
 		ColorSequenceKeypoint.new(1, Color3.fromRGB(250, 204, 21)),
 	})
 	stardustEmitter.LightEmission = 0.8
-	stardustEmitter.Parent = island
+	stardustEmitter.Parent = terrace
 
 	-- 4 Corner Celestial Lanterns with gentle illumination
 	local cornerOffsets = {
-		Vector3.new(17, 0, 17),
-		Vector3.new(-17, 0, 17),
-		Vector3.new(17, 0, -17),
-		Vector3.new(-17, 0, -17),
+		Vector3.new(24, 0, 24),
+		Vector3.new(-24, 0, 24),
+		Vector3.new(24, 0, -24),
+		Vector3.new(-24, 0, -24),
 	}
 
 	for idx, offset in cornerOffsets do

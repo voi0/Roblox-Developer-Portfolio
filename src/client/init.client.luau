@@ -50,143 +50,122 @@ local TutorialController = safeRequire(controllersFolder, "TutorialController")
 local NotificationUI = safeRequire(uiFolder, "NotificationUI")
 
 local playerData: any = nil
-local isInitialized = false
 
 -- ============================================================
--- INITIALIZE SYSTEMS
+-- INITIALIZE SYSTEMS IMMEDIATELY ON CLIENT START
 -- ============================================================
-local function initializeGame(data: any)
-	if isInitialized then
-		playerData = data
-		if UIController then UIController.Update(data) end
-		if WorldController then WorldController.Update(data) end
-		if PetController then PetController.Update(data) end
-		return
+print("  [Client] Initializing subsystems immediately...")
+
+if SoundController then
+	local s, err = pcall(function() SoundController.Init() end)
+	if s then
+		print("  [Client] SoundController ready ✓")
+	else
+		warn(`  [Client] SoundController Init error: {tostring(err)}`)
 	end
+end
 
-	isInitialized = true
+if VFXController then
+	local s, err = pcall(function() VFXController.Init() end)
+	if s then
+		print("  [Client] VFXController ready ✓")
+	else
+		warn(`  [Client] VFXController Init error: {tostring(err)}`)
+	end
+end
+
+if WorldController then
+	local s, err = pcall(function()
+		WorldController.Init()
+		WorldController.StartRenderLoop()
+	end)
+	if s then
+		print("  [Client] WorldController (3D Sanctuary) ready ✓")
+	else
+		warn(`  [Client] WorldController Init error: {tostring(err)}`)
+	end
+end
+
+if PetController then
+	local s, err = pcall(function() PetController.Init() end)
+	if s then
+		print("  [Client] PetController ready ✓")
+	else
+		warn(`  [Client] PetController Init error: {tostring(err)}`)
+	end
+end
+
+if UIController then
+	local s, err = pcall(function() UIController.Init() end)
+	if s then
+		print("  [Client] UIController (HUD & Modals) ready ✓")
+	else
+		warn(`  [Client] UIController Init error: {tostring(err)}`)
+	end
+end
+
+if TutorialController then
+	local s, err = pcall(function() TutorialController.Init() end)
+	if s then
+		print("  [Client] TutorialController ready ✓")
+	else
+		warn(`  [Client] TutorialController Init error: {tostring(err)}`)
+	end
+end
+
+-- Immediate initial UI populate (ensures TopBar, SeedBar, and Dock appear instantly)
+local defaultStartingData = {
+	Stardust = 0,
+	NebulaGems = 0,
+	Starlight = 0,
+	Level = 1,
+	Rebirth = { Level = 0, CosmicMultiplier = 1.0, ConstellationPoints = 0, ConstellationTree = {} },
+	SeedInventory = { starseed_basic = 5 },
+	Garden = {},
+	PlantCollection = {},
+	Pets = {},
+}
+for i = 1, 9 do
+	table.insert(defaultStartingData.Garden, { Index = i, Unlocked = true, Plant = nil })
+end
+if UIController then UIController.Update(defaultStartingData) end
+if WorldController then WorldController.Update(defaultStartingData) end
+
+-- ============================================================
+-- DATA SYNC HANDLER
+-- ============================================================
+local function onDataLoaded(data: any)
+	if not data then return end
 	playerData = data
-
-	print("  [Client] Initializing subsystems...")
-
-	if SoundController then
-		local s, err = pcall(function() SoundController.Init() end)
-		if s then
-			print("  [Client] SoundController ready ✓")
-		else
-			warn(`  [Client] SoundController Init error: {tostring(err)}`)
-		end
-	end
-	if VFXController then
-		local s, err = pcall(function() VFXController.Init() end)
-		if s then
-			print("  [Client] VFXController ready ✓")
-		else
-			warn(`  [Client] VFXController Init error: {tostring(err)}`)
-		end
-	end
-	if WorldController then
-		local s, err = pcall(function()
-			WorldController.Init()
-			WorldController.StartRenderLoop()
-		end)
-		if s then
-			print("  [Client] WorldController (3D Sanctuary) ready ✓")
-		else
-			warn(`  [Client] WorldController Init error: {tostring(err)}`)
-		end
-	end
-	if PetController then
-		local s, err = pcall(function() PetController.Init() end)
-		if s then
-			print("  [Client] PetController ready ✓")
-		else
-			warn(`  [Client] PetController Init error: {tostring(err)}`)
-		end
-	end
-	if TutorialController then
-		local s, err = pcall(function() TutorialController.Init() end)
-		if s then
-			print("  [Client] TutorialController ready ✓")
-		else
-			warn(`  [Client] TutorialController Init error: {tostring(err)}`)
-		end
-	end
-	if UIController then
-		local s, err = pcall(function() UIController.Init() end)
-		if s then
-			print("  [Client] UIController (HUD & Modals) ready ✓")
-		else
-			warn(`  [Client] UIController Init error: {tostring(err)}`)
-		end
-	end
-
-	-- Push initial data
+	print("  [Client] Synchronizing live player profile...")
 	if UIController then UIController.Update(data) end
 	if WorldController then WorldController.Update(data) end
 	if PetController then PetController.Update(data) end
 	if TutorialController then TutorialController.CheckStart(data) end
-
-	print("========================================")
-	print("  ✅ STARWEAVE Sanctuary Loaded & Live!")
-	print("========================================")
 end
 
--- ============================================================
--- DATA BOOTSTRAP (Concurrent & Fallback Protected)
--- ============================================================
+-- Data Bootstrap Listener
 task.spawn(function()
 	local dataReady = ReplicatedStorage:WaitForChild("DataReady", 15) :: RemoteEvent?
 	if dataReady then
-		dataReady.OnClientEvent:Connect(function(data)
-			if not isInitialized then
-				initializeGame(data)
-			else
-				playerData = data
-				if UIController then UIController.Update(data) end
-				if WorldController then WorldController.Update(data) end
-				if PetController then PetController.Update(data) end
-			end
-		end)
+		dataReady.OnClientEvent:Connect(onDataLoaded)
 	end
 end)
 
 task.spawn(function()
 	local getData = ReplicatedStorage:WaitForChild("GetData", 15) :: RemoteFunction?
 	if getData then
-		for _ = 1, 15 do
-			if isInitialized then break end
+		for _ = 1, 10 do
+			if playerData then break end
 			local success, data = pcall(function()
 				return getData:InvokeServer()
 			end)
-			if success and data and not isInitialized then
-				initializeGame(data)
+			if success and data then
+				onDataLoaded(data)
 				break
 			end
 			task.wait(0.3)
 		end
-	end
-
-	-- Guaranteed Emergency Boot: If server data takes > 2.5s, spawn immediately!
-	if not isInitialized then
-		warn("[Client] Launching sanctuary with default profile...")
-		local fallbackData = {
-			Stardust = 100,
-			NebulaGems = 10,
-			Starlight = 0,
-			GardenSize = 9,
-			Garden = {},
-			SeedInventory = { starseed_basic = 5 },
-			PlantCollection = {},
-			Pets = {},
-			Rebirth = { Level = 0, CosmicMultiplier = 1.0, ConstellationPoints = 0, ConstellationTree = {} },
-			Level = 1,
-			Experience = 0,
-		}
-		for i = 1, 9 do
-			table.insert(fallbackData.Garden, { Index = i, Unlocked = true, Plant = nil })
-		end
-		initializeGame(fallbackData)
 	end
 end)
 
