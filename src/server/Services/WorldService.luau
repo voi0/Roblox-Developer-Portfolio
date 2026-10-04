@@ -202,9 +202,8 @@ function WorldService.Init()
 	spawn.Size = Vector3.new(8, 0.4, 8)
 	spawn.Position = Vector3.new(0, 0.2, -20)
 	spawn.Anchored = true
-	spawn.CanCollide = true
-	spawn.Material = Enum.Material.Slate
-	spawn.Color = Color3.fromRGB(38, 30, 60)
+	spawn.CanCollide = false
+	spawn.Transparency = 1 -- Invisible so player walks directly on the 3D island pavers!
 	spawn.TopSurface = Enum.SurfaceType.Smooth
 	for _, child in spawn:GetChildren() do
 		if child:IsA("Decal") or child:IsA("Texture") then
