@@ -398,7 +398,16 @@ function ForgeModal.Create(parentGui: ScreenGui)
 	-- Forge button click
 	forgeBtn.MouseButton1Click:Connect(function()
 		local selectedId = ForgeModal._selectedSeedId
-		if not selectedId then return end
+		if not selectedId then
+			SoundController.Play("ButtonHover")
+			UILib.ShakeElement(forgeBtn, Color3.fromRGB(180, 50, 50))
+			local notif = script.Parent:FindFirstChild("NotificationUI")
+			if notif then
+				local nModule = require(notif :: ModuleScript)
+				nModule.ShowToast("🔮 Select an eligible seed (3+ owned) from your inventory to forge!", Color3.fromRGB(168, 85, 247), 3.0)
+			end
+			return
+		end
 
 		SoundController.Play("PlantReady")
 		local req = ReplicatedStorage:FindFirstChild("GardenRequest") :: RemoteFunction?

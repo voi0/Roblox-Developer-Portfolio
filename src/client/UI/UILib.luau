@@ -15,11 +15,11 @@ local UILib = {}
 -- ============================================================
 UILib.Colors = {
 	-- Core Palette
-	Surface0    = Color3.fromRGB(7, 3, 18),      -- Deepest background
-	Surface1    = Color3.fromRGB(12, 8, 28),      -- Modal/card base
-	Surface2    = Color3.fromRGB(20, 14, 40),      -- Elevated card
-	Surface3    = Color3.fromRGB(30, 22, 55),      -- Hover/active states
-	Surface4    = Color3.fromRGB(42, 32, 72),      -- Pressed states
+	Surface0    = Color3.fromRGB(16, 20, 34),     -- Rich deep space navy
+	Surface1    = Color3.fromRGB(24, 30, 50),     -- Sleek royal slate modal base
+	Surface2    = Color3.fromRGB(32, 40, 68),     -- Elevated frosted card
+	Surface3    = Color3.fromRGB(44, 56, 92),     -- Bright readable hover state
+	Surface4    = Color3.fromRGB(56, 72, 116),    -- Pressed arcade state
 
 	-- Text
 	TextPrimary   = Color3.fromRGB(248, 250, 252),
@@ -174,9 +174,9 @@ function UILib.CreateModalFrame(
 	-- Inner gradient for depth (lighter at top-left)
 	local innerGrad = Instance.new("UIGradient")
 	innerGrad.Color = ColorSequence.new({
-		ColorSequenceKeypoint.new(0, Color3.fromRGB(35, 28, 60)),
-		ColorSequenceKeypoint.new(0.5, Color3.fromRGB(12, 8, 28)),
-		ColorSequenceKeypoint.new(1, Color3.fromRGB(7, 4, 20)),
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(36, 46, 78)),
+		ColorSequenceKeypoint.new(0.6, Color3.fromRGB(24, 30, 52)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(16, 20, 36)),
 	})
 	innerGrad.Rotation = 135
 	innerGrad.Parent = modal
@@ -616,6 +616,29 @@ function UILib.CreateCurrencyDisplay(parent: GuiObject, name: string, iconText: 
 	valueLabel.Parent = container
 
 	return valueLabel
+end
+
+
+-- ============================================================
+-- SHAKE ELEMENT (Tactile error feedback)
+-- ============================================================
+function UILib.ShakeElement(guiObj: GuiObject, errorColor: Color3?)
+	local origPos = guiObj.Position
+	local origBg = guiObj.BackgroundColor3
+	if errorColor then
+		guiObj.BackgroundColor3 = errorColor
+	end
+	task.spawn(function()
+		for i = 1, 6 do
+			local offset = (i % 2 == 0) and 5 or -5
+			guiObj.Position = origPos + UDim2.new(0, offset, 0, 0)
+			task.wait(0.03)
+		end
+		guiObj.Position = origPos
+		if errorColor then
+			guiObj.BackgroundColor3 = origBg
+		end
+	end)
 end
 
 return UILib

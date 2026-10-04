@@ -19,6 +19,7 @@ local ForgeModal = require(script.Parent.Parent.UI.ForgeModal)
 local ConstellationModal = require(script.Parent.Parent.UI.ConstellationModal)
 local PetModal = require(script.Parent.Parent.UI.PetModal)
 local QuestModal = require(script.Parent.Parent.UI.QuestModal)
+local StatsModal = require(script.Parent.Parent.UI.StatsModal)
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
@@ -52,6 +53,7 @@ function UIController.Init()
 			{ Name = "ConstellationModal", Mod = ConstellationModal },
 			{ Name = "PetModal", Mod = PetModal },
 			{ Name = "QuestModal", Mod = QuestModal },
+			{ Name = "StatsModal", Mod = StatsModal },
 		}
 		for _, m in modalList do
 			local s, err = pcall(function()
@@ -89,6 +91,8 @@ function UIController.HandleDockAction(actionName: string)
 		UIController.ToggleModal("Collection")
 	elseif actionName == "OpenRebirth" then
 		UIController.ToggleModal("Rebirth")
+	elseif actionName == "OpenStats" or actionName == "OpenProfile" then
+		UIController.ToggleModal("Stats")
 	end
 end
 
@@ -120,6 +124,8 @@ function UIController.ToggleModal(modalName: string)
 		ConstellationModal.Open()
 	elseif modalName == "Pets" then
 		PetModal.Open()
+	elseif modalName == "Stats" or modalName == "Profile" then
+		StatsModal.Open()
 	end
 end
 
@@ -131,6 +137,7 @@ function UIController.CloseAllModals()
 	if UIController._currentOpenModal == "Rebirth" then RebirthModal.Close() end
 	if UIController._currentOpenModal == "Constellation" then ConstellationModal.Close() end
 	if UIController._currentOpenModal == "Pets" then PetModal.Close() end
+	if UIController._currentOpenModal == "Stats" or UIController._currentOpenModal == "Profile" then StatsModal.Close() end
 
 	UIController._currentOpenModal = nil
 
@@ -148,6 +155,7 @@ function UIController.Update(playerData: any)
 	ConstellationModal.Update(playerData)
 	PetModal.Update(playerData)
 	QuestModal.Update(playerData)
+	StatsModal.Update(playerData)
 end
 
 function UIController.SetWeather(isActive: boolean)

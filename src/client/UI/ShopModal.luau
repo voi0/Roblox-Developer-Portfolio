@@ -287,6 +287,12 @@ function ShopModal.RefreshGrid()
 					end
 				else
 					SoundController.Play("ButtonHover")
+					UILib.ShakeElement(buyBtn, Color3.fromRGB(180, 50, 50))
+					local notif = script.Parent:FindFirstChild("NotificationUI")
+					if notif then
+						local nMod = require(notif :: ModuleScript)
+						nMod.ShowToast(`❌ Need {price} Stardust to buy {seed.Name}!`, Color3.fromRGB(248, 113, 113), 2.5)
+					end
 				end
 			end)
 

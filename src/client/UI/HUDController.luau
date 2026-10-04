@@ -91,16 +91,25 @@ function HUDController.Create()
 	UILib.ApplyStroke(topBar, UILib.Colors.PurpleDim, 1, 0.45)
 
 	-- ── Left: Player Profile Badge ──
-	local profileCard = Instance.new("Frame")
+	local profileCard = Instance.new("TextButton")
 	profileCard.Name = "ProfileCard"
 	profileCard.Size = UDim2.new(0, 180, 0, 36)
 	profileCard.Position = UDim2.new(0, 6, 0.5, -18)
 	profileCard.BackgroundColor3 = UILib.Colors.Surface2
-	profileCard.BackgroundTransparency = 0.3
+	profileCard.BackgroundTransparency = 0.2
 	profileCard.BorderSizePixel = 0
+	profileCard.Text = ""
 	profileCard.ZIndex = 6
 	profileCard.Parent = topBar
 	UILib.ApplyPill(profileCard)
+	UILib.ApplyStroke(profileCard, Color3.fromRGB(56, 189, 248), 1, 0.5)
+
+	profileCard.MouseButton1Click:Connect(function()
+		local sc = getSoundController()
+		if sc then sc.Play("ButtonClick") end
+		local actionEvent = HUDController._gui and HUDController._gui:FindFirstChild("UIAction") :: BindableEvent?
+		if actionEvent then actionEvent:Fire("OpenStats") end
+	end)
 
 	local avatarImg = Instance.new("ImageLabel")
 	avatarImg.Name = "Avatar"

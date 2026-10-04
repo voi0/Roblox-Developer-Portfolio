@@ -228,6 +228,18 @@ function ConstellationModal.Create(parentGui: ScreenGui)
 		end)
 
 		btn.MouseButton1Click:Connect(function()
+			local availPts = ConstellationModal._data and ConstellationModal._data.ConstellationPoints or 0
+			if availPts < cfg.PointCost then
+				SoundController.Play("ButtonHover")
+				UILib.ShakeElement(btn, Color3.fromRGB(180, 50, 50))
+				local notif = script.Parent:FindFirstChild("NotificationUI")
+				if notif then
+					local nMod = require(notif :: ModuleScript)
+					nMod.ShowToast(`✦ Requires {cfg.PointCost} Constellation Points! (Earned via Rebirth/Ascension)`, Color3.fromRGB(250, 204, 21), 3.0)
+				end
+				return
+			end
+
 			SoundController.Play("ButtonClick")
 			local gardenRequest = ReplicatedStorage:FindFirstChild("GardenRequest") :: RemoteFunction?
 			if gardenRequest then
