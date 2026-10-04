@@ -23,6 +23,7 @@ local serviceNames = {
 	"GardenService",
 	"EconomyService",
 	"PetService",
+	"PlaytimeService",
 	"QuestService",
 	"CodeService",
 }

@@ -334,3 +334,26 @@ task.spawn(function()
 		if UIController then UIController.Update(playerData) end
 	end)
 end)
+
+-- ============================================================
+-- AFK MEDITATION ALERTS
+-- ============================================================
+task.spawn(function()
+	local afkAlert = ReplicatedStorage:WaitForChild("AFKAlert", 20) :: RemoteEvent?
+	if not afkAlert then return end
+
+	afkAlert.OnClientEvent:Connect(function(action: string, amount: number)
+		if action == "AFK_TICK" then
+			if playerData then
+				playerData.Stardust = (playerData.Stardust or 0) + amount
+				if UIController then UIController.Update(playerData) end
+			end
+			if NotificationUI then
+				NotificationUI.ShowToast(`✦ +{amount} Stardust (Cosmic Meditation)`, Color3.fromRGB(56, 189, 248), 2.5)
+			end
+			if SoundController then
+				SoundController.Play("ButtonClick")
+			end
+		end
+	end)
+end)
