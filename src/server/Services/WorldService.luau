@@ -20,7 +20,7 @@ local Workspace = game:GetService("Workspace")
 local WorldService = {}
 
 local GRID_COLUMNS = 3
-local PLOT_SPACING = 9.5
+local PLOT_SPACING = 13.0
 local START_ORIGIN = Vector3.new(0, 0, 2)
 
 -- ============================================================
@@ -200,7 +200,7 @@ function WorldService.Init()
 		spawn.Parent = Workspace
 	end
 	spawn.Size = Vector3.new(8, 0.4, 8)
-	spawn.Position = Vector3.new(0, 0.2, -14)
+	spawn.Position = Vector3.new(0, 0.2, -20)
 	spawn.Anchored = true
 	spawn.CanCollide = true
 	spawn.Material = Enum.Material.Slate
@@ -263,16 +263,17 @@ function WorldService.Init()
 	local proceduralIslandTransparency = 0
 
 	if islandModel then
-		print("  ✨ [WorldService] Deploying 3D Floating Sanctuary Island (72 studs)...")
+		print("  ✨ [WorldService] Deploying 3D Floating Sanctuary Island (110 studs)...")
 		islandModel.Parent = gardenFolder
 		anchorAllParts(islandModel, true)
-		scaleModelToDimension(islandModel, 72)
+		scaleModelToDimension(islandModel, 110)
 
 		if not islandModel.PrimaryPart then
 			islandModel.PrimaryPart = islandModel:FindFirstChildWhichIsA("BasePart", true)
 		end
 		if islandModel.PrimaryPart then
-			islandModel:PivotTo(CFrame.new(0, -1.0, 2))
+			-- Place island center down at Y = -42 so its top surface sits flush at Y = -0.5 beneath the plots!
+			islandModel:PivotTo(CFrame.new(0, -42.0, 2))
 		end
 		proceduralIslandTransparency = 1
 	else
@@ -329,7 +330,7 @@ function WorldService.Init()
 
 	-- 2. DEPLOY 3D TRANSMUTATION FORGE ALTAR
 	local altarModel = classifiedAssets["ALTAR"]
-	local altarPos = Vector3.new(0, 0.4, 20)
+	local altarPos = Vector3.new(0, 0.4, 26)
 
 	if altarModel then
 		print("  ✨ [WorldService] Deploying 3D Transmutation Altar (8.5 studs)...")
@@ -373,7 +374,7 @@ function WorldService.Init()
 
 	-- 3. DEPLOY 3D CELESTIAL MYSTERY PET EGG
 	local eggModel = classifiedAssets["EGG"]
-	local eggPos = Vector3.new(-18, 1.4, 2)
+	local eggPos = Vector3.new(-24, 1.4, 2)
 
 	if eggModel then
 		print("  ✨ [WorldService] Deploying 3D Celestial Pet Egg (4 studs)...")

@@ -1,7 +1,7 @@
 --!strict
 --[[
 	CollectionModal.luau — Celestial Compendium for STARWEAVE
-	Tracks all discovered plant x mutation combinations (112 total).
+	Tracks all discovered plant x mutation combinations.
 	Features discovery progress bar, glowing rarity cards, and locked states.
 	Located in: StarterPlayerScripts.Client.UI.CollectionModal
 ]]
@@ -25,18 +25,18 @@ local ACCENT = Color3.fromRGB(56, 189, 248)
 local MUTATION_COLORS: { [string]: Color3 } = {
 	Sprout     = Color3.fromRGB(74, 222, 128),
 	Bloom      = Color3.fromRGB(56, 189, 248),
-	Radiant    = Color3.fromRGB(255, 204, 0),
+	Radiant    = Color3.fromRGB(250, 204, 21),
 	Astral     = Color3.fromRGB(168, 85, 247),
 	Celestial  = Color3.fromRGB(244, 114, 182),
 	Primordial = Color3.fromRGB(248, 250, 252),
 }
 
 function CollectionModal.Create(parentGui: ScreenGui)
-	local modal = UILib.CreateModalFrame(parentGui, "CollectionModal", 580, 520, ACCENT)
+	local modal = UILib.CreateModalFrame(parentGui, "CollectionModal", 540, 440, ACCENT)
 	CollectionModal._frame = modal
 
 	-- Header
-	local header = UILib.CreateModalHeader(modal, "Celestial Compendium", "All discovered cosmic flora specimens", ACCENT, function()
+	local header = UILib.CreateModalHeader(modal, "Celestial Compendium", "Catalog of discovered cosmic flora & mutations", ACCENT, function()
 		SoundController.Play("ButtonClick")
 		CollectionModal.Close()
 	end)
@@ -45,19 +45,19 @@ function CollectionModal.Create(parentGui: ScreenGui)
 	local progressFrame = Instance.new("Frame")
 	progressFrame.Name = "ProgressFrame"
 	progressFrame.Size = UDim2.new(1, -32, 0, 36)
-	progressFrame.Position = UDim2.new(0, 16, 0, 68)
+	progressFrame.Position = UDim2.new(0, 16, 0, 56)
 	progressFrame.BackgroundTransparency = 1
 	progressFrame.ZIndex = modal.ZIndex + 1
 	progressFrame.Parent = modal
 
 	local progressLabel = Instance.new("TextLabel")
 	progressLabel.Name = "ProgressLabel"
-	progressLabel.Size = UDim2.new(0.5, 0, 0, 14)
+	progressLabel.Size = UDim2.new(1, 0, 0, 14)
 	progressLabel.Position = UDim2.new(0, 0, 0, 0)
 	progressLabel.BackgroundTransparency = 1
-	progressLabel.Text = "Discovered: 0 / 112 (0%)"
-	progressLabel.TextColor3 = UILib.Colors.TextSecondary
-	progressLabel.TextSize = 12
+	progressLabel.Text = "COMPENDIUM DISCOVERY: 0 / 96 (0%)"
+	progressLabel.TextColor3 = ACCENT
+	progressLabel.TextSize = 11
 	progressLabel.Font = UILib.Fonts.Bold
 	progressLabel.TextXAlignment = Enum.TextXAlignment.Left
 	progressLabel.ZIndex = modal.ZIndex + 2
@@ -65,23 +65,23 @@ function CollectionModal.Create(parentGui: ScreenGui)
 
 	local progBarBg, progBarFill = UILib.CreateProgressBar(
 		progressFrame, "DiscoveryProg",
-		UDim2.new(0, 0, 0, 20),
-		UDim2.new(1, 0, 0, 8),
+		UDim2.new(0, 0, 0, 18),
+		UDim2.new(1, 0, 0, 6),
 		ACCENT
 	)
 
 	-- Scrolling grid
 	local scroll = UILib.CreateScrollFrame(
 		modal, "CompendiumScroll",
-		UDim2.new(1, -32, 1, -116),
-		UDim2.new(0, 16, 0, 110),
+		UDim2.new(1, -32, 1, -100),
+		UDim2.new(0, 16, 0, 96),
 		ACCENT
 	)
 	scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
 
 	local gridLayout = Instance.new("UIGridLayout")
-	gridLayout.CellSize = UDim2.new(0, 120, 0, 120)
-	gridLayout.CellPadding = UDim2.new(0, 8, 0, 8)
+	gridLayout.CellSize = UDim2.new(0, 116, 0, 110)
+	gridLayout.CellPadding = UDim2.new(0, 10, 0, 10)
 	gridLayout.SortOrder = Enum.SortOrder.LayoutOrder
 	gridLayout.Parent = scroll
 
@@ -110,66 +110,75 @@ function CollectionModal.Refresh()
 			local isDiscovered = discoveredMap[key] == true
 			if isDiscovered then discoveredCount += 1 end
 
-			local mutColor = MUTATION_COLORS[mutTier] or UILib.Colors.Common
+			local mutColor = MUTATION_COLORS[mutTier] or Color3.fromRGB(168, 85, 247)
 
 			local card = Instance.new("Frame")
 			card.Name = key
-			card.BackgroundColor3 = isDiscovered and UILib.Colors.Surface2 or Color3.fromRGB(10, 8, 18)
+			card.BackgroundColor3 = isDiscovered and Color3.fromRGB(22, 18, 36) or Color3.fromRGB(12, 10, 20)
 			card.BorderSizePixel = 0
 			card.ZIndex = modal.ZIndex + 2
 			card.Parent = scroll
-			UILib.ApplyCorner(card, 8)
+			UILib.ApplyCorner(card, 10)
 
-			if isDiscovered then
-				UILib.ApplyStroke(card, mutColor, 1, 0.35)
-				-- Gradient depth
-				local cGrad = Instance.new("UIGradient")
-				cGrad.Color = ColorSequence.new({
-					ColorSequenceKeypoint.new(0, Color3.fromRGB(28, 22, 48)),
-					ColorSequenceKeypoint.new(1, Color3.fromRGB(16, 12, 30)),
-				})
-				cGrad.Rotation = 150
-				cGrad.Parent = card
-			else
-				UILib.ApplyStroke(card, Color3.fromRGB(30, 26, 42), 1, 0.7)
-			end
+			local stroke = Instance.new("UIStroke")
+			stroke.Color = isDiscovered and mutColor or Color3.fromRGB(35, 28, 50)
+			stroke.Thickness = isDiscovered and 1.2 or 1
+			stroke.Transparency = isDiscovered and 0.35 or 0.7
+			stroke.Parent = card
 
-			-- Icon / Lock indicator
-			local iconLabel = Instance.new("TextLabel")
-			iconLabel.Size = UDim2.new(1, 0, 0, 30)
-			iconLabel.Position = UDim2.new(0, 0, 0, 8)
-			iconLabel.BackgroundTransparency = 1
-			iconLabel.Text = isDiscovered and "*" or "?"
-			iconLabel.TextColor3 = isDiscovered and mutColor or Color3.fromRGB(50, 44, 65)
-			iconLabel.TextSize = isDiscovered and 22 or 18
-			iconLabel.Font = UILib.Fonts.Black
-			iconLabel.ZIndex = modal.ZIndex + 3
-			iconLabel.Parent = card
+			local grad = Instance.new("UIGradient")
+			grad.Color = ColorSequence.new({
+				ColorSequenceKeypoint.new(0, isDiscovered and Color3.fromRGB(32, 26, 52) or Color3.fromRGB(16, 12, 24)),
+				ColorSequenceKeypoint.new(1, isDiscovered and Color3.fromRGB(18, 14, 30) or Color3.fromRGB(10, 8, 18)),
+			})
+			grad.Rotation = 90
+			grad.Parent = card
+
+			-- Icon
+			local icon = Instance.new("TextLabel")
+			icon.Size = UDim2.new(1, 0, 0, 28)
+			icon.Position = UDim2.new(0, 0, 0, 10)
+			icon.BackgroundTransparency = 1
+			icon.Text = isDiscovered and "✦" or "🔒"
+			icon.TextColor3 = isDiscovered and mutColor or Color3.fromRGB(70, 60, 90)
+			icon.TextSize = isDiscovered and 20 or 14
+			icon.Font = UILib.Fonts.Bold
+			icon.ZIndex = modal.ZIndex + 3
+			icon.Parent = card
 
 			-- Name
 			local nameLabel = Instance.new("TextLabel")
-			nameLabel.Size = UDim2.new(1, -10, 0, 28)
-			nameLabel.Position = UDim2.new(0, 5, 0, 42)
+			nameLabel.Size = UDim2.new(1, -12, 0, 26)
+			nameLabel.Position = UDim2.new(0, 6, 0, 42)
 			nameLabel.BackgroundTransparency = 1
-			nameLabel.Text = isDiscovered and seed.Name or "???"
-			nameLabel.TextColor3 = isDiscovered and UILib.Colors.TextPrimary or Color3.fromRGB(60, 55, 75)
-			nameLabel.TextSize = 11
+			nameLabel.Text = isDiscovered and seed.Name or "Undiscovered"
+			nameLabel.TextColor3 = isDiscovered and Color3.fromRGB(244, 235, 255) or Color3.fromRGB(100, 90, 120)
+			nameLabel.TextSize = 10
 			nameLabel.Font = UILib.Fonts.Bold
 			nameLabel.TextWrapped = true
 			nameLabel.ZIndex = modal.ZIndex + 3
 			nameLabel.Parent = card
 
-			-- Mutation tier badge
-			local tierLabel = Instance.new("TextLabel")
-			tierLabel.Size = UDim2.new(1, -10, 0, 14)
-			tierLabel.Position = UDim2.new(0, 5, 1, -22)
-			tierLabel.BackgroundTransparency = 1
-			tierLabel.Text = isDiscovered and mutTier or "Undiscovered"
-			tierLabel.TextColor3 = isDiscovered and mutColor or Color3.fromRGB(50, 44, 65)
-			tierLabel.TextSize = 9
-			tierLabel.Font = UILib.Fonts.Medium
-			tierLabel.ZIndex = modal.ZIndex + 3
-			tierLabel.Parent = card
+			-- Mutation Pill
+			local pill = Instance.new("Frame")
+			pill.Size = UDim2.new(1, -20, 0, 18)
+			pill.Position = UDim2.new(0, 10, 1, -24)
+			pill.BackgroundColor3 = isDiscovered and mutColor or Color3.fromRGB(20, 16, 30)
+			pill.BackgroundTransparency = isDiscovered and 0.85 or 0.5
+			pill.BorderSizePixel = 0
+			pill.ZIndex = modal.ZIndex + 3
+			pill.Parent = card
+			UILib.ApplyPill(pill)
+
+			local pillText = Instance.new("TextLabel")
+			pillText.Size = UDim2.fromScale(1, 1)
+			pillText.BackgroundTransparency = 1
+			pillText.Text = string.upper(mutTier)
+			pillText.TextColor3 = isDiscovered and mutColor or Color3.fromRGB(80, 70, 100)
+			pillText.TextSize = 9
+			pillText.Font = UILib.Fonts.Bold
+			pillText.ZIndex = modal.ZIndex + 4
+			pillText.Parent = pill
 
 			table.insert(CollectionModal._cardList, card)
 		end
@@ -178,27 +187,25 @@ function CollectionModal.Refresh()
 	-- Update progress
 	local progressFrame = modal:FindFirstChild("ProgressFrame")
 	if progressFrame then
-		local pLabel = progressFrame:FindFirstChild("ProgressLabel") :: TextLabel?
-		local fillFrame = progressFrame:FindFirstChild("DiscoveryProgBg")
-		local fill = fillFrame and fillFrame:FindFirstChild("Fill") :: Frame?
-
-		local pct = totalPossibilities > 0 and (discoveredCount / totalPossibilities) or 0
-
-		if pLabel then
-			pLabel.Text = string.format("Discovered: %d / %d (%d%%)", discoveredCount, totalPossibilities, math.floor(pct * 100))
+		local progressLabel = progressFrame:FindFirstChild("ProgressLabel") :: TextLabel?
+		if progressLabel then
+			local pct = totalPossibilities > 0 and math.floor((discoveredCount / totalPossibilities) * 100) or 0
+			progressLabel.Text = `COMPENDIUM DISCOVERY: {discoveredCount} / {totalPossibilities} ({pct}%)`
 		end
-		if fill then
-			TweenService:Create(fill, UILib.Timing.Normal, {
-				Size = UDim2.fromScale(pct, 1),
-			}):Play()
+		local progBar = progressFrame:FindFirstChild("DiscoveryProg") :: Frame?
+		if progBar then
+			local fill = progBar:FindFirstChild("Fill") :: Frame?
+			if fill and totalPossibilities > 0 then
+				fill.Size = UDim2.fromScale(discoveredCount / totalPossibilities, 1)
+			end
 		end
 	end
 end
 
 function CollectionModal.Open()
 	if not CollectionModal._frame then return end
-	UILib.OpenModal(CollectionModal._frame)
 	CollectionModal.Refresh()
+	UILib.OpenModal(CollectionModal._frame)
 end
 
 function CollectionModal.Close()
