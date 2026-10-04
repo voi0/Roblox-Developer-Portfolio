@@ -1,21 +1,15 @@
-MIT License
+# Portfolio & Source-Available License
 
-Copyright (c) 2026 Yassein Shehata (voi0)
+Copyright (c) 2026 Yassein Shehata (@voi0). All Rights Reserved.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+This repository, its code, visual assets, documentation, systems designs, and associated files are the exclusive intellectual property of Yassein Shehata.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+### Permitted Uses:
+1. **Recruiter & Client Evaluation:** Potential employers, recruiters, and prospective clients are granted a non-exclusive, non-transferable license to view, review, compile, and evaluate this codebase strictly for employment, contracting, or assessment purposes.
+2. **Personal Learning:** Individuals may read the source code and architectural documentation for educational, non-commercial purposes.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+### Prohibited Uses:
+1. **Commercial Exploitation:** You may NOT publish, re-upload, distribute, license, sell, monetize, or deploy this game, its source code, assets, or modified derivatives on the Roblox platform, other gaming platforms, or commercial marketplaces without prior written consent from the author.
+2. **Plagiarism & Rebranding:** You may NOT remove author attributions, rebrand, or misrepresent this work as your own.
+
+For commercial licensing inquiries or employment opportunities, contact Yassein Shehata directly via GitHub [@voi0](https://github.com/voi0).
