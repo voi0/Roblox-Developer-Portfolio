@@ -51,7 +51,7 @@ UILib.Colors = {
 	Void       = Color3.fromRGB(147, 51, 234),
 }
 
-UILib.TierColor: { [string]: Color3 } = {
+UILib.TierColor = {
 	Common     = UILib.Colors.Common,
 	Uncommon   = UILib.Colors.Uncommon,
 	Rare       = UILib.Colors.Rare,
