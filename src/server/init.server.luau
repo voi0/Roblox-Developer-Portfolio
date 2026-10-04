@@ -17,6 +17,7 @@ print("  🌟 STARWEAVE Server Booting...")
 print("========================================")
 
 local serviceNames = {
+	"WorldService",
 	"DataService",
 	"MutationService",
 	"GardenService",
