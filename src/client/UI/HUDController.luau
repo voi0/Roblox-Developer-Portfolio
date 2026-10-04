@@ -40,14 +40,14 @@ HUDController._weatherBadge = nil :: Frame?
 -- ============================================================
 -- DOCK BUTTON ICON GLYPHS (geometric, no emoji)
 -- ============================================================
-local DOCK_BUTTONS: { { Label: string, Action: string, Accent: Color3, Glyph: string } } = {
-	{ Label = "Market",    Action = "OpenShop",          Accent = Color3.fromRGB(74, 222, 128),  Glyph = "M" },
-	{ Label = "Forge",     Action = "OpenForge",         Accent = Color3.fromRGB(168, 85, 247),  Glyph = "F" },
-	{ Label = "Quests",    Action = "OpenQuests",        Accent = Color3.fromRGB(250, 204, 21),  Glyph = "Q" },
-	{ Label = "Pets",      Action = "OpenPets",          Accent = Color3.fromRGB(251, 191, 36),  Glyph = "P" },
-	{ Label = "Stars",     Action = "OpenConstellation", Accent = Color3.fromRGB(192, 132, 252), Glyph = "S" },
-	{ Label = "Logbook",   Action = "OpenCollection",    Accent = Color3.fromRGB(56, 189, 248),  Glyph = "L" },
-	{ Label = "Transcend", Action = "OpenRebirth",       Accent = Color3.fromRGB(244, 114, 182), Glyph = "T" },
+local DOCK_BUTTONS: { { Label: string, Action: string, Accent: Color3 } } = {
+	{ Label = "SHOP",      Action = "OpenShop",          Accent = Color3.fromRGB(52, 211, 153) },
+	{ Label = "FORGE",     Action = "OpenForge",         Accent = Color3.fromRGB(168, 85, 247) },
+	{ Label = "QUESTS",    Action = "OpenQuests",        Accent = Color3.fromRGB(250, 204, 21) },
+	{ Label = "PETS",      Action = "OpenPets",          Accent = Color3.fromRGB(56, 189, 248) },
+	{ Label = "STARS",     Action = "OpenConstellation", Accent = Color3.fromRGB(192, 132, 252) },
+	{ Label = "CODEX",     Action = "OpenCollection",    Accent = Color3.fromRGB(96, 165, 250) },
+	{ Label = "TRANSCEND", Action = "OpenRebirth",       Accent = Color3.fromRGB(244, 114, 182) },
 }
 
 function HUDController.Create()
@@ -231,15 +231,15 @@ function HUDController.Create()
 	-- ============================================================
 	local dock = Instance.new("Frame")
 	dock.Name = "NavigationDock"
-	dock.Size = UDim2.new(0, 646, 0, 48)
-	dock.Position = UDim2.new(0.5, -323, 1, -54)
-	dock.BackgroundColor3 = UILib.Colors.Surface0
-	dock.BackgroundTransparency = 0.12
+	dock.Size = UDim2.new(0, 688, 0, 50)
+	dock.Position = UDim2.new(0.5, -344, 1, -58)
+	dock.BackgroundColor3 = Color3.fromRGB(12, 10, 22)
+	dock.BackgroundTransparency = 0.15
 	dock.BorderSizePixel = 0
 	dock.ZIndex = 5
 	dock.Parent = gui
 	UILib.ApplyCorner(dock, 14)
-	UILib.ApplyStroke(dock, UILib.Colors.PurpleDim, 1.2, 0.4)
+	UILib.ApplyStroke(dock, Color3.fromRGB(120, 80, 180), 1.2, 0.5)
 
 	local dockLayout = Instance.new("UIListLayout")
 	dockLayout.FillDirection = Enum.FillDirection.Horizontal
@@ -249,7 +249,7 @@ function HUDController.Create()
 	dockLayout.Parent = dock
 
 	for _, btnDef in DOCK_BUTTONS do
-		HUDController._createDockButton(dock, btnDef.Label, btnDef.Action, btnDef.Accent, btnDef.Glyph)
+		HUDController._createDockButton(dock, btnDef.Label, btnDef.Action, btnDef.Accent)
 	end
 end
 
@@ -307,45 +307,44 @@ end
 -- ============================================================
 -- DOCK BUTTON FACTORY
 -- ============================================================
-function HUDController._createDockButton(parent: Frame, label: string, actionName: string, accentColor: Color3, glyph: string)
+function HUDController._createDockButton(parent: Frame, label: string, actionName: string, accentColor: Color3)
 	local btn = Instance.new("TextButton")
 	btn.Name = actionName
-	btn.Size = UDim2.new(0, 84, 0, 36)
-	btn.BackgroundColor3 = UILib.Colors.Surface2
+	btn.Size = UDim2.new(0, 92, 0, 38)
+	btn.BackgroundColor3 = Color3.fromRGB(22, 18, 36)
+	btn.BackgroundTransparency = 0.15
 	btn.BorderSizePixel = 0
 	btn.Text = ""
 	btn.ZIndex = 6
 	btn.Parent = parent
 	UILib.ApplyCorner(btn, 10)
 
-	local indicator = Instance.new("Frame")
-	indicator.Size = UDim2.new(0, 3, 0, 16)
-	indicator.Position = UDim2.new(0, 4, 0.5, -8)
-	indicator.BackgroundColor3 = accentColor
-	indicator.BorderSizePixel = 0
-	indicator.ZIndex = 7
-	indicator.Parent = btn
-	UILib.ApplyPill(indicator)
+	local stroke = Instance.new("UIStroke")
+	stroke.Name = "ButtonStroke"
+	stroke.Color = accentColor
+	stroke.Thickness = 1.2
+	stroke.Transparency = 0.55
+	stroke.Parent = btn
 
-	local glyphLabel = Instance.new("TextLabel")
-	glyphLabel.Size = UDim2.new(0, 16, 0, 14)
-	glyphLabel.Position = UDim2.new(0, 10, 0, 3)
-	glyphLabel.BackgroundTransparency = 1
-	glyphLabel.Text = glyph
-	glyphLabel.TextColor3 = accentColor
-	glyphLabel.TextSize = 11
-	glyphLabel.Font = UILib.Fonts.Black
-	glyphLabel.ZIndex = 7
-	glyphLabel.Parent = btn
+	local bottomBar = Instance.new("Frame")
+	bottomBar.Name = "BottomAccent"
+	bottomBar.Size = UDim2.new(0.6, 0, 0, 2)
+	bottomBar.Position = UDim2.new(0.2, 0, 1, -3)
+	bottomBar.BackgroundColor3 = accentColor
+	bottomBar.BorderSizePixel = 0
+	bottomBar.ZIndex = 7
+	bottomBar.Parent = btn
+	UILib.ApplyPill(bottomBar)
 
 	local textLabel = Instance.new("TextLabel")
-	textLabel.Size = UDim2.new(1, -12, 0, 12)
-	textLabel.Position = UDim2.new(0, 6, 1, -15)
+	textLabel.Name = "BtnLabel"
+	textLabel.Size = UDim2.fromScale(1, 1)
+	textLabel.Position = UDim2.new(0, 0, 0, -1)
 	textLabel.BackgroundTransparency = 1
 	textLabel.Text = label
-	textLabel.TextColor3 = UILib.Colors.TextSecondary
-	textLabel.TextSize = 9
-	textLabel.Font = UILib.Fonts.Medium
+	textLabel.TextColor3 = Color3.fromRGB(240, 235, 255)
+	textLabel.TextSize = 11
+	textLabel.Font = UILib.Fonts.Bold
 	textLabel.ZIndex = 7
 	textLabel.Parent = btn
 
@@ -353,15 +352,37 @@ function HUDController._createDockButton(parent: Frame, label: string, actionNam
 		local sc = getSoundController()
 		if sc then sc.Play("ButtonHover") end
 		TweenService:Create(btn, UILib.Timing.Fast, {
-			BackgroundColor3 = UILib.Colors.Surface3,
-			Size = UDim2.new(0, 86, 0, 38),
+			BackgroundColor3 = Color3.fromRGB(36, 28, 58),
+			Size = UDim2.new(0, 94, 0, 40),
+		}):Play()
+		TweenService:Create(stroke, UILib.Timing.Fast, {
+			Transparency = 0.1,
+			Thickness = 1.6,
+		}):Play()
+		TweenService:Create(textLabel, UILib.Timing.Fast, {
+			TextColor3 = accentColor,
+		}):Play()
+		TweenService:Create(bottomBar, UILib.Timing.Fast, {
+			Size = UDim2.new(0.9, 0, 0, 3),
+			Position = UDim2.new(0.05, 0, 1, -4),
 		}):Play()
 	end)
 
 	btn.MouseLeave:Connect(function()
 		TweenService:Create(btn, UILib.Timing.Fast, {
-			BackgroundColor3 = UILib.Colors.Surface2,
-			Size = UDim2.new(0, 84, 0, 36),
+			BackgroundColor3 = Color3.fromRGB(22, 18, 36),
+			Size = UDim2.new(0, 92, 0, 38),
+		}):Play()
+		TweenService:Create(stroke, UILib.Timing.Fast, {
+			Transparency = 0.55,
+			Thickness = 1.2,
+		}):Play()
+		TweenService:Create(textLabel, UILib.Timing.Fast, {
+			TextColor3 = Color3.fromRGB(240, 235, 255),
+		}):Play()
+		TweenService:Create(bottomBar, UILib.Timing.Fast, {
+			Size = UDim2.new(0.6, 0, 0, 2),
+			Position = UDim2.new(0.2, 0, 1, -3),
 		}):Play()
 	end)
 
@@ -370,11 +391,11 @@ function HUDController._createDockButton(parent: Frame, label: string, actionNam
 		if sc then sc.Play("ButtonClick") end
 
 		TweenService:Create(btn, TweenInfo.new(0.06), {
-			Size = UDim2.new(0, 80, 0, 34),
+			Size = UDim2.new(0, 88, 0, 35),
 		}):Play()
 		task.delay(0.07, function()
 			TweenService:Create(btn, UILib.Timing.Fast, {
-				Size = UDim2.new(0, 84, 0, 36),
+				Size = UDim2.new(0, 92, 0, 38),
 			}):Play()
 		end)
 
@@ -385,9 +406,6 @@ function HUDController._createDockButton(parent: Frame, label: string, actionNam
 	end)
 end
 
--- ============================================================
--- SEED BAR REFRESH
--- ============================================================
 function HUDController.RefreshSeedBar(data: any)
 	local bar = HUDController._seedBar
 	if not bar then return end

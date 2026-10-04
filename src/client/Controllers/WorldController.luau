@@ -1,13 +1,13 @@
 --!strict
 --[[
 	WorldController.luau — 3D Spatial Garden & Cosmic Environment for STARWEAVE
-	Bulletproof detection and wiring for Nilo-generated 3D GLB/FBX assets:
-	  1. Floating Sanctuary Island (Celestial ground foundation, scaled to 72 studs)
-	  2. Gardner Plant Box (3D modular stone planter, scaled to 7 studs, across 9 plots)
-	  3. Transmutation Altar (Interactive Forge Shrine with ProximityPrompt, scaled to 8.5 studs)
-	  4. Cosmic Crystal Bloom (Dynamic scaling 3D crop blooming from 1.8 to 3.4 studs)
-	  5. Celestial Mystery Egg (Hovering Companion Gacha with ProximityPrompt, scaled to 4 studs)
-	Includes full auto-adoption for unnamed or MeshPart imports so NO 3D asset is ever left tiny.
+	Detects, auto-classifies, scales, and wires all Nilo-generated 3D assets:
+	  1. Floating Sanctuary Island (Celestial foundation, scaled to 72 studs)
+	  2. Gardner Plant Box (3D stone planter, scaled to 7 studs, across all 9 plots)
+	  3. Transmutation Altar (Interactive Forge Shrine, scaled to 8.5 studs with [E] prompt)
+	  4. Cosmic Crystal Bloom (Dynamic 3D crop blooming from 1.8 to 3.4 studs)
+	  5. Celestial Mystery Egg (Hovering Companion Gacha, scaled to 4 studs with [E] prompt)
+	Features geometric ratio classification + node ID matching + luminous celestial lighting.
 	Located in: StarterPlayerScripts.Client.Controllers.WorldController
 ]]
 
@@ -81,7 +81,48 @@ local function getUIController(): any?
 end
 
 -- ============================================================
--- HELPER: ENSURE INSTANCE IS A CLEAN MODEL WITH PRIMARYPART
+-- HELPER: GET ALL BASEPARTS IN ANY CONTAINER
+-- ============================================================
+local function getContainerParts(inst: Instance): { BasePart }
+	local parts: { BasePart } = {}
+	if inst:IsA("BasePart") then
+		table.insert(parts, inst)
+	end
+	for _, desc in inst:GetDescendants() do
+		if desc:IsA("BasePart") then
+			table.insert(parts, desc)
+		end
+	end
+	return parts
+end
+
+-- ============================================================
+-- HELPER: GET ACCURATE BOUNDING BOX FROM PARTS
+-- ============================================================
+local function getContainerBounds(inst: Instance): (CFrame, Vector3)
+	local parts = getContainerParts(inst)
+	if #parts == 0 then
+		return CFrame.new(), Vector3.zero
+	end
+	local minX, minY, minZ = math.huge, math.huge, math.huge
+	local maxX, maxY, maxZ = -math.huge, -math.huge, -math.huge
+	for _, part in parts do
+		local p = part.Position
+		local s = part.Size
+		minX = math.min(minX, p.X - s.X / 2)
+		maxX = math.max(maxX, p.X + s.X / 2)
+		minY = math.min(minY, p.Y - s.Y / 2)
+		maxY = math.max(maxY, p.Y + s.Y / 2)
+		minZ = math.min(minZ, p.Z - s.Z / 2)
+		maxZ = math.max(maxZ, p.Z + s.Z / 2)
+	end
+	local size = Vector3.new(maxX - minX, maxY - minY, maxZ - minZ)
+	local center = Vector3.new((minX + maxX) / 2, (minY + maxY) / 2, (minZ + maxZ) / 2)
+	return CFrame.new(center), size
+end
+
+-- ============================================================
+-- HELPER: WRAP RAW MESHPARTS OR MODELS INTO A STANDARD MODEL
 -- ============================================================
 local function ensureAsModel(inst: Instance): Model
 	if inst:IsA("Model") then
@@ -100,46 +141,11 @@ local function ensureAsModel(inst: Instance): Model
 	return inst:FindFirstChildWhichIsA("Model", true) or Instance.new("Model")
 end
 
-local function matchesKeywords(name: string, keywords: { string }): boolean
-	local lower = string.lower(name)
-	for _, kw in keywords do
-		if string.find(lower, string.lower(kw), 1, true) then
-			return true
-		end
-	end
-	return false
-end
-
 -- ============================================================
--- HELPER: BULLETPROOF ASSET SEARCH & DISCOVERY
+-- HELPER: ROBUST SCALE FOR MODEL
 -- ============================================================
-local function findImportedAsset(keywords: { string }, claimedMap: { [Instance]: boolean }): Model?
-	local searchContainers: { Instance } = { Workspace, ReplicatedStorage }
-
-	for _, container in searchContainers do
-		for _, child in container:GetChildren() do
-			if child.Name ~= "StarweaveGarden" and child.Name ~= "Terrain" and child.Name ~= "Camera" and child.Name ~= "SanctuarySpawn" then
-				if not claimedMap[child] and child ~= player.Character and not (player.Character and child:IsDescendantOf(player.Character)) then
-					if matchesKeywords(child.Name, keywords) then
-						claimedMap[child] = true
-						return ensureAsModel(child)
-					end
-					for _, desc in child:GetDescendants() do
-						if matchesKeywords(desc.Name, keywords) then
-							claimedMap[child] = true
-							return ensureAsModel(child)
-						end
-					end
-				end
-			end
-		end
-	end
-
-	return nil
-end
-
 local function scaleModelToDimension(model: Model, targetMaxDim: number)
-	local cf, size = model:GetBoundingBox()
+	local cf, size = getContainerBounds(model)
 	local maxDim = math.max(size.X, size.Y, size.Z)
 	if maxDim > 0.001 then
 		local factor = targetMaxDim / maxDim
@@ -147,48 +153,86 @@ local function scaleModelToDimension(model: Model, targetMaxDim: number)
 			model:ScaleTo(factor)
 		end)
 		if not s then
-			for _, desc in model:GetDescendants() do
-				if desc:IsA("BasePart") then
-					pcall(function()
-						desc.Size = desc.Size * factor
-					end)
-				end
+			-- Fallback: scale each BasePart individually
+			for _, part in getContainerParts(model) do
+				pcall(function()
+					part.Size = part.Size * factor
+					local offset = (part.Position - cf.Position) * factor
+					part.CFrame = CFrame.new(cf.Position + offset) * part.CFrame.Rotation
+				end)
 			end
 		end
 	end
 end
 
 local function anchorAllParts(inst: Instance, canCollide: boolean?)
-	for _, desc in inst:GetDescendants() do
-		if desc:IsA("BasePart") then
-			desc.Anchored = true
-			if canCollide ~= nil then
-				desc.CanCollide = canCollide
-			end
-		end
-	end
-	if inst:IsA("BasePart") then
-		inst.Anchored = true
+	for _, part in getContainerParts(inst) do
+		part.Anchored = true
 		if canCollide ~= nil then
-			inst.CanCollide = canCollide
+			part.CanCollide = canCollide
 		end
 	end
 end
 
 -- ============================================================
--- COSMIC ENVIRONMENT & SKYBOX SETUP
+-- 3D MODEL CLASSIFIER (Node IDs + Geometric Aspect Ratios)
+-- ============================================================
+local function classifyModel(inst: Instance): string?
+	local allNames = { inst.Name }
+	for _, d in inst:GetDescendants() do
+		table.insert(allNames, d.Name)
+	end
+	local combined = string.lower(table.concat(allNames, " "))
+
+	-- 1. Exact Nilo glTF node ID & Keyword Match
+	if string.find(combined, "agdrm0mbeo3gylxitymk") or string.find(combined, "island") or string.find(combined, "floating") then
+		return "ISLAND"
+	elseif string.find(combined, "ivdfl4qeemqt7ve4qcvs") or string.find(combined, "planter") or string.find(combined, "plant%-box") or string.find(combined, "plant_box") or string.find(combined, "gardner") then
+		return "PLANTER"
+	elseif string.find(combined, "12lquskllicosvzozjaa") or string.find(combined, "altar") or string.find(combined, "transmutation") or string.find(combined, "forge") then
+		return "ALTAR"
+	elseif string.find(combined, "wumxsfiy9i8durscm3vv") or string.find(combined, "bloom") or string.find(combined, "crystal%-bloom") or string.find(combined, "flower") then
+		return "BLOOM"
+	elseif string.find(combined, "pftfbiaqxyqqa70eng8j") or string.find(combined, "egg") or string.find(combined, "mystery") or string.find(combined, "pet") then
+		return "EGG"
+	end
+
+	-- 2. Geometric Aspect Ratio Signature Match
+	local _, sz = getContainerBounds(inst)
+	if sz.X > 0.05 and sz.Z > 0.05 then
+		local yx = sz.Y / sz.X
+		local xz = sz.X / sz.Z
+		if yx > 2.0 then
+			return "BLOOM"
+		elseif yx < 0.55 and (xz > 0.8 and xz < 1.25) then
+			return "PLANTER"
+		elseif (yx >= 0.55 and yx < 0.80) and (xz > 0.8 and xz < 1.25) then
+			return "ALTAR"
+		elseif (yx >= 1.1 and yx < 1.8) then
+			return "EGG"
+		elseif (yx >= 0.80 and yx <= 1.05) and (xz > 0.8 and xz < 1.25) then
+			return "ISLAND"
+		end
+	end
+
+	return nil
+end
+
+-- ============================================================
+-- COSMIC ENVIRONMENT & LUMINOUS LIGHTING SETUP
 -- ============================================================
 function WorldController.SetupEnvironment()
-	Lighting.ClockTime = 0
-	Lighting.GeographicLatitude = 35
-	Lighting.Ambient = Color3.fromRGB(48, 38, 68)
-	Lighting.OutdoorAmbient = Color3.fromRGB(32, 25, 52)
-	Lighting.Brightness = 1.0
-	Lighting.ColorShift_Top = Color3.fromRGB(216, 180, 254)
-	Lighting.ColorShift_Bottom = Color3.fromRGB(35, 25, 55)
-	Lighting.FogColor = Color3.fromRGB(15, 10, 26)
-	Lighting.FogEnd = 400
-	Lighting.FogStart = 80
+	-- Daytime Celestial Lighting: Bright, clear, readable, beautiful!
+	Lighting.ClockTime = 14
+	Lighting.GeographicLatitude = 20
+	Lighting.Ambient = Color3.fromRGB(120, 110, 160)
+	Lighting.OutdoorAmbient = Color3.fromRGB(145, 135, 185)
+	Lighting.Brightness = 2.2
+	Lighting.ColorShift_Top = Color3.fromRGB(245, 230, 255)
+	Lighting.ColorShift_Bottom = Color3.fromRGB(80, 65, 120)
+	Lighting.FogColor = Color3.fromRGB(45, 30, 75)
+	Lighting.FogEnd = 10000 -- No suffocating dark fog!
+	Lighting.FogStart = 500
 
 	local bloom = Lighting:FindFirstChildOfClass("BloomEffect")
 	if not bloom then
@@ -196,9 +240,9 @@ function WorldController.SetupEnvironment()
 		bloom.Name = "CosmicBloom"
 		bloom.Parent = Lighting
 	end
-	bloom.Intensity = 0.35
-	bloom.Size = 16
-	bloom.Threshold = 0.95
+	bloom.Intensity = 0.3
+	bloom.Size = 18
+	bloom.Threshold = 0.9
 
 	local colorCorrection = Lighting:FindFirstChildOfClass("ColorCorrectionEffect")
 	if not colorCorrection then
@@ -206,9 +250,9 @@ function WorldController.SetupEnvironment()
 		colorCorrection.Name = "CosmicGrade"
 		colorCorrection.Parent = Lighting
 	end
-	colorCorrection.Saturation = 0.18
-	colorCorrection.Contrast = 0.08
-	colorCorrection.TintColor = Color3.fromRGB(250, 242, 255)
+	colorCorrection.Saturation = 0.25
+	colorCorrection.Contrast = 0.12
+	colorCorrection.TintColor = Color3.fromRGB(255, 250, 255)
 
 	local existingSky = Lighting:FindFirstChildOfClass("Sky")
 	if not existingSky then
@@ -225,12 +269,14 @@ function WorldController.SetupEnvironment()
 		sky.Parent = Lighting
 	end
 
+	-- Remove default baseplate
 	for _, child in Workspace:GetDescendants() do
 		if child:IsA("BasePart") and string.find(string.lower(child.Name), "baseplate") then
 			child:Destroy()
 		end
 	end
 
+	-- Clean up legacy spawn locations
 	for _, desc in Workspace:GetDescendants() do
 		if desc:IsA("SpawnLocation") and desc.Name ~= "SanctuarySpawn" then
 			desc.Transparency = 1
@@ -254,7 +300,7 @@ function WorldController.SetupEnvironment()
 	spawn.Anchored = true
 	spawn.CanCollide = true
 	spawn.Material = Enum.Material.Slate
-	spawn.Color = Color3.fromRGB(24, 18, 38)
+	spawn.Color = Color3.fromRGB(38, 30, 60)
 	spawn.TopSurface = Enum.SurfaceType.Smooth
 	for _, child in spawn:GetChildren() do
 		if child:IsA("Decal") or child:IsA("Texture") then
@@ -286,7 +332,7 @@ function WorldController.Init()
 		local char = player.Character or player.CharacterAdded:Wait()
 		local root = char:WaitForChild("HumanoidRootPart", 5) :: BasePart?
 		if root then
-			root.CFrame = CFrame.new(0, 3.0, -14) * CFrame.Angles(0, 0, 0)
+			root.CFrame = CFrame.new(0, 3.5, -14) * CFrame.Angles(0, 0, 0)
 		end
 	end)
 
@@ -294,7 +340,7 @@ function WorldController.Init()
 	local safetyFloor = Instance.new("Part")
 	safetyFloor.Name = "SanctuarySafetyFloor"
 	safetyFloor.Size = Vector3.new(800, 4, 800)
-	safetyFloor.Position = Vector3.new(0, -18, 0)
+	safetyFloor.Position = Vector3.new(0, -22, 0)
 	safetyFloor.Anchored = true
 	safetyFloor.CanCollide = true
 	safetyFloor.Transparency = 1
@@ -305,77 +351,76 @@ function WorldController.Init()
 		if hitChar and hitChar == player.Character then
 			local root = hitChar:FindFirstChild("HumanoidRootPart") :: BasePart?
 			if root then
-				root.CFrame = CFrame.new(0, 3.0, -14)
+				root.CFrame = CFrame.new(0, 3.5, -14)
 			end
 		end
 	end)
 
-	-- Spawn Portal Graphic
-	local spawnPortal = Instance.new("Part")
-	spawnPortal.Name = "SpawnPortalRing"
-	spawnPortal.Shape = Enum.PartType.Cylinder
-	spawnPortal.Size = Vector3.new(0.08, 6, 6)
-	spawnPortal.Position = Vector3.new(0, 0.42, -14)
-	spawnPortal.Orientation = Vector3.new(0, 0, 90)
-	spawnPortal.Anchored = true
-	spawnPortal.Material = Enum.Material.Neon
-	spawnPortal.Color = Color3.fromRGB(168, 85, 247)
-	spawnPortal.Transparency = 0.75
-	spawnPortal.CanCollide = false
-	spawnPortal.Parent = gardenFolder
+	-- ========================================================
+	-- SCAN & CLASSIFY ALL IMPORTED 3D ASSETS IN WORKSPACE
+	-- ========================================================
+	local classifiedAssets: { [string]: Model } = {}
+	local strayAssets: { Instance } = {}
 
-	-- Track all claimed assets so we don't double-assign
-	local claimedMap: { [Instance]: boolean } = {}
-
-	-- Print full Workspace inventory scan for logging
-	print("================ [STARWEAVE ASSET SCAN] ================")
 	for _, child in Workspace:GetChildren() do
 		if child.Name ~= "StarweaveGarden" and child.Name ~= "Terrain" and child.Name ~= "Camera" and child.Name ~= "SanctuarySpawn" then
 			if child ~= player.Character and not (player.Character and child:IsDescendantOf(player.Character)) then
-				local cf, size = Vector3.zero, Vector3.zero
-				if child:IsA("Model") then
-					cf, size = child:GetBoundingBox()
-				elseif child:IsA("BasePart") then
-					size = child.Size
+				local model = ensureAsModel(child)
+				local tag = classifyModel(model)
+				if tag and not classifiedAssets[tag] then
+					classifiedAssets[tag] = model
+					print(string.format("  🎯 [WorldController] 3D Asset Classified: %s -> %s", child.Name, tag))
+				else
+					table.insert(strayAssets, child)
 				end
-				print(string.format("  [FOUND ITEM] '%s' (%s) Size: (%.1f, %.1f, %.1f)", child.Name, child.ClassName, size.X, size.Y, size.Z))
 			end
 		end
 	end
-	print("=======================================================")
+
+	-- Also check ReplicatedStorage if any model was stored there
+	for _, child in ReplicatedStorage:GetChildren() do
+		if child:IsA("Model") or child:IsA("BasePart") then
+			local model = ensureAsModel(child)
+			local tag = classifyModel(model)
+			if tag and not classifiedAssets[tag] then
+				classifiedAssets[tag] = model
+				print(string.format("  🎯 [WorldController] 3D Asset in ReplicatedStorage: %s -> %s", child.Name, tag))
+			end
+		end
+	end
 
 	-- ========================================================
-	-- 1. DETECT & WIRE 3D FLOATING SANCTUARY ISLAND
+	-- 1. WIRE 3D FLOATING SANCTUARY ISLAND
 	-- ========================================================
-	local islandFound = findImportedAsset({ "island", "floating", "sanctuary", "map", "ground" }, claimedMap)
+	local islandModel = classifiedAssets["ISLAND"]
 	local proceduralIslandTransparency = 0
 
-	if islandFound then
-		print("  ✨ [WorldController] 3D Floating Island WIRED: " .. islandFound.Name)
-		islandFound.Parent = gardenFolder
-		anchorAllParts(islandFound, true)
-		scaleModelToDimension(islandFound, 72)
-		
-		if not islandFound.PrimaryPart then
-			islandFound.PrimaryPart = islandFound:FindFirstChildWhichIsA("BasePart", true)
+	if islandModel then
+		print("  ✨ [WorldController] Deploying 3D Floating Sanctuary Island (72 studs)...")
+		islandModel.Parent = gardenFolder
+		anchorAllParts(islandModel, true)
+		scaleModelToDimension(islandModel, 72)
+
+		if not islandModel.PrimaryPart then
+			islandModel.PrimaryPart = islandModel:FindFirstChildWhichIsA("BasePart", true)
 		end
-		if islandFound.PrimaryPart then
-			islandFound:PivotTo(CFrame.new(0, -1.0, 2))
+		if islandModel.PrimaryPart then
+			islandModel:PivotTo(CFrame.new(0, -1.0, 2))
 		end
-		WorldController._islandModel = islandFound
+		WorldController._islandModel = islandModel
 		proceduralIslandTransparency = 1
 	else
 		print("  ℹ️ [WorldController] Using procedural island foundation fallback")
 	end
 
-	-- Solid Foundation & Walking Mesh
+	-- Solid Walkable Foundation Parts
 	local island = Instance.new("Part")
 	island.Name = "SanctuaryIslandFoundation"
 	island.Size = Vector3.new(64, 2.0, 64)
 	island.Position = Vector3.new(0, -1.0, 0)
 	island.Anchored = true
 	island.Material = Enum.Material.Slate
-	island.Color = Color3.fromRGB(16, 12, 26)
+	island.Color = Color3.fromRGB(24, 20, 36)
 	island.Transparency = proceduralIslandTransparency
 	island.TopSurface = Enum.SurfaceType.Smooth
 	island.Parent = gardenFolder
@@ -386,12 +431,12 @@ function WorldController.Init()
 	terrace.Position = Vector3.new(0, 0.2, 2)
 	terrace.Anchored = true
 	terrace.Material = Enum.Material.Slate
-	terrace.Color = Color3.fromRGB(22, 16, 36)
+	terrace.Color = Color3.fromRGB(30, 24, 46)
 	terrace.Transparency = proceduralIslandTransparency
 	terrace.TopSurface = Enum.SurfaceType.Smooth
 	terrace.Parent = gardenFolder
 
-	-- Ambient Floating Stardust
+	-- Stardust Ambient Particles
 	local stardustEmitter = Instance.new("ParticleEmitter")
 	stardustEmitter.Name = "AmbientStardust"
 	stardustEmitter.Rate = 26
@@ -410,76 +455,39 @@ function WorldController.Init()
 		NumberSequenceKeypoint.new(1, 1),
 	})
 	stardustEmitter.Color = ColorSequence.new({
-		ColorSequenceKeypoint.new(0, Color3.fromRGB(200, 160, 255)),
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(220, 180, 255)),
 		ColorSequenceKeypoint.new(1, Color3.fromRGB(250, 204, 21)),
 	})
 	stardustEmitter.LightEmission = 0.8
 	stardustEmitter.Parent = terrace
 
-	-- 4 Corner Celestial Lanterns
-	local cornerOffsets = {
-		Vector3.new(24, 0, 24),
-		Vector3.new(-24, 0, 24),
-		Vector3.new(24, 0, -24),
-		Vector3.new(-24, 0, -24),
-	}
-	for idx, offset in cornerOffsets do
-		local pillar = Instance.new("Part")
-		pillar.Name = `CornerLantern_{idx}`
-		pillar.Size = Vector3.new(1.2, 2.8, 1.2)
-		pillar.Position = startOrigin + offset + Vector3.new(0, 1.4, 0)
-		pillar.Anchored = true
-		pillar.Material = Enum.Material.Slate
-		pillar.Color = Color3.fromRGB(26, 20, 42)
-		pillar.Parent = gardenFolder
-
-		local gem = Instance.new("Part")
-		gem.Name = "LanternCrystal"
-		gem.Shape = Enum.PartType.Ball
-		gem.Size = Vector3.new(1.0, 1.0, 1.0)
-		gem.Position = pillar.Position + Vector3.new(0, 1.8, 0)
-		gem.Anchored = true
-		gem.Material = Enum.Material.Neon
-		gem.Color = Color3.fromRGB(192, 132, 252)
-		gem.Transparency = 0.2
-		gem.CanCollide = false
-		gem.Parent = gardenFolder
-
-		local light = Instance.new("PointLight")
-		light.Color = Color3.fromRGB(216, 180, 254)
-		light.Brightness = 1.2
-		light.Range = 18
-		light.Shadows = false
-		light.Parent = gem
-	end
-
 	-- ========================================================
-	-- 2. DETECT & WIRE 3D TRANSMUTATION FORGE ALTAR
+	-- 2. WIRE 3D TRANSMUTATION FORGE ALTAR
 	-- ========================================================
-	local altarFound = findImportedAsset({ "altar", "forge", "transmutation", "shrine", "crystal" }, claimedMap)
+	local altarModel = classifiedAssets["ALTAR"]
 	local altarPos = Vector3.new(0, 0.4, 20)
 
-	if altarFound then
-		print("  ✨ [WorldController] 3D Transmutation Altar WIRED: " .. altarFound.Name)
-		altarFound.Parent = gardenFolder
-		anchorAllParts(altarFound, true)
-		scaleModelToDimension(altarFound, 8.5)
-		
-		if not altarFound.PrimaryPart then
-			altarFound.PrimaryPart = altarFound:FindFirstChildWhichIsA("BasePart", true)
+	if altarModel then
+		print("  ✨ [WorldController] Deploying 3D Transmutation Altar (8.5 studs)...")
+		altarModel.Parent = gardenFolder
+		anchorAllParts(altarModel, true)
+		scaleModelToDimension(altarModel, 8.5)
+
+		if not altarModel.PrimaryPart then
+			altarModel.PrimaryPart = altarModel:FindFirstChildWhichIsA("BasePart", true)
 		end
-		if altarFound.PrimaryPart then
-			altarFound:PivotTo(CFrame.new(altarPos) * CFrame.Angles(0, math.rad(180), 0))
+		if altarModel.PrimaryPart then
+			altarModel:PivotTo(CFrame.new(altarPos) * CFrame.Angles(0, math.rad(180), 0))
 		end
 
-		local promptPart = altarFound.PrimaryPart or Instance.new("Part")
-		if promptPart.Parent ~= altarFound then
+		local promptPart = altarModel.PrimaryPart or Instance.new("Part")
+		if promptPart.Parent ~= altarModel then
 			promptPart.Size = Vector3.new(4, 4, 4)
 			promptPart.Position = altarPos + Vector3.new(0, 2, 0)
 			promptPart.Anchored = true
 			promptPart.Transparency = 1
 			promptPart.CanCollide = false
-			promptPart.Parent = altarFound
+			promptPart.Parent = altarModel
 		end
 
 		local altarPrompt = Instance.new("ProximityPrompt")
@@ -501,33 +509,33 @@ function WorldController.Init()
 
 		local altarLight = Instance.new("PointLight")
 		altarLight.Color = Color3.fromRGB(168, 85, 247)
-		altarLight.Brightness = 2.0
-		altarLight.Range = 16
+		altarLight.Brightness = 2.5
+		altarLight.Range = 18
 		altarLight.Parent = promptPart
-		WorldController._altarModel = altarFound
+		WorldController._altarModel = altarModel
 	end
 
 	-- ========================================================
-	-- 3. DETECT & WIRE 3D CELESTIAL MYSTERY PET EGG
+	-- 3. WIRE 3D CELESTIAL MYSTERY PET EGG
 	-- ========================================================
-	local eggFound = findImportedAsset({ "egg", "mystery", "pet", "companion", "gacha" }, claimedMap)
-	local eggPos = Vector3.new(-18, 1.2, 2)
+	local eggModel = classifiedAssets["EGG"]
+	local eggPos = Vector3.new(-18, 1.4, 2)
 
-	if eggFound then
-		print("  ✨ [WorldController] 3D Celestial Pet Egg WIRED: " .. eggFound.Name)
-		eggFound.Parent = gardenFolder
-		anchorAllParts(eggFound, false)
-		scaleModelToDimension(eggFound, 4.0)
+	if eggModel then
+		print("  ✨ [WorldController] Deploying 3D Celestial Pet Egg (4 studs)...")
+		eggModel.Parent = gardenFolder
+		anchorAllParts(eggModel, false)
+		scaleModelToDimension(eggModel, 4.0)
 
-		if not eggFound.PrimaryPart then
-			eggFound.PrimaryPart = eggFound:FindFirstChildWhichIsA("BasePart", true)
+		if not eggModel.PrimaryPart then
+			eggModel.PrimaryPart = eggModel:FindFirstChildWhichIsA("BasePart", true)
 		end
-		if eggFound.PrimaryPart then
-			eggFound:PivotTo(CFrame.new(eggPos))
+		if eggModel.PrimaryPart then
+			eggModel:PivotTo(CFrame.new(eggPos))
 		end
 
 		WorldController._eggBaseCFrame = CFrame.new(eggPos)
-		WorldController._eggModel = eggFound
+		WorldController._eggModel = eggModel
 
 		local pedestal = Instance.new("Part")
 		pedestal.Name = "EggPedestal"
@@ -537,10 +545,10 @@ function WorldController.Init()
 		pedestal.Orientation = Vector3.new(0, 0, 90)
 		pedestal.Anchored = true
 		pedestal.Material = Enum.Material.Slate
-		pedestal.Color = Color3.fromRGB(24, 18, 38)
+		pedestal.Color = Color3.fromRGB(30, 24, 46)
 		pedestal.Parent = gardenFolder
 
-		local eggPromptPart = eggFound.PrimaryPart or pedestal
+		local eggPromptPart = eggModel.PrimaryPart or pedestal
 		local eggPrompt = Instance.new("ProximityPrompt")
 		eggPrompt.Name = "HatchEggPrompt"
 		eggPrompt.ActionText = "Hatch Companion"
@@ -560,70 +568,37 @@ function WorldController.Init()
 
 		local eggLight = Instance.new("PointLight")
 		eggLight.Color = Color3.fromRGB(244, 114, 182)
-		eggLight.Brightness = 1.6
-		eggLight.Range = 12
+		eggLight.Brightness = 2.0
+		eggLight.Range = 14
 		eggLight.Parent = eggPromptPart
 	end
 
 	-- ========================================================
-	-- 4. DETECT 3D PLANTER & CROP TEMPLATES
+	-- 4. WIRE 3D PLANTER & CROP TEMPLATES
 	-- ========================================================
-	local planterFound = findImportedAsset({ "plant", "planter", "gardner", "box", "pot", "plot" }, claimedMap)
-	if planterFound then
-		print("  ✨ [WorldController] 3D Planter Box WIRED: " .. planterFound.Name)
-		anchorAllParts(planterFound, true)
-		scaleModelToDimension(planterFound, 7.0)
-		WorldController._planterTemplate = planterFound:Clone()
-		planterFound:Destroy()
+	local planterModel = classifiedAssets["PLANTER"]
+	if planterModel then
+		print("  ✨ [WorldController] Configuring 3D Planter Box Template (7 studs)...")
+		anchorAllParts(planterModel, true)
+		scaleModelToDimension(planterModel, 7.0)
+		WorldController._planterTemplate = planterModel:Clone()
+		planterModel:Destroy()
 	end
 
-	local cropFound = findImportedAsset({ "bloom", "flower", "crop", "crystal-bloom", "bloom " }, claimedMap)
-	if cropFound then
-		print("  ✨ [WorldController] 3D Crystal Bloom WIRED: " .. cropFound.Name)
-		anchorAllParts(cropFound, false)
-		scaleModelToDimension(cropFound, 3.4)
-		WorldController._cropTemplate = cropFound:Clone()
-		cropFound:Destroy()
+	local cropModel = classifiedAssets["BLOOM"]
+	if cropModel then
+		print("  ✨ [WorldController] Configuring 3D Crystal Bloom Template (3.4 studs)...")
+		anchorAllParts(cropModel, false)
+		scaleModelToDimension(cropModel, 3.4)
+		WorldController._cropTemplate = cropModel:Clone()
+		cropModel:Destroy()
 	end
 
-	-- ========================================================
-	-- 5. AUTO-ADOPTION FALLBACK FOR ANY UNCLAIMED MESHES
-	-- ========================================================
-	-- If any imported meshes remain unnamed or unmatched in Workspace, adopt them!
-	for _, child in Workspace:GetChildren() do
-		if child.Name ~= "StarweaveGarden" and child.Name ~= "Terrain" and child.Name ~= "Camera" and child.Name ~= "SanctuarySpawn" then
-			if not claimedMap[child] and child ~= player.Character and not (player.Character and child:IsDescendantOf(player.Character)) then
-				if child:IsA("Model") or child:IsA("BasePart") then
-					local orphanModel = ensureAsModel(child)
-					local cf, sz = orphanModel:GetBoundingBox()
-					print(`  🔍 [WorldController] Adopting unclaimed 3D mesh: '{child.Name}' with size ({sz.X}, {sz.Y}, {sz.Z})`)
-					
-					-- Check what we are missing and adopt based on shape
-					if not WorldController._planterTemplate and sz.X > 0.5 and math.abs(sz.X - sz.Z) < 2.0 then
-						print("    -> Assigned as 3D Planter Box template!")
-						scaleModelToDimension(orphanModel, 7.0)
-						WorldController._planterTemplate = orphanModel:Clone()
-						claimedMap[child] = true
-						orphanModel:Destroy()
-					elseif not WorldController._altarModel and sz.Y > sz.X * 0.8 then
-						print("    -> Assigned as 3D Altar model!")
-						scaleModelToDimension(orphanModel, 8.5)
-						orphanModel.Parent = gardenFolder
-						orphanModel:PivotTo(CFrame.new(altarPos))
-						WorldController._altarModel = orphanModel
-						claimedMap[child] = true
-					elseif not WorldController._eggModel and sz.Y < 3.0 then
-						print("    -> Assigned as 3D Pet Egg model!")
-						scaleModelToDimension(orphanModel, 4.0)
-						orphanModel.Parent = gardenFolder
-						orphanModel:PivotTo(CFrame.new(eggPos))
-						WorldController._eggBaseCFrame = CFrame.new(eggPos)
-						WorldController._eggModel = orphanModel
-						claimedMap[child] = true
-					end
-				end
-			end
-		end
+	-- Clean up any stray imported meshes so nothing is left tiny on the side
+	for _, stray in strayAssets do
+		pcall(function()
+			stray:Destroy()
+		end)
 	end
 
 	-- Generate the 9 Starting Plots (3x3 grid)
@@ -650,7 +625,7 @@ function WorldController._create3DPlot(index: number, position: Vector3, parent:
 		local planterClone = planterTemplate:Clone()
 		planterClone.Name = "PlanterMesh"
 		anchorAllParts(planterClone, true)
-		
+
 		if not planterClone.PrimaryPart then
 			planterClone.PrimaryPart = planterClone:FindFirstChildWhichIsA("BasePart", true)
 		end
@@ -666,29 +641,18 @@ function WorldController._create3DPlot(index: number, position: Vector3, parent:
 		planter.Position = position + Vector3.new(0, 0.35, 0)
 		planter.Anchored = true
 		planter.Material = Enum.Material.Slate
-		planter.Color = Color3.fromRGB(24, 18, 38)
+		planter.Color = Color3.fromRGB(30, 24, 46)
 		planter.Parent = plotModel
-
-		local runeBorder = Instance.new("Part")
-		runeBorder.Name = "RuneTrim"
-		runeBorder.Size = Vector3.new(6.0, 0.05, 6.0)
-		runeBorder.Position = position + Vector3.new(0, 0.72, 0)
-		runeBorder.Anchored = true
-		runeBorder.Material = Enum.Material.SmoothPlastic
-		runeBorder.Color = Color3.fromRGB(88, 28, 135)
-		runeBorder.Transparency = 0.5
-		runeBorder.CanCollide = false
-		runeBorder.Parent = plotModel
 	end
 
-	-- Rich Soil Clickable / Interaction Zone
+	-- Soil Clickable / Interaction Zone
 	local soil = Instance.new("Part")
 	soil.Name = "Soil"
 	soil.Size = Vector3.new(5.8, 0.4, 5.8)
 	soil.Position = position + Vector3.new(0, 0.65, 0)
 	soil.Anchored = true
 	soil.Material = Enum.Material.Slate
-	soil.Color = Color3.fromRGB(14, 10, 22)
+	soil.Color = Color3.fromRGB(18, 14, 28)
 	soil.Transparency = (planterTemplate ~= nil) and 1 or 0
 	soil.TopSurface = Enum.SurfaceType.Smooth
 	soil.Parent = plotModel
@@ -877,7 +841,7 @@ function WorldController.UpdatePlantVisual(plotIndex: number, plant: any?)
 			cropClone.Name = "GrowingCrop"
 			anchorAllParts(cropClone, false)
 			scaleModelToDimension(cropClone, 1.8)
-			
+
 			if not cropClone.PrimaryPart then
 				cropClone.PrimaryPart = cropClone:FindFirstChildWhichIsA("BasePart", true)
 			end
@@ -942,8 +906,8 @@ function WorldController.UpdatePlantVisual(plotIndex: number, plant: any?)
 				table.insert(WorldController._rotatingCores, corePart)
 				local bloomLight = Instance.new("PointLight")
 				bloomLight.Color = seedColor
-				bloomLight.Brightness = 1.8
-				bloomLight.Range = 12
+				bloomLight.Brightness = 2.0
+				bloomLight.Range = 14
 				bloomLight.Parent = corePart
 			end
 		else
