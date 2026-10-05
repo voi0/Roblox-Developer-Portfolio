@@ -237,34 +237,46 @@ function WorldController._setupPlotClient(index: number, plotModel: Model)
 		end)
 	end
 
-	-- Create Client-Side Status Billboard
+	-- Create Client-Side Status Billboard (Juicy Simulator Badge)
 	local billboard = Instance.new("BillboardGui")
 	billboard.Name = "PlotBillboard"
-	billboard.Size = UDim2.new(0, 140, 0, 48)
-	billboard.StudsOffset = Vector3.new(0, 3.2, 0)
-	billboard.AlwaysOnTop = false
-	billboard.MaxDistance = 28
+	billboard.Size = UDim2.new(0, 160, 0, 52)
+	billboard.StudsOffset = Vector3.new(0, 4.2, 0)
+	billboard.AlwaysOnTop = true
+	billboard.MaxDistance = 35
 	billboard.Enabled = false
 	billboard.Parent = soil
 
 	local badgeFrame = Instance.new("Frame")
 	badgeFrame.Name = "Badge"
 	badgeFrame.Size = UDim2.fromScale(1, 1)
-	badgeFrame.BackgroundColor3 = Color3.fromRGB(15, 11, 26)
-	badgeFrame.BackgroundTransparency = 0.15
+	badgeFrame.BackgroundColor3 = Color3.fromRGB(24, 18, 44)
+	badgeFrame.BackgroundTransparency = 0.08
 	badgeFrame.BorderSizePixel = 0
 	badgeFrame.Parent = billboard
 
 	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 10)
+	corner.CornerRadius = UDim.new(0, 14)
 	corner.Parent = badgeFrame
 
 	local stroke = Instance.new("UIStroke")
 	stroke.Name = "BadgeStroke"
-	stroke.Color = Color3.fromRGB(168, 85, 247)
-	stroke.Thickness = 1.2
-	stroke.Transparency = 0.3
+	stroke.Color = Color3.fromRGB(16, 12, 28)
+	stroke.Thickness = 2.5
 	stroke.Parent = badgeFrame
+
+	-- Top Gloss Sheen
+	local sheen = Instance.new("Frame")
+	sheen.Name = "Sheen"
+	sheen.Size = UDim2.new(1, -16, 0, 4)
+	sheen.Position = UDim2.new(0, 8, 0, 3)
+	sheen.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	sheen.BackgroundTransparency = 0.7
+	sheen.BorderSizePixel = 0
+	sheen.Parent = badgeFrame
+	local sCorner = Instance.new("UICorner")
+	sCorner.CornerRadius = UDim.new(1, 0)
+	sCorner.Parent = sheen
 
 	local titleLabel = Instance.new("TextLabel")
 	titleLabel.Name = "StatusTitle"
@@ -272,10 +284,15 @@ function WorldController._setupPlotClient(index: number, plotModel: Model)
 	titleLabel.Position = UDim2.new(0, 6, 0, 6)
 	titleLabel.BackgroundTransparency = 1
 	titleLabel.Text = ""
-	titleLabel.TextColor3 = Color3.fromRGB(244, 235, 255)
-	titleLabel.TextSize = 12
-	titleLabel.Font = Enum.Font.GothamBold
+	titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+	titleLabel.TextSize = 13
+	titleLabel.Font = Enum.Font.FredokaOne
 	titleLabel.Parent = badgeFrame
+
+	local tStroke = Instance.new("UIStroke")
+	tStroke.Color = Color3.fromRGB(16, 12, 28)
+	tStroke.Thickness = 2.0
+	tStroke.Parent = titleLabel
 
 	local subLabel = Instance.new("TextLabel")
 	subLabel.Name = "SubInfo"
@@ -283,16 +300,21 @@ function WorldController._setupPlotClient(index: number, plotModel: Model)
 	subLabel.Position = UDim2.new(0, 6, 0, 24)
 	subLabel.BackgroundTransparency = 1
 	subLabel.Text = ""
-	subLabel.TextColor3 = Color3.fromRGB(192, 132, 252)
-	subLabel.TextSize = 10
-	subLabel.Font = Enum.Font.GothamMedium
+	subLabel.TextColor3 = Color3.fromRGB(254, 240, 138)
+	subLabel.TextSize = 11
+	subLabel.Font = Enum.Font.FredokaOne
 	subLabel.Parent = badgeFrame
+
+	local sStroke = Instance.new("UIStroke")
+	sStroke.Color = Color3.fromRGB(16, 12, 28)
+	sStroke.Thickness = 1.5
+	sStroke.Parent = subLabel
 
 	local progressBarBg = Instance.new("Frame")
 	progressBarBg.Name = "ProgressBarBg"
-	progressBarBg.Size = UDim2.new(1, -16, 0, 4)
-	progressBarBg.Position = UDim2.new(0, 8, 1, -8)
-	progressBarBg.BackgroundColor3 = Color3.fromRGB(28, 20, 44)
+	progressBarBg.Size = UDim2.new(1, -16, 0, 7)
+	progressBarBg.Position = UDim2.new(0, 8, 1, -11)
+	progressBarBg.BackgroundColor3 = Color3.fromRGB(16, 12, 28)
 	progressBarBg.BorderSizePixel = 0
 	progressBarBg.Visible = false
 	progressBarBg.Parent = badgeFrame
@@ -304,13 +326,21 @@ function WorldController._setupPlotClient(index: number, plotModel: Model)
 	local progressFill = Instance.new("Frame")
 	progressFill.Name = "Fill"
 	progressFill.Size = UDim2.fromScale(0, 1)
-	progressFill.BackgroundColor3 = Color3.fromRGB(168, 85, 247)
+	progressFill.BackgroundColor3 = Color3.fromRGB(74, 222, 128)
 	progressFill.BorderSizePixel = 0
 	progressFill.Parent = progressBarBg
 
 	local fillCorner = Instance.new("UICorner")
 	fillCorner.CornerRadius = UDim.new(1, 0)
 	fillCorner.Parent = progressFill
+
+	local fillGrad = Instance.new("UIGradient")
+	fillGrad.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(134, 239, 172)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(34, 197, 94)),
+	})
+	fillGrad.Rotation = 90
+	fillGrad.Parent = progressFill
 
 	WorldController._plotModels[index] = plotModel
 end
@@ -472,12 +502,27 @@ function WorldController.UpdatePlantVisual(plotIndex: number, plant: any?, isUnl
 		billboard.Enabled = true
 
 		if titleLabel and subLabel and progressBg and stroke then
-			titleLabel.Text = seedDef and seedDef.Name or plant.SeedId
-			titleLabel.TextColor3 = Color3.fromRGB(244, 235, 255)
-			subLabel.Text = "Growing..."
-			subLabel.TextColor3 = seedColor
+			titleLabel.Text = string.upper(seedDef and seedDef.Name or plant.SeedId)
+			titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+			subLabel.Text = "🌱 SPROUTING..."
+			subLabel.TextColor3 = Color3.fromRGB(254, 240, 138)
 			progressBg.Visible = true
-			stroke.Color = seedColor
+			stroke.Color = Color3.fromRGB(16, 12, 28)
+		end
+
+		-- Swirling Growth Pollen Particles (Shows 3D plant is alive and growing!)
+		local existingPollen = soil:FindFirstChild("GrowthPollen")
+		if not existingPollen then
+			local pollen = Instance.new("ParticleEmitter")
+			pollen.Name = "GrowthPollen"
+			pollen.Rate = 12
+			pollen.Lifetime = NumberRange.new(1.5, 3.0)
+			pollen.Speed = NumberRange.new(0.6, 1.4)
+			pollen.SpreadAngle = Vector2.new(30, 30)
+			pollen.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.15), NumberSequenceKeypoint.new(0.5, 0.35), NumberSequenceKeypoint.new(1, 0) })
+			pollen.Color = ColorSequence.new({ ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)), ColorSequenceKeypoint.new(1, seedColor) })
+			pollen.LightEmission = 0.9
+			pollen.Parent = soil
 		end
 
 		if cropTemplate then
@@ -515,19 +560,38 @@ function WorldController.UpdatePlantVisual(plotIndex: number, plant: any?, isUnl
 
 	-- 3. READY TO HARVEST
 	elseif plant.State == "Ready" then
+		-- Clean up growing pollen
+		local existingPollen = soil:FindFirstChild("GrowthPollen")
+		if existingPollen then existingPollen:Destroy() end
+
 		prompt.Enabled = true
 		prompt.ActionText = "Harvest!"
 		prompt.ObjectText = seedDef and seedDef.Name or "Cosmic Bloom"
 		billboard.Enabled = true
 
 		if titleLabel and subLabel and progressBg and stroke then
-			titleLabel.Text = "READY TO HARVEST"
+			titleLabel.Text = "★ READY TO HARVEST! ★"
 			titleLabel.TextColor3 = Color3.fromRGB(250, 204, 21)
-			subLabel.Text = "[E] Harvest"
+			subLabel.Text = "[E] Collect Stardust"
 			subLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 			progressBg.Visible = false
 			stroke.Color = Color3.fromRGB(250, 204, 21)
 		end
+
+		-- Floating Beacon Halo Ring (Celebratory 3D visual cue)
+		local halo = Instance.new("Part")
+		halo.Name = "BeaconHalo"
+		halo.Shape = Enum.PartType.Cylinder
+		halo.Size = Vector3.new(0.1, 3.2, 3.2)
+		halo.Position = soil.Position + Vector3.new(0, 3.4, 0)
+		halo.Orientation = Vector3.new(0, 0, 90)
+		halo.Anchored = true
+		halo.CanCollide = false
+		halo.Material = Enum.Material.Neon
+		halo.Color = Color3.fromRGB(250, 204, 21)
+		halo.Transparency = 0.35
+		halo.Parent = cropFolder
+		table.insert(WorldController._rotatingCores, halo)
 
 		if cropTemplate then
 			local cropClone = cropTemplate:Clone()
@@ -606,7 +670,7 @@ function WorldController.StartRenderLoop()
 							local fill = progressBg and progressBg:FindFirstChild("Fill") :: Frame?
 
 							if subLabel then
-								subLabel.Text = string.format("%02ds remaining", remaining)
+								subLabel.Text = string.format("GROWING • %02ds (%d%%)", remaining, math.floor(progressPct * 100))
 							end
 							if fill then
 								fill.Size = UDim2.fromScale(progressPct, 1)

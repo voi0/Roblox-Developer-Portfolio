@@ -178,6 +178,9 @@ function UILib.CreateChunkyButton(
 	container.Position = pos
 	container.BackgroundTransparency = 1
 	container.Text = ""
+	container.Active = true
+	container.AutoButtonColor = false
+	container.Selectable = true
 	container.Parent = parent
 
 	-- Shadow Base (3D Bevel depth)
@@ -187,6 +190,7 @@ function UILib.CreateChunkyButton(
 	shadow.Position = UDim2.new(0, 0, 0, 4)
 	shadow.BackgroundColor3 = bottomColor:Lerp(Color3.new(0, 0, 0), 0.45)
 	shadow.BorderSizePixel = 0
+	shadow.Active = false
 	shadow.ZIndex = container.ZIndex
 	shadow.Parent = container
 	UILib.ApplyCorner(shadow, 12)
@@ -199,6 +203,7 @@ function UILib.CreateChunkyButton(
 	face.Position = UDim2.new(0, 0, 0, 0)
 	face.BackgroundColor3 = topColor
 	face.BorderSizePixel = 0
+	face.Active = false
 	face.ZIndex = container.ZIndex + 1
 	face.Parent = container
 	UILib.ApplyCorner(face, 12)
@@ -543,13 +548,6 @@ function UILib.OpenModal(modal: Frame)
 	modal.Visible = true
 	modal.BackgroundTransparency = 0.3
 	modal.Position = UDim2.fromScale(0.5, 0.54)
-
-	local children = modal:GetDescendants()
-	for _, child in children do
-		if child:IsA("GuiObject") then
-			child.Visible = true
-		end
-	end
 
 	TweenService:Create(modal, UILib.Timing.ModalIn, {
 		Position = UDim2.fromScale(0.5, 0.5),

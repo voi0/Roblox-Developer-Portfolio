@@ -67,7 +67,11 @@ function UIController.Init()
 		end
 	end
 
-	-- Listen for Dock Action Triggers
+	-- Wire Direct Callback + BindableEvent for 100% Reliable Dock Action Execution
+	HUDController.SetActionCallback(function(actionName: string)
+		UIController.HandleDockAction(actionName)
+	end)
+
 	local actionEvent = HUDController.GetUIActionEvent()
 	if actionEvent then
 		actionEvent.Event:Connect(function(actionName: string)

@@ -382,6 +382,12 @@ function HUDController._createCapsule(parent: Frame, name: string, icon: string,
 	return valLabel
 end
 
+HUDController._onActionCallback = nil :: ((string) -> ())?
+
+function HUDController.SetActionCallback(callback: (string) -> ())
+	HUDController._onActionCallback = callback
+end
+
 -- ============================================================
 -- DOCK BUTTON FACTORY (Chunky 3D Toy Button)
 -- ============================================================
@@ -404,15 +410,24 @@ function HUDController._createDockButton(
 		iconAssetId
 	)
 
-	btn.MouseButton1Click:Connect(function()
+	local function triggerAction()
 		local sc = getSoundController()
 		if sc then sc.Play("ButtonClick") end
+
+		if HUDController._onActionCallback then
+			pcall(function()
+				HUDController._onActionCallback(actionName)
+			end)
+		end
 
 		local actionEvent = HUDController._gui and HUDController._gui:FindFirstChild("UIAction") :: BindableEvent?
 		if actionEvent then
 			actionEvent:Fire(actionName)
 		end
-	end)
+	end
+
+	btn.Activated:Connect(triggerAction)
+	btn.MouseButton1Click:Connect(triggerAction)
 end
 
 function HUDController.RefreshSeedBar(data: any)
