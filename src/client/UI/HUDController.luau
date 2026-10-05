@@ -187,8 +187,8 @@ function HUDController.Create()
 	-- ── Right: Weather Badge ──
 	local weatherBadge = Instance.new("Frame")
 	weatherBadge.Name = "WeatherBadge"
-	weatherBadge.Size = UDim2.new(0, 140, 0, 28)
-	weatherBadge.Position = UDim2.new(1, -150, 0.5, -14)
+	weatherBadge.Size = UDim2.new(0, 168, 0, 28)
+	weatherBadge.Position = UDim2.new(1, -178, 0.5, -14)
 	weatherBadge.BackgroundColor3 = UILib.Colors.Surface2
 	weatherBadge.BackgroundTransparency = 0.2
 	weatherBadge.BorderSizePixel = 0
@@ -205,7 +205,7 @@ function HUDController.Create()
 	wText.BackgroundTransparency = 1
 	wText.Text = "2x LUCK STORM"
 	wText.TextColor3 = UILib.Colors.Gold
-	wText.TextSize = 11
+	wText.TextSize = 10
 	wText.Font = UILib.Fonts.Bold
 	wText.ZIndex = 7
 	wText.Parent = weatherBadge
@@ -242,13 +242,13 @@ function HUDController.Create()
 	dock.Name = "NavigationDock"
 	dock.Size = UDim2.new(0, 688, 0, 50)
 	dock.Position = UDim2.new(0.5, -344, 1, -58)
-	dock.BackgroundColor3 = Color3.fromRGB(12, 10, 22)
+	dock.BackgroundColor3 = UILib.Colors.Surface0
 	dock.BackgroundTransparency = 0.15
 	dock.BorderSizePixel = 0
 	dock.ZIndex = 5
 	dock.Parent = gui
 	UILib.ApplyCorner(dock, 14)
-	UILib.ApplyStroke(dock, Color3.fromRGB(120, 80, 180), 1.2, 0.5)
+	UILib.ApplyStroke(dock, UILib.Colors.PurpleLight, 1.2, 0.4)
 
 	local dockLayout = Instance.new("UIListLayout")
 	dockLayout.FillDirection = Enum.FillDirection.Horizontal
@@ -481,17 +481,27 @@ function HUDController.RefreshSeedBar(data: any)
 		end
 	end
 
-	-- If player has 0 seeds in inventory, give them a prompt to visit market
+	-- If player has 0 seeds in inventory, give them a clickable button to visit Shop
 	if not hasAnySeeds then
-		local emptyMsg = Instance.new("TextLabel")
-		emptyMsg.Size = UDim2.fromScale(1, 1)
-		emptyMsg.BackgroundTransparency = 1
-		emptyMsg.Text = "No seeds equipped — Open Market [M] to buy seeds"
-		emptyMsg.TextColor3 = UILib.Colors.TextMuted
-		emptyMsg.TextSize = 11
-		emptyMsg.Font = UILib.Fonts.Medium
-		emptyMsg.ZIndex = 6
-		emptyMsg.Parent = bar
+		local emptyBtn = Instance.new("TextButton")
+		emptyBtn.Name = "EmptySeedButton"
+		emptyBtn.Size = UDim2.fromScale(1, 1)
+		emptyBtn.BackgroundTransparency = 1
+		emptyBtn.Text = "✦ No seeds equipped — Click to Open Shop ✦"
+		emptyBtn.TextColor3 = UILib.Colors.Green
+		emptyBtn.TextSize = 11
+		emptyBtn.Font = UILib.Fonts.Bold
+		emptyBtn.ZIndex = 6
+		emptyBtn.Parent = bar
+
+		emptyBtn.MouseButton1Click:Connect(function()
+			local sc = getSoundController()
+			if sc then sc.Play("ButtonClick") end
+			local actionEvent = HUDController._gui and HUDController._gui:FindFirstChild("UIAction") :: BindableEvent?
+			if actionEvent then
+				actionEvent:Fire("OpenShop")
+			end
+		end)
 	end
 end
 
@@ -522,14 +532,55 @@ function HUDController.Update(data: any)
 	HUDController.RefreshSeedBar(data)
 end
 
-function HUDController.SetWeatherVisible(isVisible: boolean)
-	if HUDController._weatherBadge then
-		HUDController._weatherBadge.Visible = isVisible
-		if isVisible then
-			local sc = getSoundController()
-			if sc then sc.Play("StormAlert") end
-		end
+HUDController._weatherThread = nil :: thread?
+
+function HUDController.SetWeather(weatherData: any)
+	local badge = HUDController._weatherBadge
+	if not badge then return end
+
+	if HUDController._weatherThread then
+		task.cancel(HUDController._weatherThread)
+		HUDController._weatherThread = nil
 	end
+
+	if type(weatherData) == "boolean" then
+		badge.Visible = weatherData
+		return
+	end
+
+	if not weatherData or not weatherData.IsActive then
+		badge.Visible = false
+		return
+	end
+
+	badge.Visible = true
+	local stroke = badge:FindFirstChildOfClass("UIStroke")
+	if stroke and weatherData.BadgeColor then
+		stroke.Color = weatherData.BadgeColor
+	end
+
+	local wText = badge:FindFirstChild("WeatherText") :: TextLabel?
+	if wText and weatherData.BadgeColor then
+		wText.TextColor3 = weatherData.BadgeColor
+	end
+
+	local sc = getSoundController()
+	if sc then sc.Play("StormAlert") end
+
+	local duration = weatherData.Duration or 45
+	HUDController._weatherThread = task.spawn(function()
+		for rem = duration, 0, -1 do
+			if wText and badge.Visible then
+				wText.Text = string.format("%s %s (%ds)", weatherData.Icon or "⚡", weatherData.MultiplierText or "BOOST", rem)
+			end
+			task.wait(1)
+		end
+		badge.Visible = false
+	end)
+end
+
+function HUDController.SetWeatherVisible(isVisible: boolean)
+	HUDController.SetWeather({ IsActive = isVisible, MultiplierText = "2x LUCK", Duration = 60, Icon = "⚡" })
 end
 
 function HUDController.GetUIActionEvent(): BindableEvent?

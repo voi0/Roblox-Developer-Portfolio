@@ -76,7 +76,14 @@ function MutationService.CalculateLuckMultiplier(playerData: any, seedId: string
 	luckMultiplier = luckMultiplier + rebirthBonus
 
 	-- Weather bonus
-	if MutationService._weatherActive then
+	local weatherLuck = 1.0
+	pcall(function()
+		local ws = require(script.Parent.WeatherService)
+		weatherLuck = ws.GetLuckMultiplier()
+	end)
+	if weatherLuck > 1.0 then
+		luckMultiplier = luckMultiplier * weatherLuck
+	elseif MutationService._weatherActive then
 		luckMultiplier = luckMultiplier * Config.Engagement.WeatherMutationBonus
 	end
 
@@ -208,10 +215,17 @@ function MutationService.CalculateHarvestValue(
 		end
 	end
 
+	local weatherSellBonus = 1.0
+	pcall(function()
+		local ws = require(script.Parent.WeatherService)
+		weatherSellBonus = ws.GetSellMultiplier()
+	end)
+
 	local finalValue = baseValue
 		* mutationMultiplier
 		* cosmicMult
 		* (sellMult + constellationSellBonus)
+		* weatherSellBonus
 
 	-- Round to whole number
 	return math.floor(finalValue + 0.5)
@@ -243,20 +257,22 @@ function MutationService.CalculateForgeResult(inputTier: string): string?
 end
 
 -- ============================================================
--- WEATHER SYSTEM
+-- WEATHER COMPATIBILITY
 -- ============================================================
 
 function MutationService.SetWeatherActive(active: boolean)
 	MutationService._weatherActive = active
-
-	-- Fire event to all clients for visual effects
-	local weatherEvent = ReplicatedStorage:FindFirstChild("WeatherChanged")
-	if weatherEvent and weatherEvent:IsA("RemoteEvent") then
-		weatherEvent:FireAllClients(active)
-	end
 end
 
 function MutationService.IsWeatherActive(): boolean
+	local ws = nil
+	pcall(function()
+		ws = require(script.Parent.WeatherService)
+	end)
+	if ws then
+		local w = ws.GetActiveWeather()
+		return (w and w.Id ~= "clear")
+	end
 	return MutationService._weatherActive
 end
 
@@ -275,34 +291,6 @@ end
 function MutationService.Init()
 	if MutationService._initialized then return end
 	MutationService._initialized = true
-
-	-- Create weather remote event
-	local weatherEvent = Instance.new("RemoteEvent")
-	weatherEvent.Name = "WeatherChanged"
-	weatherEvent.Parent = ReplicatedStorage
-
-	-- Start weather cycle
-	task.spawn(function()
-		while true do
-			-- Wait random interval
-			local waitTime = MutationService._random:NextInteger(
-				Config.Engagement.WeatherEventMinInterval,
-				Config.Engagement.WeatherEventMaxInterval
-			)
-			task.wait(waitTime)
-
-			-- Activate weather event
-			MutationService.SetWeatherActive(true)
-			print("[MutationService] ⚡ Mutation Storm active!")
-
-			-- Duration
-			task.wait(Config.Engagement.WeatherEventDuration)
-
-			-- Deactivate
-			MutationService.SetWeatherActive(false)
-			print("[MutationService] Mutation Storm ended.")
-		end
-	end)
 
 	print("[MutationService] Initialized ✓")
 end

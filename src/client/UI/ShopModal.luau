@@ -24,9 +24,11 @@ ShopModal._frame = nil :: Frame?
 ShopModal._data = nil :: any
 ShopModal._currentCategory = "Seeds" :: "Seeds" | "Gamepasses" | "Boosts"
 ShopModal._activeFilter = "All"
+ShopModal._selectedQuantity = 1
 ShopModal._cardList = {} :: { Frame }
 ShopModal._filterButtons = {} :: { [string]: TextButton }
 ShopModal._categoryButtons = {} :: { [string]: TextButton }
+ShopModal._quantityButtons = {} :: { [number]: TextButton }
 
 local SEED_PRICE_MULTIPLIER: { [string]: number } = {
 	Common = 2, Uncommon = 2.5, Rare = 3, Epic = 3.5,
@@ -71,6 +73,67 @@ function ShopModal.Create(parentGui: ScreenGui)
 		{ Id = "Boosts", Name = "Boosts & Gems", Color = Color3.fromRGB(192, 132, 252) },
 	}
 
+	-- Sub-Filter Tab Bar (Only visible when Seeds category is active)
+	local filterBar = Instance.new("Frame")
+	filterBar.Name = "FilterBar"
+	filterBar.Size = UDim2.new(1, -216, 0, 24)
+	filterBar.Position = UDim2.new(0, 16, 0, 106)
+	filterBar.BackgroundTransparency = 1
+	filterBar.ZIndex = modal.ZIndex + 1
+	filterBar.Parent = modal
+
+	local filterLayout = Instance.new("UIListLayout")
+	filterLayout.FillDirection = Enum.FillDirection.Horizontal
+	filterLayout.Padding = UDim.new(0, 4)
+	filterLayout.Parent = filterBar
+
+	-- Quantity Selector Bar (1x / 5x / 10x / 25x)
+	local qtyBar = Instance.new("Frame")
+	qtyBar.Name = "QuantityBar"
+	qtyBar.Size = UDim2.new(0, 176, 0, 24)
+	qtyBar.Position = UDim2.new(1, -192, 0, 106)
+	qtyBar.BackgroundTransparency = 1
+	qtyBar.ZIndex = modal.ZIndex + 1
+	qtyBar.Parent = modal
+
+	local qtyLayout = Instance.new("UIListLayout")
+	qtyLayout.FillDirection = Enum.FillDirection.Horizontal
+	qtyLayout.Padding = UDim.new(0, 4)
+	qtyLayout.Parent = qtyBar
+
+	local quantities = { 1, 5, 10, 25 }
+	for _, q in quantities do
+		local qBtn = Instance.new("TextButton")
+		qBtn.Name = `Qty_{q}`
+		qBtn.Size = UDim2.new(0, 40, 1, 0)
+		qBtn.BackgroundColor3 = (q == 1) and UILib.Colors.Surface4 or UILib.Colors.Surface2
+		qBtn.BackgroundTransparency = 0.2
+		qBtn.BorderSizePixel = 0
+		qBtn.Text = `{q}x`
+		qBtn.TextColor3 = (q == 1) and ACCENT or UILib.Colors.TextSecondary
+		qBtn.TextSize = 10
+		qBtn.Font = UILib.Fonts.Bold
+		qBtn.ZIndex = modal.ZIndex + 2
+		qBtn.Parent = qtyBar
+		UILib.ApplyCorner(qBtn, 6)
+		UILib.ApplyStroke(qBtn, (q == 1) and ACCENT or UILib.Colors.PurpleDim, 1, 0.4)
+
+		ShopModal._quantityButtons[q] = qBtn
+
+		qBtn.MouseButton1Click:Connect(function()
+			SoundController.Play("ButtonHover")
+			ShopModal._selectedQuantity = q
+			for qVal, btn in ShopModal._quantityButtons do
+				local isActive = (qVal == q)
+				btn.BackgroundColor3 = isActive and UILib.Colors.Surface4 or UILib.Colors.Surface2
+				btn.TextColor3 = isActive and ACCENT or UILib.Colors.TextSecondary
+				local s = btn:FindFirstChildOfClass("UIStroke")
+				if s then s.Color = isActive and ACCENT or UILib.Colors.PurpleDim end
+			end
+			ShopModal.RefreshGrid()
+		end)
+	end
+
 	for _, cat in categories do
 		local cBtn = Instance.new("TextButton")
 		cBtn.Name = cat.Id
@@ -98,35 +161,23 @@ function ShopModal.Create(parentGui: ScreenGui)
 				btn.BackgroundTransparency = isActive and 0 or 0.8
 				btn.TextColor3 = isActive and cat.Color or UILib.Colors.TextSecondary
 			end
+			filterBar.Visible = (cat.Id == "Seeds")
+			qtyBar.Visible = (cat.Id == "Seeds")
 			ShopModal.RefreshGrid()
 		end)
 	end
-
-	-- Sub-Filter Tab Bar (Only visible when Seeds category is active)
-	local filterBar = Instance.new("Frame")
-	filterBar.Name = "FilterBar"
-	filterBar.Size = UDim2.new(1, -32, 0, 24)
-	filterBar.Position = UDim2.new(0, 16, 0, 106)
-	filterBar.BackgroundTransparency = 1
-	filterBar.ZIndex = modal.ZIndex + 1
-	filterBar.Parent = modal
-
-	local filterLayout = Instance.new("UIListLayout")
-	filterLayout.FillDirection = Enum.FillDirection.Horizontal
-	filterLayout.Padding = UDim.new(0, 4)
-	filterLayout.Parent = filterBar
 
 	local filters = { "All", "Common", "Uncommon", "Rare", "Epic", "Celestial" }
 	for _, fName in filters do
 		local tab = Instance.new("TextButton")
 		tab.Name = fName
-		tab.Size = UDim2.new(0, 80, 1, 0)
+		tab.Size = UDim2.new(0, 52, 1, 0)
 		tab.BackgroundColor3 = UILib.Colors.Surface2
 		tab.BackgroundTransparency = 0.3
 		tab.BorderSizePixel = 0
 		tab.Text = fName
 		tab.TextColor3 = UILib.Colors.TextSecondary
-		tab.TextSize = 11
+		tab.TextSize = 10
 		tab.Font = UILib.Fonts.Bold
 		tab.ZIndex = modal.ZIndex + 2
 		tab.Parent = filterBar
@@ -218,8 +269,10 @@ function ShopModal.RefreshGrid()
 				continue
 			end
 
+			local qty = ShopModal._selectedQuantity or 1
 			local mult = SEED_PRICE_MULTIPLIER[seed.Tier] or 3
-			local price = math.floor(seed.BaseValue * mult)
+			local unitPrice = math.floor(seed.BaseValue * mult)
+			local price = unitPrice * qty
 			local canAfford = playerStardust >= price
 			local tierColor = UILib.TierColor[seed.Tier] or UILib.Colors.Common
 
@@ -270,9 +323,9 @@ function ShopModal.RefreshGrid()
 			buyBtn.Position = UDim2.new(0, 10, 1, -44)
 			buyBtn.BackgroundColor3 = canAfford and UILib.Colors.GreenDim or UILib.Colors.Surface3
 			buyBtn.BorderSizePixel = 0
-			buyBtn.Text = string.format("%s SD", UILib.FormatNumber(price))
+			buyBtn.Text = string.format("%dx: %s SD", qty, UILib.FormatNumber(price))
 			buyBtn.TextColor3 = canAfford and UILib.Colors.Green or UILib.Colors.TextMuted
-			buyBtn.TextSize = 13
+			buyBtn.TextSize = 12
 			buyBtn.Font = UILib.Fonts.Bold
 			buyBtn.ZIndex = modal.ZIndex + 3
 			buyBtn.Parent = card
@@ -283,7 +336,22 @@ function ShopModal.RefreshGrid()
 					SoundController.Play("HarvestCommon")
 					local req = ReplicatedStorage:FindFirstChild("GardenRequest") :: RemoteFunction?
 					if req then
-						req:InvokeServer("BuySeed", seed.Id, 1)
+						local res = req:InvokeServer("BuySeed", seed.Id, qty)
+						if res and res.Success then
+							local notif = script.Parent:FindFirstChild("NotificationUI")
+							if notif then
+								local nMod = require(notif :: ModuleScript)
+								nMod.ShowToast(`✦ {res.Message or "Purchased seeds!"}`, UILib.Colors.Green, 2.5)
+							end
+						else
+							SoundController.Play("ButtonHover")
+							UILib.ShakeElement(buyBtn, Color3.fromRGB(180, 50, 50))
+							local notif = script.Parent:FindFirstChild("NotificationUI")
+							if notif then
+								local nMod = require(notif :: ModuleScript)
+								nMod.ShowToast(`❌ {res and res.Message or "Purchase failed!"}`, Color3.fromRGB(248, 113, 113), 2.5)
+							end
+						end
 					end
 				else
 					SoundController.Play("ButtonHover")
@@ -291,7 +359,7 @@ function ShopModal.RefreshGrid()
 					local notif = script.Parent:FindFirstChild("NotificationUI")
 					if notif then
 						local nMod = require(notif :: ModuleScript)
-						nMod.ShowToast(`❌ Need {price} Stardust to buy {seed.Name}!`, Color3.fromRGB(248, 113, 113), 2.5)
+						nMod.ShowToast(`❌ Need {UILib.FormatNumber(price)} Stardust for {qty}x {seed.Name}!`, Color3.fromRGB(248, 113, 113), 2.5)
 					end
 				end
 			end)

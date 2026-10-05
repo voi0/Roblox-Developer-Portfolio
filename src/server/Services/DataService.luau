@@ -256,6 +256,19 @@ function DataService.IsDataLoaded(player: Player): boolean
 end
 
 -- ============================================================
+-- DATA REPLICATION & CLIENT SYNC
+-- ============================================================
+
+function DataService.SyncClient(player: Player)
+	local data = DataService.GetData(player)
+	if not data then return end
+	local dataReady = ReplicatedStorage:FindFirstChild("DataReady")
+	if dataReady and dataReady:IsA("RemoteEvent") then
+		dataReady:FireClient(player, data)
+	end
+end
+
+-- ============================================================
 -- CURRENCY OPERATIONS (Server-Authoritative)
 -- ============================================================
 
@@ -281,6 +294,7 @@ function DataService.AddCurrency(player: Player, currencyType: string, amount: n
 		data.TotalStardustEarned = data.TotalStardustEarned + amount
 	end
 
+	DataService.SyncClient(player)
 	return true
 end
 
@@ -294,6 +308,7 @@ function DataService.RemoveCurrency(player: Player, currencyType: string, amount
 	end
 
 	data[currencyType] = data[currencyType] - amount
+	DataService.SyncClient(player)
 	return true
 end
 
@@ -313,6 +328,7 @@ function DataService.AddSeeds(player: Player, seedId: string, count: number): bo
 	if count <= 0 then return false end
 
 	data.SeedInventory[seedId] = (data.SeedInventory[seedId] or 0) + count
+	DataService.SyncClient(player)
 	return true
 end
 
@@ -327,6 +343,7 @@ function DataService.RemoveSeed(player: Player, seedId: string, count: number): 
 	if data.SeedInventory[seedId] <= 0 then
 		data.SeedInventory[seedId] = nil
 	end
+	DataService.SyncClient(player)
 	return true
 end
 
@@ -353,6 +370,7 @@ function DataService.SetPlotPlant(player: Player, plotIndex: number, plant: any?
 	local plot = data.Garden[plotIndex]
 	if plot then
 		plot.Plant = plant
+		DataService.SyncClient(player)
 	end
 end
 
@@ -366,6 +384,7 @@ function DataService.UnlockPlot(player: Player, plotIndex: number): boolean
 
 	plot.Unlocked = true
 	data.GardenSize = data.GardenSize + 1
+	DataService.SyncClient(player)
 	return true
 end
 
@@ -386,12 +405,14 @@ function DataService.AddExperience(player: Player, amount: number)
 		data.Level = data.Level + 1
 		requiredXP = Config.Leveling.LevelUpBase * (data.Level ^ Config.Leveling.LevelUpExponent)
 	end
+	DataService.SyncClient(player)
 end
 
 function DataService.IncrementHarvests(player: Player)
 	local data = DataService.GetData(player)
 	if not data then return end
 	data.TotalHarvests = data.TotalHarvests + 1
+	DataService.SyncClient(player)
 end
 
 function DataService.AddToCollection(player: Player, collectionKey: string): boolean
@@ -403,6 +424,7 @@ function DataService.AddToCollection(player: Player, collectionKey: string): boo
 	end
 
 	data.PlantCollection[collectionKey] = true
+	DataService.SyncClient(player)
 	return true
 end
 
@@ -414,6 +436,7 @@ function DataService.SetGamepassFlag(player: Player, flag: string, value: boolea
 	local data = DataService.GetData(player)
 	if not data then return end
 	data[flag] = value
+	DataService.SyncClient(player)
 end
 
 function DataService.HasGamepass(player: Player, flag: string): boolean
@@ -437,6 +460,7 @@ function DataService.SetActiveQuests(player: Player, quests: any)
 	local data = DataService.GetData(player)
 	if not data then return end
 	data.ActiveQuests = quests
+	DataService.SyncClient(player)
 end
 
 function DataService.HasRedeemedCode(player: Player, code: string): boolean
@@ -450,6 +474,7 @@ function DataService.MarkCodeRedeemed(player: Player, code: string)
 	if not data then return end
 	if not data.RedeemedCodes then data.RedeemedCodes = {} end
 	data.RedeemedCodes[string.upper(code)] = true
+	DataService.SyncClient(player)
 end
 
 -- ============================================================

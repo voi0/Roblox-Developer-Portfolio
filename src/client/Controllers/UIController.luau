@@ -158,9 +158,20 @@ function UIController.Update(playerData: any)
 	StatsModal.Update(playerData)
 end
 
-function UIController.SetWeather(isActive: boolean)
-	HUDController.SetWeatherVisible(isActive)
-	NotificationUI.ShowWeather(isActive)
+function UIController.SetWeather(weatherData: any)
+	HUDController.SetWeather(weatherData)
+	NotificationUI.ShowWeather(weatherData)
+
+	if type(weatherData) == "table" and weatherData.Ambient then
+		pcall(function()
+			local tInfo = TweenInfo.new(2.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+			TweenService:Create(Lighting, tInfo, {
+				Ambient = weatherData.Ambient,
+				OutdoorAmbient = weatherData.OutdoorAmbient or Lighting.OutdoorAmbient,
+				ColorShift_Top = weatherData.ColorShift_Top or Lighting.ColorShift_Top,
+			}):Play()
+		end)
+	end
 end
 
 return UIController

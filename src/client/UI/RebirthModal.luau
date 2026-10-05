@@ -181,6 +181,13 @@ function RebirthModal.Create(parentGui: ScreenGui)
 			RebirthModal.Close()
 		else
 			SoundController.Play("ButtonHover")
+			UILib.ShakeElement(transcendBtn, Color3.fromRGB(180, 50, 50))
+			local notif = script.Parent:FindFirstChild("NotificationUI")
+			if notif then
+				local nModule = require(notif :: ModuleScript)
+				local remaining = math.max(0, reqCost - totalEarned)
+				nModule.ShowToast(`✦ Earn {UILib.FormatNumber(remaining)} more Stardust this cycle to Transcend!`, ACCENT, 3.5)
+			end
 		end
 	end)
 end

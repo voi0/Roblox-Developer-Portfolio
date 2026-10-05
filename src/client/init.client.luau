@@ -257,11 +257,13 @@ task.spawn(function()
 	local weatherChanged = ReplicatedStorage:WaitForChild("WeatherChanged", 20) :: RemoteEvent?
 	if not weatherChanged then return end
 
-	weatherChanged.OnClientEvent:Connect(function(isActive: boolean)
-		if UIController then UIController.SetWeather(isActive) end
+	weatherChanged.OnClientEvent:Connect(function(weatherData: any)
+		if UIController then UIController.SetWeather(weatherData) end
+		local isActive = (type(weatherData) == "table" and weatherData.IsActive) or (weatherData == true)
 		if isActive and VFXController then
-			VFXController.AddCameraTrauma(0.4)
-			VFXController.FlashScreen(Color3.fromRGB(168, 85, 247), 0.5, 1.0)
+			VFXController.AddCameraTrauma(0.35)
+			local flashColor = (type(weatherData) == "table" and weatherData.BadgeColor) or Color3.fromRGB(168, 85, 247)
+			VFXController.FlashScreen(flashColor, 0.5, 0.9)
 		end
 	end)
 end)
@@ -356,4 +358,46 @@ task.spawn(function()
 			end
 		end
 	end)
+end)
+
+-- ============================================================
+-- KEYBOARD HOTKEYS & SHORTCUTS (1-7, B, F, Q, P, C, R, Tab, Esc)
+-- ============================================================
+local UserInputService = game:GetService("UserInputService")
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+	if gameProcessed then return end
+	if not UIController then return end
+
+	if input.KeyCode == Enum.KeyCode.One then
+		UIController.ToggleModal("Shop")
+	elseif input.KeyCode == Enum.KeyCode.Two then
+		UIController.ToggleModal("Forge")
+	elseif input.KeyCode == Enum.KeyCode.Three then
+		UIController.ToggleModal("Quests")
+	elseif input.KeyCode == Enum.KeyCode.Four then
+		UIController.ToggleModal("Pets")
+	elseif input.KeyCode == Enum.KeyCode.Five then
+		UIController.ToggleModal("Constellation")
+	elseif input.KeyCode == Enum.KeyCode.Six then
+		UIController.ToggleModal("Collection")
+	elseif input.KeyCode == Enum.KeyCode.Seven then
+		UIController.ToggleModal("Rebirth")
+	elseif input.KeyCode == Enum.KeyCode.B then
+		UIController.ToggleModal("Shop")
+	elseif input.KeyCode == Enum.KeyCode.F then
+		UIController.ToggleModal("Forge")
+	elseif input.KeyCode == Enum.KeyCode.Q then
+		UIController.ToggleModal("Quests")
+	elseif input.KeyCode == Enum.KeyCode.P then
+		UIController.ToggleModal("Pets")
+	elseif input.KeyCode == Enum.KeyCode.C then
+		UIController.ToggleModal("Collection")
+	elseif input.KeyCode == Enum.KeyCode.R then
+		UIController.ToggleModal("Rebirth")
+	elseif input.KeyCode == Enum.KeyCode.Tab then
+		UIController.ToggleModal("Stats")
+	elseif input.KeyCode == Enum.KeyCode.Escape then
+		UIController.CloseAllModals()
+	end
 end)

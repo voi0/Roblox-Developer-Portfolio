@@ -132,6 +132,15 @@ function GardenService.PlantSeed(player: Player, plotIndex: number, seedId: stri
 		growthTime = growthTime * 0.9 -- 10% faster
 	end
 
+	-- Cosmic Weather bonus (e.g. Solar Flare 3.0x speed)
+	pcall(function()
+		local ws = require(script.Parent.WeatherService)
+		local growthMult = ws.GetGrowthMultiplier()
+		if growthMult > 1.0 then
+			growthTime = growthTime / growthMult
+		end
+	end)
+
 	-- Create plant instance
 	local now = os.time()
 	local plant = {
@@ -598,6 +607,23 @@ function GardenService.Init()
 
 	-- Cleanup on leave
 	Players.PlayerRemoving:Connect(GardenService.OnPlayerRemoving)
+
+	-- Active Auto-Harvester Background Loop
+	task.spawn(function()
+		while true do
+			task.wait(2)
+			for _, player in Players:GetPlayers() do
+				local data = DataService and DataService.GetData(player)
+				if data and data.HasAutoHarvester and data.Garden then
+					for plotIdx, plot in data.Garden do
+						if plot.Plant and plot.Plant.State == "Ready" then
+							GardenService.HarvestPlant(player, plotIdx)
+						end
+					end
+				end
+			end
+		end
+	end)
 
 	print("[GardenService] Initialized ✓")
 end

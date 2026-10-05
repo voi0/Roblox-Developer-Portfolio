@@ -241,9 +241,25 @@ function ConstellationModal.Create(parentGui: ScreenGui)
 			end
 
 			SoundController.Play("ButtonClick")
-			local gardenRequest = ReplicatedStorage:FindFirstChild("GardenRequest") :: RemoteFunction?
-			if gardenRequest then
-				gardenRequest:InvokeServer("UpgradeConstellation", upgradeId)
+			local ecoReq = ReplicatedStorage:FindFirstChild("EconomyRequest") :: RemoteFunction?
+			if ecoReq then
+				local res = ecoReq:InvokeServer("UpgradeConstellation", upgradeId)
+				if res and res.Success then
+					SoundController.Play("PlantReady")
+					local notif = script.Parent:FindFirstChild("NotificationUI")
+					if notif then
+						local nMod = require(notif :: ModuleScript)
+						nMod.ShowToast(`✦ {meta.Title} upgraded!`, meta.Color, 2.5)
+					end
+				else
+					SoundController.Play("ButtonHover")
+					UILib.ShakeElement(btn, Color3.fromRGB(180, 50, 50))
+					local notif = script.Parent:FindFirstChild("NotificationUI")
+					if notif then
+						local nMod = require(notif :: ModuleScript)
+						nMod.ShowToast(res and res.Message or "Upgrade failed.", Color3.fromRGB(248, 113, 113), 2.5)
+					end
+				end
 			end
 		end)
 

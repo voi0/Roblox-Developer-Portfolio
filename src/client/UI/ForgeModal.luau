@@ -426,6 +426,14 @@ function ForgeModal.Create(parentGui: ScreenGui)
 
 				ForgeModal._selectedSeedId = nil
 				ForgeModal.Refresh()
+			else
+				SoundController.Play("ButtonHover")
+				UILib.ShakeElement(forgeBtn, Color3.fromRGB(180, 50, 50))
+				local notif = script.Parent:FindFirstChild("NotificationUI")
+				if notif then
+					local nModule = require(notif :: ModuleScript)
+					nModule.ShowToast(result and result.Message or "Forge failed. You need 3 matching seeds!", Color3.fromRGB(248, 113, 113), 3.0)
+				end
 			end
 		end
 	end)

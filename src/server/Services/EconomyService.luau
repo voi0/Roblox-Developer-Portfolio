@@ -245,6 +245,7 @@ function EconomyService.PerformRebirth(player: Player, forced: boolean?): (boole
 		})
 	end
 
+	DataService.SyncClient(player)
 	print(`[EconomyService] {player.Name} transcended to Rebirth Level {data.Rebirth.Level}!`)
 	return true, `Transcended to Level {data.Rebirth.Level}!`
 end
@@ -282,6 +283,7 @@ function EconomyService.UpgradeConstellation(player: Player, upgradeId: string):
 	-- Deduct and upgrade
 	data.Rebirth.ConstellationPoints = data.Rebirth.ConstellationPoints - upgrade.PointCost
 	data.Rebirth.ConstellationTree[upgradeId] = currentLevel + 1
+	DataService.SyncClient(player)
 
 	return true, `{upgradeId} upgraded to level {currentLevel + 1}!`
 end

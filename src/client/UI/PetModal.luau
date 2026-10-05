@@ -112,6 +112,12 @@ function PetModal.Create(parentGui: ScreenGui)
 				end)
 			else
 				SoundController.Play("ButtonHover")
+				UILib.ShakeElement(hatchBtn, Color3.fromRGB(180, 50, 50))
+				local notif = script.Parent:FindFirstChild("NotificationUI")
+				if notif then
+					local nModule = require(notif :: ModuleScript)
+					nModule.ShowToast(result and result.Message or "Need 2,500 Stardust to awaken a Celestial Egg!", Color3.fromRGB(248, 113, 113), 3.0)
+				end
 			end
 		end
 	end)

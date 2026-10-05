@@ -122,13 +122,10 @@ function PlaytimeService.ClaimReward(player: Player, tierIdx: number): { Success
 		DataService.AddCurrency(player, "NebulaGems", cfg.Gems)
 	end
 	if cfg.Seed then
-		local data = DataService.GetData(player)
-		if data then
-			if not data.SeedInventory then data.SeedInventory = {} end
-			data.SeedInventory[cfg.Seed] = (data.SeedInventory[cfg.Seed] or 0) + 1
-		end
+		DataService.AddSeeds(player, cfg.Seed, 1)
 	end
 
+	DataService.SyncClient(player)
 	return { Success = true, Message = `Claimed {cfg.Label}! (+{cfg.Stardust} SD)` }
 end
 

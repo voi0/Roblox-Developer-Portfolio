@@ -74,6 +74,7 @@ function PetService.HatchEgg(player: Player): (boolean, string, any?)
 		data.EquippedPetIndex = 1
 	end
 
+	DataService.SyncClient(player)
 	return true, `Awakened a {petDef.Name}!`, petInstance
 end
 
@@ -85,6 +86,7 @@ function PetService.EquipPet(player: Player, petIndex: number): (boolean, string
 	if not pet then return false, "Pet not found." end
 
 	data.EquippedPetIndex = petIndex
+	DataService.SyncClient(player)
 	return true, `Equipped {pet.Name}!`
 end
 
@@ -93,6 +95,7 @@ function PetService.UnequipPet(player: Player): (boolean, string)
 	if not data then return false, "Data not loaded." end
 
 	data.EquippedPetIndex = nil
+	DataService.SyncClient(player)
 	return true, "Unequipped companion."
 end
 

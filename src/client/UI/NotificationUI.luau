@@ -311,12 +311,23 @@ end
 -- ============================================================
 -- WEATHER NOTIFICATION
 -- ============================================================
-function NotificationUI.ShowWeather(isActive: boolean)
-	if isActive then
-		NotificationUI.ShowToast("MUTATION STORM ACTIVE — All luck x2", Color3.fromRGB(50, 30, 80), 5)
-	else
-		NotificationUI.ShowToast("Mutation Storm has passed", Color3.fromRGB(30, 28, 42), 3)
+function NotificationUI.ShowWeather(weatherData: any)
+	if type(weatherData) == "boolean" then
+		if weatherData then
+			NotificationUI.ShowToast("⚡ MUTATION STORM ACTIVE — All luck x2", Color3.fromRGB(88, 28, 152), 5)
+		else
+			NotificationUI.ShowToast("✨ The celestial storm has subsided", Color3.fromRGB(32, 40, 68), 3)
+		end
+		return
 	end
+
+	if not weatherData or not weatherData.IsActive then
+		NotificationUI.ShowToast("✨ The cosmic storm has passed — Sanctuary is calm", Color3.fromRGB(32, 40, 68), 3)
+		return
+	end
+
+	local title = string.format("%s %s [%s]", weatherData.Icon or "⚡", weatherData.Name or "COSMIC EVENT", weatherData.MultiplierText or "")
+	NotificationUI.ShowToast(title, weatherData.BadgeColor or Color3.fromRGB(88, 28, 152), 5)
 end
 
 -- ============================================================
