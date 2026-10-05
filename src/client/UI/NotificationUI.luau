@@ -178,41 +178,39 @@ function NotificationUI.ShowToast(message: string, color: Color3?, duration: num
 
 	local toast = Instance.new("Frame")
 	toast.Name = "Toast"
-	toast.Size = UDim2.new(1, 0, 0, 44)
+	toast.Size = UDim2.new(1, 0, 0, 46)
 	toast.BackgroundColor3 = toastColor
-	toast.BackgroundTransparency = 0.12
+	toast.BackgroundTransparency = 0.05
 	toast.BorderSizePixel = 0
 	toast.LayoutOrder = math.floor(os.clock() * 100)
 	toast.ZIndex = 21
 	toast.Parent = NotificationUI._container
-	UILib.ApplyCorner(toast, 8)
+	UILib.ApplyCorner(toast, 12)
+	UILib.ApplyStroke(toast, UILib.Colors.StrokeDark, 2.5)
 
-	-- Subtle left accent bar
+	-- Left accent bar
 	local accentBar = Instance.new("Frame")
-	accentBar.Size = UDim2.new(0, 3, 1, -8)
-	accentBar.Position = UDim2.new(0, 4, 0, 4)
-	accentBar.BackgroundColor3 = Color3.new(
-		math.min(toastColor.R * 1.5, 1),
-		math.min(toastColor.G * 1.5, 1),
-		math.min(toastColor.B * 1.5, 1)
-	)
+	accentBar.Size = UDim2.new(0, 4, 1, -10)
+	accentBar.Position = UDim2.new(0, 5, 0, 5)
+	accentBar.BackgroundColor3 = Color3.fromRGB(251, 191, 36)
 	accentBar.BorderSizePixel = 0
 	accentBar.ZIndex = 22
 	accentBar.Parent = toast
 	UILib.ApplyPill(accentBar)
 
 	local label = Instance.new("TextLabel")
-	label.Size = UDim2.new(1, -24, 1, 0)
-	label.Position = UDim2.new(0, 14, 0, 0)
+	label.Size = UDim2.new(1, -26, 1, 0)
+	label.Position = UDim2.new(0, 16, 0, 0)
 	label.BackgroundTransparency = 1
 	label.Text = message
-	label.TextColor3 = UILib.Colors.TextPrimary
-	label.TextSize = 12
-	label.Font = UILib.Fonts.Bold
+	label.TextColor3 = Color3.fromRGB(255, 255, 255)
+	label.TextSize = 13
+	label.Font = UILib.Fonts.Black
 	label.TextWrapped = true
 	label.TextXAlignment = Enum.TextXAlignment.Left
 	label.ZIndex = 22
 	label.Parent = toast
+	UILib.ApplyTextStroke(label, UILib.Colors.StrokeDark, 2)
 
 	-- Slide in from right
 	toast.Position = UDim2.new(1, 20, 0, 0)
@@ -249,17 +247,12 @@ function NotificationUI.ShowHarvest(harvestData: any)
 		NotificationUI._showRarePopup(harvestData)
 	end
 
-	local tierSymbol = {
-		None = "-", Sprout = "+", Bloom = "++",
-		Radiant = "*", Astral = "**", Celestial = "***", Primordial = "!",
-	}
-	local sym = tierSymbol[tier] or "-"
-	local msg = string.format("[%s] %s (%dx) > %s SD", sym, tier, multiplier, UILib.FormatNumber(value))
-	NotificationUI.ShowToast(msg, Color3.new(color.R * 0.35, color.G * 0.35, color.B * 0.35), 4)
+	local msg = string.format("★ %s Mutation (%dx) > +%s Stardust", tier, multiplier, UILib.FormatNumber(value))
+	NotificationUI.ShowToast(msg, Color3.new(color.R * 0.45, color.G * 0.45, color.B * 0.45), 4)
 
 	if harvestData.IsNewCollection then
 		task.delay(0.5, function()
-			NotificationUI.ShowToast("NEW COLLECTION ENTRY", Color3.fromRGB(20, 50, 80), 3)
+			NotificationUI.ShowToast("🌟 NEW COLLECTION ENTRY DISCOVERED!", Color3.fromRGB(30, 60, 110), 3)
 		end)
 	end
 end

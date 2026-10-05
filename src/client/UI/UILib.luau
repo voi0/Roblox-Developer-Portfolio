@@ -11,35 +11,43 @@ local TweenService = game:GetService("TweenService")
 local UILib = {}
 
 -- ============================================================
--- DESIGN TOKENS
+-- DESIGN TOKENS (Vibrant, Kid-Friendly Roblox Simulator Style)
 -- ============================================================
 UILib.Colors = {
-	-- Core Palette
-	Surface0    = Color3.fromRGB(16, 20, 34),     -- Rich deep space navy
-	Surface1    = Color3.fromRGB(24, 30, 50),     -- Sleek royal slate modal base
-	Surface2    = Color3.fromRGB(32, 40, 68),     -- Elevated frosted card
-	Surface3    = Color3.fromRGB(44, 56, 92),     -- Bright readable hover state
-	Surface4    = Color3.fromRGB(56, 72, 116),    -- Pressed arcade state
+	-- Core Roblox Simulator Palette (Rich warm indigo, NOT depressing black)
+	Surface0    = Color3.fromRGB(24, 18, 44),     -- Deep cosmic purple-navy
+	Surface1    = Color3.fromRGB(34, 26, 60),     -- Rich modal base
+	Surface2    = Color3.fromRGB(46, 36, 80),     -- Elevated card face
+	Surface3    = Color3.fromRGB(64, 50, 110),    -- Bright hover state
+	Surface4    = Color3.fromRGB(82, 64, 136),    -- Pressed arcade state
 
-	-- Text
-	TextPrimary   = Color3.fromRGB(248, 250, 252),
-	TextSecondary = Color3.fromRGB(168, 162, 190),
-	TextMuted     = Color3.fromRGB(105, 98, 130),
+	-- Text (Crisp White and Saturated Lavender)
+	TextPrimary   = Color3.fromRGB(255, 255, 255),
+	TextSecondary = Color3.fromRGB(224, 210, 255),
+	TextMuted     = Color3.fromRGB(160, 145, 195),
 
-	-- Accent
-	Purple       = Color3.fromRGB(147, 51, 234),
-	PurpleLight  = Color3.fromRGB(192, 132, 252),
-	PurpleDim    = Color3.fromRGB(88, 28, 152),
+	-- Cartoon Outlines
+	StrokeDark    = Color3.fromRGB(16, 12, 28),     -- Thick cartoon dark outline
+	StrokeGold    = Color3.fromRGB(180, 130, 15),
 
-	-- Semantic
-	Gold        = Color3.fromRGB(255, 204, 0),
-	GoldDim     = Color3.fromRGB(180, 140, 20),
-	Cyan        = Color3.fromRGB(56, 189, 248),
-	Pink        = Color3.fromRGB(244, 114, 182),
-	Green       = Color3.fromRGB(74, 222, 128),
-	GreenDim    = Color3.fromRGB(22, 101, 52),
-	Red         = Color3.fromRGB(248, 113, 113),
-	Orange      = Color3.fromRGB(251, 146, 60),
+	-- Bright Candy Accents
+	Gold        = Color3.fromRGB(251, 191, 36),     -- Cheerful Sunny Gold
+	GoldBright  = Color3.fromRGB(254, 240, 138),
+	GoldDark    = Color3.fromRGB(217, 119, 6),
+	Cyan        = Color3.fromRGB(14, 165, 233),     -- Vibrant Sky Cyan
+	CyanBright  = Color3.fromRGB(125, 211, 252),
+	CyanDark    = Color3.fromRGB(3, 105, 161),
+	Pink        = Color3.fromRGB(244, 114, 182),    -- Bubblegum Candy Pink
+	PinkBright  = Color3.fromRGB(249, 168, 212),
+	PinkDark    = Color3.fromRGB(190, 24, 93),
+	Green       = Color3.fromRGB(34, 197, 94),      -- Juicy Emerald Lime
+	GreenBright = Color3.fromRGB(134, 239, 172),
+	GreenDark   = Color3.fromRGB(21, 128, 61),
+	Purple      = Color3.fromRGB(168, 85, 247),     -- Arcane Amethyst
+	PurpleLight = Color3.fromRGB(216, 180, 254),
+	PurpleDark  = Color3.fromRGB(126, 34, 206),
+	Red         = Color3.fromRGB(239, 68, 68),
+	Orange      = Color3.fromRGB(249, 115, 22),
 
 	-- Tier Colors
 	Common     = Color3.fromRGB(148, 163, 184),
@@ -48,7 +56,7 @@ UILib.Colors = {
 	Epic       = Color3.fromRGB(192, 132, 252),
 	Legendary  = Color3.fromRGB(251, 191, 36),
 	Celestial  = Color3.fromRGB(244, 114, 182),
-	Void       = Color3.fromRGB(147, 51, 234),
+	Void       = Color3.fromRGB(168, 85, 247),
 }
 
 UILib.TierColor = {
@@ -61,11 +69,13 @@ UILib.TierColor = {
 	Void       = UILib.Colors.Void,
 }
 
+-- Gold-standard kid-friendly Roblox font
 UILib.Fonts = {
-	Black  = Enum.Font.GothamBlack,
-	Bold   = Enum.Font.GothamBold,
-	Medium = Enum.Font.GothamMedium,
-	Body   = Enum.Font.Gotham,
+	Black  = Enum.Font.FredokaOne,
+	Bold   = Enum.Font.FredokaOne,
+	Medium = Enum.Font.FredokaOne,
+	Body   = Enum.Font.FredokaOne,
+	Alt    = Enum.Font.LuckiestGuy,
 }
 
 UILib.Icons = {
@@ -142,6 +152,142 @@ function UILib.ApplyPadding(parent: GuiObject, top: number, right: number?, bott
 	return pad
 end
 
+function UILib.ApplyTextStroke(parent: TextLabel | TextButton, color: Color3?, thickness: number?): UIStroke
+	local stroke = Instance.new("UIStroke")
+	stroke.Color = color or UILib.Colors.StrokeDark
+	stroke.Thickness = thickness or 2.5
+	stroke.Transparency = 0
+	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual
+	stroke.Parent = parent
+	return stroke
+end
+
+function UILib.CreateChunkyButton(
+	parent: GuiObject,
+	name: string,
+	text: string,
+	topColor: Color3,
+	bottomColor: Color3,
+	size: UDim2,
+	pos: UDim2,
+	iconId: string?
+): TextButton
+	local container = Instance.new("TextButton")
+	container.Name = name
+	container.Size = size
+	container.Position = pos
+	container.BackgroundTransparency = 1
+	container.Text = ""
+	container.Parent = parent
+
+	-- Shadow Base (3D Bevel depth)
+	local shadow = Instance.new("Frame")
+	shadow.Name = "ShadowBase"
+	shadow.Size = UDim2.new(1, 0, 1, -4)
+	shadow.Position = UDim2.new(0, 0, 0, 4)
+	shadow.BackgroundColor3 = bottomColor:Lerp(Color3.new(0, 0, 0), 0.45)
+	shadow.BorderSizePixel = 0
+	shadow.ZIndex = container.ZIndex
+	shadow.Parent = container
+	UILib.ApplyCorner(shadow, 12)
+	UILib.ApplyStroke(shadow, UILib.Colors.StrokeDark, 2.5)
+
+	-- Button Face
+	local face = Instance.new("Frame")
+	face.Name = "Face"
+	face.Size = UDim2.new(1, 0, 1, -4)
+	face.Position = UDim2.new(0, 0, 0, 0)
+	face.BackgroundColor3 = topColor
+	face.BorderSizePixel = 0
+	face.ZIndex = container.ZIndex + 1
+	face.Parent = container
+	UILib.ApplyCorner(face, 12)
+	UILib.ApplyGradient(face, topColor, bottomColor, 90)
+	UILib.ApplyStroke(face, UILib.Colors.StrokeDark, 2.5)
+
+	-- Top Glossy Sheen
+	local sheen = Instance.new("Frame")
+	sheen.Name = "Sheen"
+	sheen.Size = UDim2.new(1, -12, 0, 6)
+	sheen.Position = UDim2.new(0, 6, 0, 3)
+	sheen.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	sheen.BackgroundTransparency = 0.65
+	sheen.BorderSizePixel = 0
+	sheen.ZIndex = container.ZIndex + 2
+	sheen.Parent = face
+	UILib.ApplyPill(sheen)
+
+	-- Icon & Label
+	if iconId and iconId ~= "" then
+		local icon = Instance.new("ImageLabel")
+		icon.Name = "Icon"
+		icon.Size = UDim2.new(0, 22, 0, 22)
+		icon.Position = UDim2.new(0.5, -11, 0, 4)
+		icon.BackgroundTransparency = 1
+		icon.Image = iconId
+		icon.ZIndex = container.ZIndex + 2
+		icon.Parent = face
+
+		local label = Instance.new("TextLabel")
+		label.Name = "Label"
+		label.Size = UDim2.new(1, 0, 0, 14)
+		label.Position = UDim2.new(0, 0, 1, -18)
+		label.BackgroundTransparency = 1
+		label.Text = text
+		label.TextColor3 = Color3.fromRGB(255, 255, 255)
+		label.TextSize = 10
+		label.Font = UILib.Fonts.Black
+		label.ZIndex = container.ZIndex + 2
+		label.Parent = face
+		UILib.ApplyTextStroke(label, UILib.Colors.StrokeDark, 2.5)
+	else
+		local label = Instance.new("TextLabel")
+		label.Name = "Label"
+		label.Size = UDim2.fromScale(1, 1)
+		label.BackgroundTransparency = 1
+		label.Text = text
+		label.TextColor3 = Color3.fromRGB(255, 255, 255)
+		label.TextSize = 12
+		label.Font = UILib.Fonts.Black
+		label.ZIndex = container.ZIndex + 2
+		label.Parent = face
+		UILib.ApplyTextStroke(label, UILib.Colors.StrokeDark, 2.5)
+	end
+
+	-- Micro-Interactions (Squish down on click, bounce on hover)
+	container.MouseEnter:Connect(function()
+		TweenService:Create(face, TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			Position = UDim2.new(0, 0, 0, -2),
+		}):Play()
+		TweenService:Create(shadow, TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			Position = UDim2.new(0, 0, 0, 6),
+		}):Play()
+	end)
+
+	container.MouseLeave:Connect(function()
+		TweenService:Create(face, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			Position = UDim2.new(0, 0, 0, 0),
+		}):Play()
+		TweenService:Create(shadow, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			Position = UDim2.new(0, 0, 0, 4),
+		}):Play()
+	end)
+
+	container.MouseButton1Down:Connect(function()
+		TweenService:Create(face, TweenInfo.new(0.06), {
+			Position = UDim2.new(0, 0, 0, 4),
+		}):Play()
+	end)
+
+	container.MouseButton1Up:Connect(function()
+		TweenService:Create(face, TweenInfo.new(0.12, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+			Position = UDim2.new(0, 0, 0, -2),
+		}):Play()
+	end)
+
+	return container
+end
+
 -- ============================================================
 -- DROP SHADOW (offset duplicate behind element)
 -- ============================================================
@@ -181,18 +327,18 @@ function UILib.CreateModalFrame(
 	modal.ZIndex = 10
 	modal.Parent = parentGui
 
-	UILib.ApplyCorner(modal, 14)
+	UILib.ApplyCorner(modal, 16)
 
-	-- Outer glow stroke
-	local outerStroke = UILib.ApplyStroke(modal, accentColor, 1.5, 0.3)
-	outerStroke.Name = "AccentStroke"
+	-- Dark cartoon outline
+	local outerStroke = UILib.ApplyStroke(modal, UILib.Colors.StrokeDark, 3.5, 0)
+	outerStroke.Name = "CartoonStroke"
 
-	-- Inner gradient for depth (lighter at top-left)
+	-- Inner gradient for depth (vibrant deep space navy)
 	local innerGrad = Instance.new("UIGradient")
 	innerGrad.Color = ColorSequence.new({
-		ColorSequenceKeypoint.new(0, Color3.fromRGB(36, 46, 78)),
-		ColorSequenceKeypoint.new(0.6, Color3.fromRGB(24, 30, 52)),
-		ColorSequenceKeypoint.new(1, Color3.fromRGB(16, 20, 36)),
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(36, 42, 72)),
+		ColorSequenceKeypoint.new(0.6, Color3.fromRGB(24, 28, 50)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(16, 18, 36)),
 	})
 	innerGrad.Rotation = 135
 	innerGrad.Parent = modal
@@ -220,7 +366,7 @@ function UILib.CreateModalHeader(
 	header.Parent = parent
 
 	-- Only round top corners using a clip frame
-	UILib.ApplyCorner(header, 14)
+	UILib.ApplyCorner(header, 16)
 
 	-- Bottom divider line
 	local divider = Instance.new("Frame")
@@ -235,16 +381,17 @@ function UILib.CreateModalHeader(
 
 	local titleLabel = Instance.new("TextLabel")
 	titleLabel.Name = "Title"
-	titleLabel.Size = UDim2.new(0.75, 0, 0, 24)
-	titleLabel.Position = UDim2.new(0, 20, 0, 10)
+	titleLabel.Size = UDim2.new(0.75, 0, 0, 26)
+	titleLabel.Position = UDim2.new(0, 20, 0, 9)
 	titleLabel.BackgroundTransparency = 1
 	titleLabel.Text = string.upper(title)
 	titleLabel.TextColor3 = accentColor
-	titleLabel.TextSize = 18
+	titleLabel.TextSize = 20
 	titleLabel.Font = UILib.Fonts.Black
 	titleLabel.TextXAlignment = Enum.TextXAlignment.Left
 	titleLabel.ZIndex = parent.ZIndex + 2
 	titleLabel.Parent = header
+	UILib.ApplyTextStroke(titleLabel, UILib.Colors.StrokeDark, 2.5)
 
 	local subtitleLabel = Instance.new("TextLabel")
 	subtitleLabel.Name = "Subtitle"
@@ -326,6 +473,8 @@ function UILib.CreateActionButton(
 	btn.Parent = parent
 
 	UILib.ApplyCorner(btn, 10)
+	UILib.ApplyStroke(btn, UILib.Colors.StrokeDark, 2.5)
+	UILib.ApplyTextStroke(btn, UILib.Colors.StrokeDark, 2)
 
 	-- Gradient overlay for depth
 	local grad = Instance.new("UIGradient")

@@ -33,23 +33,23 @@ function ObjectiveTracker.Create(parentGui: ScreenGui)
 
 	local card = Instance.new("Frame")
 	card.Name = "ObjectiveTrackerCard"
-	card.Size = UDim2.new(0, 240, 0, 76)
+	card.Size = UDim2.new(0, 250, 0, 80)
 	card.Position = UDim2.new(0, 16, 0, 116)
 	card.BackgroundColor3 = UILib.Colors.Surface0
-	card.BackgroundTransparency = 0.15
+	card.BackgroundTransparency = 0.05
 	card.BorderSizePixel = 0
 	card.ZIndex = 8
 	card.Parent = parentGui
 	ObjectiveTracker._frame = card
 
-	UILib.ApplyCorner(card, 12)
-	local stroke = UILib.ApplyStroke(card, UILib.Colors.Gold, 1.2, 0.45)
+	UILib.ApplyCorner(card, 14)
+	local stroke = UILib.ApplyStroke(card, UILib.Colors.StrokeDark, 2.5)
 	stroke.Name = "CardStroke"
 
 	-- Left glowing accent indicator bar
 	local accentBar = Instance.new("Frame")
 	accentBar.Name = "AccentBar"
-	accentBar.Size = UDim2.new(0, 4, 1, -16)
+	accentBar.Size = UDim2.new(0, 5, 1, -16)
 	accentBar.Position = UDim2.new(0, 8, 0, 8)
 	accentBar.BackgroundColor3 = UILib.Colors.Gold
 	accentBar.BorderSizePixel = 0
@@ -63,36 +63,38 @@ function ObjectiveTracker.Create(parentGui: ScreenGui)
 	header.Size = UDim2.new(1, -28, 0, 14)
 	header.Position = UDim2.new(0, 20, 0, 8)
 	header.BackgroundTransparency = 1
-	header.Text = "✦ CURRENT OBJECTIVE"
-	header.TextColor3 = UILib.Colors.Gold
-	header.TextSize = 10
+	header.Text = "★ CURRENT OBJECTIVE"
+	header.TextColor3 = UILib.Colors.GoldBright
+	header.TextSize = 11
 	header.Font = UILib.Fonts.Black
 	header.TextXAlignment = Enum.TextXAlignment.Left
 	header.ZIndex = 9
 	header.Parent = card
+	UILib.ApplyTextStroke(header, UILib.Colors.StrokeDark, 2.5)
 
 	-- Objective Title
 	local title = Instance.new("TextLabel")
 	title.Name = "ObjectiveTitle"
 	title.Size = UDim2.new(1, -28, 0, 16)
-	title.Position = UDim2.new(0, 20, 0, 24)
+	title.Position = UDim2.new(0, 20, 0, 25)
 	title.BackgroundTransparency = 1
 	title.Text = "Plant 3 Cosmic Seeds"
-	title.TextColor3 = UILib.Colors.TextPrimary
-	title.TextSize = 12
-	title.Font = UILib.Fonts.Bold
+	title.TextColor3 = Color3.fromRGB(255, 255, 255)
+	title.TextSize = 13
+	title.Font = UILib.Fonts.Black
 	title.TextXAlignment = Enum.TextXAlignment.Left
 	title.TextTruncate = Enum.TextTruncate.AtEnd
 	title.ZIndex = 9
 	title.Parent = card
+	UILib.ApplyTextStroke(title, UILib.Colors.StrokeDark, 2.5)
 	ObjectiveTracker._titleLabel = title
 
 	-- Progress Bar Background
 	local barBg = Instance.new("Frame")
 	barBg.Name = "BarBg"
-	barBg.Size = UDim2.new(1, -28, 0, 6)
-	barBg.Position = UDim2.new(0, 20, 0, 46)
-	barBg.BackgroundColor3 = Color3.fromRGB(24, 20, 40)
+	barBg.Size = UDim2.new(1, -28, 0, 8)
+	barBg.Position = UDim2.new(0, 20, 0, 47)
+	barBg.BackgroundColor3 = Color3.fromRGB(16, 12, 28)
 	barBg.BorderSizePixel = 0
 	barBg.ZIndex = 9
 	barBg.Parent = card
@@ -113,29 +115,31 @@ function ObjectiveTracker.Create(parentGui: ScreenGui)
 	local progressLabel = Instance.new("TextLabel")
 	progressLabel.Name = "ProgressLabel"
 	progressLabel.Size = UDim2.new(0.4, 0, 0, 14)
-	progressLabel.Position = UDim2.new(0, 20, 0, 56)
+	progressLabel.Position = UDim2.new(0, 20, 0, 58)
 	progressLabel.BackgroundTransparency = 1
 	progressLabel.Text = "0 / 3"
-	progressLabel.TextColor3 = UILib.Colors.TextSecondary
-	progressLabel.TextSize = 9
-	progressLabel.Font = UILib.Fonts.Medium
+	progressLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+	progressLabel.TextSize = 11
+	progressLabel.Font = UILib.Fonts.Black
 	progressLabel.TextXAlignment = Enum.TextXAlignment.Left
 	progressLabel.ZIndex = 9
 	progressLabel.Parent = card
+	UILib.ApplyTextStroke(progressLabel, UILib.Colors.StrokeDark, 2.5)
 	ObjectiveTracker._progressLabel = progressLabel
 
 	local rewardLabel = Instance.new("TextLabel")
 	rewardLabel.Name = "RewardLabel"
 	rewardLabel.Size = UDim2.new(0.55, 0, 0, 14)
-	rewardLabel.Position = UDim2.new(1, -145, 0, 56)
+	rewardLabel.Position = UDim2.new(1, -145, 0, 58)
 	rewardLabel.BackgroundTransparency = 1
 	rewardLabel.Text = "+250 Stardust  +5 Gems"
-	rewardLabel.TextColor3 = UILib.Colors.Green
-	rewardLabel.TextSize = 9
-	rewardLabel.Font = UILib.Fonts.Bold
+	rewardLabel.TextColor3 = UILib.Colors.GreenBright
+	rewardLabel.TextSize = 11
+	rewardLabel.Font = UILib.Fonts.Black
 	rewardLabel.TextXAlignment = Enum.TextXAlignment.Right
 	rewardLabel.ZIndex = 9
 	rewardLabel.Parent = card
+	UILib.ApplyTextStroke(rewardLabel, UILib.Colors.StrokeDark, 2.5)
 	ObjectiveTracker._rewardLabel = rewardLabel
 end
 

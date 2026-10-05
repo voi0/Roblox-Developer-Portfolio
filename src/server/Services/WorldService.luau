@@ -166,16 +166,47 @@ end
 function WorldService.Init()
 	print("  🏗️ [WorldService] Building Authoritative 3D Sanctuary on Server...")
 
-	-- 1. Setup Environment Authoritatively
-	Lighting.ClockTime = 14
-	Lighting.GeographicLatitude = 20
-	Lighting.Ambient = Color3.fromRGB(120, 110, 160)
-	Lighting.OutdoorAmbient = Color3.fromRGB(145, 135, 185)
-	Lighting.Brightness = 2.2
-	Lighting.ColorShift_Top = Color3.fromRGB(245, 230, 255)
-	Lighting.ColorShift_Bottom = Color3.fromRGB(80, 65, 120)
-	Lighting.FogColor = Color3.fromRGB(45, 30, 75)
-	Lighting.FogEnd = 10000
+	-- 1. Setup Environment Authoritatively (Vibrant Fairy-Tale Sanctuary)
+	Lighting.ClockTime = 14.5
+	Lighting.GeographicLatitude = 25
+	Lighting.Ambient = Color3.fromRGB(165, 150, 215)
+	Lighting.OutdoorAmbient = Color3.fromRGB(185, 170, 235)
+	Lighting.Brightness = 3.2
+	Lighting.ColorShift_Top = Color3.fromRGB(255, 248, 235)
+	Lighting.ColorShift_Bottom = Color3.fromRGB(120, 100, 160)
+	Lighting.FogColor = Color3.fromRGB(180, 160, 230)
+	Lighting.FogEnd = 30000
+
+	-- Cinematic Atmospheric Post-Processing
+	local bloom = Lighting:FindFirstChildOfClass("BloomEffect") or Instance.new("BloomEffect")
+	bloom.Name = "SanctuaryBloom"
+	bloom.Intensity = 0.65
+	bloom.Size = 24
+	bloom.Threshold = 0.82
+	bloom.Parent = Lighting
+
+	local colorCorrection = Lighting:FindFirstChildOfClass("ColorCorrectionEffect") or Instance.new("ColorCorrectionEffect")
+	colorCorrection.Name = "SanctuaryColorCorrection"
+	colorCorrection.Saturation = 0.18
+	colorCorrection.Contrast = 0.08
+	colorCorrection.TintColor = Color3.fromRGB(255, 250, 255)
+	colorCorrection.Parent = Lighting
+
+	local sunRays = Lighting:FindFirstChildOfClass("SunRaysEffect") or Instance.new("SunRaysEffect")
+	sunRays.Name = "SanctuarySunRays"
+	sunRays.Intensity = 0.15
+	sunRays.Spread = 0.8
+	sunRays.Parent = Lighting
+
+	local atmosphere = Lighting:FindFirstChildOfClass("Atmosphere") or Instance.new("Atmosphere")
+	atmosphere.Name = "SanctuaryAtmosphere"
+	atmosphere.Density = 0.28
+	atmosphere.Offset = 0.2
+	atmosphere.Color = Color3.fromRGB(200, 185, 245)
+	atmosphere.Decay = Color3.fromRGB(130, 105, 180)
+	atmosphere.Glare = 0.35
+	atmosphere.Haze = 0.75
+	atmosphere.Parent = Lighting
 
 	-- Destroy Baseplate
 	for _, child in Workspace:GetChildren() do
@@ -192,18 +223,18 @@ function WorldService.Init()
 		end
 	end
 
-	-- Create SanctuarySpawn
+	-- Create SanctuarySpawn (Solid, raised, elevated above pavers)
 	local spawn = Workspace:FindFirstChild("SanctuarySpawn") :: SpawnLocation?
 	if not spawn then
 		spawn = Instance.new("SpawnLocation")
 		spawn.Name = "SanctuarySpawn"
 		spawn.Parent = Workspace
 	end
-	spawn.Size = Vector3.new(8, 0.4, 8)
-	spawn.Position = Vector3.new(0, 0.2, -20)
+	spawn.Size = Vector3.new(10, 0.5, 10)
+	spawn.Position = Vector3.new(0, 1.2, -12)
 	spawn.Anchored = true
-	spawn.CanCollide = false
-	spawn.Transparency = 1 -- Invisible so player walks directly on the 3D island pavers!
+	spawn.CanCollide = true
+	spawn.Transparency = 1
 	spawn.TopSurface = Enum.SurfaceType.Smooth
 	for _, child in spawn:GetChildren() do
 		if child:IsA("Decal") or child:IsA("Texture") then
@@ -282,50 +313,245 @@ function WorldService.Init()
 	-- Solid Walkable Foundation Parts
 	local island = Instance.new("Part")
 	island.Name = "SanctuaryIslandFoundation"
-	island.Size = Vector3.new(64, 2.0, 64)
+	island.Size = Vector3.new(68, 2.0, 68)
 	island.Position = Vector3.new(0, -1.0, 0)
 	island.Anchored = true
 	island.Material = Enum.Material.Slate
-	island.Color = Color3.fromRGB(24, 20, 36)
-	island.Transparency = proceduralIslandTransparency
+	island.Color = Color3.fromRGB(32, 26, 48)
+	island.Transparency = 0
 	island.TopSurface = Enum.SurfaceType.Smooth
 	island.Parent = gardenFolder
 
 	local terrace = Instance.new("Part")
 	terrace.Name = "GardenTerraceFoundation"
-	terrace.Size = Vector3.new(42, 0.4, 42)
+	terrace.Size = Vector3.new(44, 0.4, 44)
 	terrace.Position = Vector3.new(0, 0.2, 2)
 	terrace.Anchored = true
 	terrace.Material = Enum.Material.Slate
-	terrace.Color = Color3.fromRGB(30, 24, 46)
-	terrace.Transparency = proceduralIslandTransparency
+	terrace.Color = Color3.fromRGB(42, 34, 62)
+	terrace.Transparency = 0
 	terrace.TopSurface = Enum.SurfaceType.Smooth
 	terrace.Parent = gardenFolder
 
 	-- Ambient Floating Stardust
 	local stardustEmitter = Instance.new("ParticleEmitter")
 	stardustEmitter.Name = "AmbientStardust"
-	stardustEmitter.Rate = 26
+	stardustEmitter.Rate = 28
 	stardustEmitter.Lifetime = NumberRange.new(4, 7)
 	stardustEmitter.Speed = NumberRange.new(0.5, 1.8)
 	stardustEmitter.SpreadAngle = Vector2.new(45, 45)
 	stardustEmitter.Size = NumberSequence.new({
 		NumberSequenceKeypoint.new(0, 0.1),
-		NumberSequenceKeypoint.new(0.5, 0.25),
+		NumberSequenceKeypoint.new(0.5, 0.3),
 		NumberSequenceKeypoint.new(1, 0),
 	})
 	stardustEmitter.Transparency = NumberSequence.new({
 		NumberSequenceKeypoint.new(0, 1),
-		NumberSequenceKeypoint.new(0.3, 0.2),
-		NumberSequenceKeypoint.new(0.8, 0.4),
+		NumberSequenceKeypoint.new(0.3, 0.15),
+		NumberSequenceKeypoint.new(0.8, 0.35),
 		NumberSequenceKeypoint.new(1, 1),
 	})
 	stardustEmitter.Color = ColorSequence.new({
-		ColorSequenceKeypoint.new(0, Color3.fromRGB(220, 180, 255)),
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(240, 210, 255)),
 		ColorSequenceKeypoint.new(1, Color3.fromRGB(250, 204, 21)),
 	})
-	stardustEmitter.LightEmission = 0.8
+	stardustEmitter.LightEmission = 0.85
 	stardustEmitter.Parent = terrace
+
+	-- 1.5 SPAWN PAVILION & GRAND CELESTIAL ARCHWAY
+	local spawnPavilion = Instance.new("Part")
+	spawnPavilion.Name = "SpawnPavilion"
+	spawnPavilion.Shape = Enum.PartType.Cylinder
+	spawnPavilion.Size = Vector3.new(1.2, 16, 16)
+	spawnPavilion.Position = Vector3.new(0, 0.6, -12)
+	spawnPavilion.Orientation = Vector3.new(0, 0, 90)
+	spawnPavilion.Anchored = true
+	spawnPavilion.CanCollide = true
+	spawnPavilion.Material = Enum.Material.Slate
+	spawnPavilion.Color = Color3.fromRGB(38, 30, 56)
+	spawnPavilion.Parent = gardenFolder
+
+	local spawnRim = Instance.new("Part")
+	spawnRim.Name = "SpawnRim"
+	spawnRim.Shape = Enum.PartType.Cylinder
+	spawnRim.Size = Vector3.new(0.4, 17.2, 17.2)
+	spawnRim.Position = Vector3.new(0, 1.1, -12)
+	spawnRim.Orientation = Vector3.new(0, 0, 90)
+	spawnRim.Anchored = true
+	spawnRim.CanCollide = true
+	spawnRim.Material = Enum.Material.Slate
+	spawnRim.Color = Color3.fromRGB(56, 44, 82)
+	spawnRim.Parent = gardenFolder
+
+	local spawnRune = Instance.new("Part")
+	spawnRune.Name = "SpawnRune"
+	spawnRune.Shape = Enum.PartType.Cylinder
+	spawnRune.Size = Vector3.new(0.05, 12, 12)
+	spawnRune.Position = Vector3.new(0, 1.15, -12)
+	spawnRune.Orientation = Vector3.new(0, 0, 90)
+	spawnRune.Anchored = true
+	spawnRune.CanCollide = false
+	spawnRune.Material = Enum.Material.Neon
+	spawnRune.Color = Color3.fromRGB(192, 132, 252)
+	spawnRune.Transparency = 0.5
+	spawnRune.Parent = gardenFolder
+
+	local archModel = Instance.new("Model")
+	archModel.Name = "CelestialArchway"
+	archModel.Parent = gardenFolder
+
+	local pLeft = Instance.new("Part")
+	pLeft.Name = "PillarLeft"
+	pLeft.Size = Vector3.new(2.2, 12, 2.2)
+	pLeft.Position = Vector3.new(-7, 6.0, -18)
+	pLeft.Anchored = true
+	pLeft.Material = Enum.Material.Slate
+	pLeft.Color = Color3.fromRGB(38, 30, 56)
+	pLeft.Parent = archModel
+
+	local capLeft = Instance.new("Part")
+	capLeft.Name = "CapLeft"
+	capLeft.Size = Vector3.new(3, 1, 3)
+	capLeft.Position = Vector3.new(-7, 12.2, -18)
+	capLeft.Anchored = true
+	capLeft.Material = Enum.Material.Neon
+	capLeft.Color = Color3.fromRGB(192, 132, 252)
+	capLeft.Parent = archModel
+
+	local pRight = Instance.new("Part")
+	pRight.Name = "PillarRight"
+	pRight.Size = Vector3.new(2.2, 12, 2.2)
+	pRight.Position = Vector3.new(7, 6.0, -18)
+	pRight.Anchored = true
+	pRight.Material = Enum.Material.Slate
+	pRight.Color = Color3.fromRGB(38, 30, 56)
+	pRight.Parent = archModel
+
+	local capRight = Instance.new("Part")
+	capRight.Name = "CapRight"
+	capRight.Size = Vector3.new(3, 1, 3)
+	capRight.Position = Vector3.new(7, 12.2, -18)
+	capRight.Anchored = true
+	capRight.Material = Enum.Material.Neon
+	capRight.Color = Color3.fromRGB(192, 132, 252)
+	capRight.Parent = archModel
+
+	local beam = Instance.new("Part")
+	beam.Name = "ArchBeam"
+	beam.Size = Vector3.new(16.4, 1.8, 2.4)
+	beam.Position = Vector3.new(0, 12.5, -18)
+	beam.Anchored = true
+	beam.Material = Enum.Material.Slate
+	beam.Color = Color3.fromRGB(48, 38, 72)
+	beam.Parent = archModel
+
+	local starSigil = Instance.new("Part")
+	starSigil.Name = "StarSigil"
+	starSigil.Size = Vector3.new(2.4, 2.4, 0.4)
+	starSigil.Position = Vector3.new(0, 12.5, -16.6)
+	starSigil.Orientation = Vector3.new(0, 0, 45)
+	starSigil.Anchored = true
+	starSigil.Material = Enum.Material.Neon
+	starSigil.Color = Color3.fromRGB(250, 204, 21)
+	starSigil.Parent = archModel
+
+	-- 1.6 COBBLESTONE PATHWAYS
+	local function createPath(name: string, p1: Vector3, p2: Vector3, width: number)
+		local diff = p2 - p1
+		local length = diff.Magnitude
+		local center = (p1 + p2) / 2
+		local cf = CFrame.lookAt(center, p2)
+
+		local pathPart = Instance.new("Part")
+		pathPart.Name = name
+		pathPart.Size = Vector3.new(width, 0.25, length)
+		pathPart.CFrame = cf
+		pathPart.Anchored = true
+		pathPart.CanCollide = true
+		pathPart.Material = Enum.Material.Slate
+		pathPart.Color = Color3.fromRGB(38, 30, 56)
+		pathPart.TopSurface = Enum.SurfaceType.Smooth
+		pathPart.Parent = gardenFolder
+	end
+
+	createPath("Path_SpawnToGarden", Vector3.new(0, 0.35, -5), Vector3.new(0, 0.35, -1), 6)
+	createPath("Path_GardenToAltar", Vector3.new(0, 0.35, 17), Vector3.new(0, 0.35, 22), 6)
+	createPath("Path_GardenToWell", Vector3.new(14, 0.35, 2), Vector3.new(18, 0.35, 2), 5)
+	createPath("Path_GardenToEgg", Vector3.new(-14, 0.35, 2), Vector3.new(-18, 0.35, 2), 5)
+
+	-- 1.7 STARDUST LANTERN POSTS
+	local lanternLocations = {
+		Vector3.new(-5, 0.4, -6),
+		Vector3.new(5, 0.4, -6),
+		Vector3.new(-5, 0.4, 16),
+		Vector3.new(5, 0.4, 16),
+		Vector3.new(15, 0.4, 5),
+		Vector3.new(15, 0.4, -1),
+		Vector3.new(-15, 0.4, 5),
+		Vector3.new(-15, 0.4, -1),
+	}
+	for idx, lPos in lanternLocations do
+		local pole = Instance.new("Part")
+		pole.Name = "LanternPole_" .. idx
+		pole.Size = Vector3.new(0.6, 5, 0.6)
+		pole.Position = lPos + Vector3.new(0, 2.5, 0)
+		pole.Anchored = true
+		pole.Material = Enum.Material.Slate
+		pole.Color = Color3.fromRGB(45, 35, 65)
+		pole.Parent = gardenFolder
+
+		local lamp = Instance.new("Part")
+		lamp.Name = "LanternGlow"
+		lamp.Shape = Enum.PartType.Ball
+		lamp.Size = Vector3.new(1.4, 1.4, 1.4)
+		lamp.Position = lPos + Vector3.new(0, 5.2, 0)
+		lamp.Anchored = true
+		lamp.Material = Enum.Material.Neon
+		lamp.Color = Color3.fromRGB(250, 204, 21)
+		lamp.Parent = gardenFolder
+
+		local light = Instance.new("PointLight")
+		light.Color = Color3.fromRGB(250, 210, 80)
+		light.Brightness = 1.8
+		light.Range = 14
+		light.Parent = lamp
+	end
+
+	-- 1.8 DISTANT FLOATING SKY ISLANDS
+	local skyIslandConfigs = {
+		{ Pos = Vector3.new(85, 30, 70), Size = 28, CrystalColor = Color3.fromRGB(56, 189, 248) },
+		{ Pos = Vector3.new(-90, 38, 65), Size = 24, CrystalColor = Color3.fromRGB(168, 85, 247) },
+		{ Pos = Vector3.new(95, 25, -60), Size = 26, CrystalColor = Color3.fromRGB(250, 204, 21) },
+		{ Pos = Vector3.new(-85, 42, -55), Size = 22, CrystalColor = Color3.fromRGB(244, 114, 182) },
+	}
+	for idx, sCfg in skyIslandConfigs do
+		local sIsland = Instance.new("Part")
+		sIsland.Name = "SkyIsland_" .. idx
+		sIsland.Shape = Enum.PartType.Cylinder
+		sIsland.Size = Vector3.new(6, sCfg.Size, sCfg.Size)
+		sIsland.Position = sCfg.Pos
+		sIsland.Orientation = Vector3.new(0, 0, 90)
+		sIsland.Anchored = true
+		sIsland.Material = Enum.Material.Slate
+		sIsland.Color = Color3.fromRGB(36, 28, 52)
+		sIsland.Parent = gardenFolder
+
+		local spire = Instance.new("Part")
+		spire.Name = "CrystalSpire"
+		spire.Size = Vector3.new(3.5, 16, 3.5)
+		spire.Position = sCfg.Pos + Vector3.new(0, 10, 0)
+		spire.Anchored = true
+		spire.Material = Enum.Material.Neon
+		spire.Color = sCfg.CrystalColor
+		spire.Orientation = Vector3.new(10, 15, -8)
+		spire.Parent = gardenFolder
+
+		local sLight = Instance.new("PointLight")
+		sLight.Color = sCfg.CrystalColor
+		sLight.Brightness = 3.5
+		sLight.Range = 40
+		sLight.Parent = spire
+	end
 
 	-- 2. DEPLOY 3D TRANSMUTATION FORGE ALTAR
 	local altarModel = classifiedAssets["ALTAR"]
@@ -417,11 +643,22 @@ function WorldService.Init()
 		eggLight.Parent = eggPromptPart
 	end
 
-	-- 3.5 DEPLOY CELESTIAL STARDUST WELL (AFK VAULT)
-	local wellPos = Vector3.new(0, 0.4, -22)
+	-- 3.5 DEPLOY CELESTIAL STARDUST WELL (EAST GARDEN PLAZA)
+	local wellPos = Vector3.new(22, 0.4, 2)
 	local wellModel = Instance.new("Model")
 	wellModel.Name = "CelestialWell"
 	wellModel.Parent = gardenFolder
+
+	local wellPatio = Instance.new("Part")
+	wellPatio.Name = "WellPatio"
+	wellPatio.Shape = Enum.PartType.Cylinder
+	wellPatio.Size = Vector3.new(0.6, 13, 13)
+	wellPatio.Position = wellPos + Vector3.new(0, 0.1, 0)
+	wellPatio.Orientation = Vector3.new(0, 0, 90)
+	wellPatio.Anchored = true
+	wellPatio.Material = Enum.Material.Slate
+	wellPatio.Color = Color3.fromRGB(34, 28, 50)
+	wellPatio.Parent = wellModel
 
 	local wellBase = Instance.new("Part")
 	wellBase.Name = "WellBase"
@@ -585,6 +822,30 @@ function WorldService.Init()
 		prompt.MaxActivationDistance = 12
 		prompt.RequiresLineOfSight = false
 		prompt.Parent = soil
+	end
+
+	-- 5. ENSURE RELIABLE CHARACTER SPAWN POSITIONING (PAVILION LOOKING AT GARDEN)
+	local function onCharacterAdded(player: Player, character: Model)
+		local hrp = character:WaitForChild("HumanoidRootPart", 10) :: BasePart?
+		if hrp then
+			task.wait(0.08)
+			hrp.CFrame = CFrame.new(0, 3.5, -12) * CFrame.Angles(0, 0, 0)
+		end
+	end
+
+	Players.PlayerAdded:Connect(function(player)
+		player.CharacterAdded:Connect(function(char)
+			onCharacterAdded(player, char)
+		end)
+	end)
+
+	for _, player in Players:GetPlayers() do
+		if player.Character then
+			onCharacterAdded(player, player.Character)
+		end
+		player.CharacterAdded:Connect(function(char)
+			onCharacterAdded(player, char)
+		end)
 	end
 
 	print("  ✅ [WorldService] Authoritative 3D Sanctuary Online! All 9 Plots & Meshes Deployed.")

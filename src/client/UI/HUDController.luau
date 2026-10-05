@@ -40,16 +40,16 @@ HUDController._weatherBadge = nil :: Frame?
 HUDController._xpFill = nil :: Frame?
 
 -- ============================================================
--- DOCK BUTTON CONFIGURATION
+-- DOCK BUTTON CONFIGURATION (Vibrant Candy 3D Toy Palettes)
 -- ============================================================
-local DOCK_BUTTONS: { { Label: string, Action: string, Icon: string, Accent: Color3 } } = {
-	{ Label = "SHOP",      Action = "OpenShop",          Icon = UILib.Icons.Shop,      Accent = Color3.fromRGB(52, 211, 153) },
-	{ Label = "FORGE",     Action = "OpenForge",         Icon = UILib.Icons.Forge,     Accent = Color3.fromRGB(168, 85, 247) },
-	{ Label = "QUESTS",    Action = "OpenQuests",        Icon = UILib.Icons.Quests,    Accent = Color3.fromRGB(250, 204, 21) },
-	{ Label = "PETS",      Action = "OpenPets",          Icon = UILib.Icons.Pets,      Accent = Color3.fromRGB(56, 189, 248) },
-	{ Label = "STARS",     Action = "OpenConstellation", Icon = UILib.Icons.Stars,     Accent = Color3.fromRGB(192, 132, 252) },
-	{ Label = "CODEX",     Action = "OpenCollection",    Icon = UILib.Icons.Codex,     Accent = Color3.fromRGB(96, 165, 250) },
-	{ Label = "TRANSCEND", Action = "OpenRebirth",       Icon = UILib.Icons.Transcend, Accent = Color3.fromRGB(244, 114, 182) },
+local DOCK_BUTTONS: { { Label: string, Action: string, Icon: string, Top: Color3, Bottom: Color3 } } = {
+	{ Label = "SHOP",      Action = "OpenShop",          Icon = UILib.Icons.Shop,      Top = Color3.fromRGB(52, 211, 153), Bottom = Color3.fromRGB(16, 149, 106) },
+	{ Label = "FORGE",     Action = "OpenForge",         Icon = UILib.Icons.Forge,     Top = Color3.fromRGB(168, 85, 247), Bottom = Color3.fromRGB(109, 40, 217) },
+	{ Label = "QUESTS",    Action = "OpenQuests",        Icon = UILib.Icons.Quests,    Top = Color3.fromRGB(251, 191, 36), Bottom = Color3.fromRGB(194, 98, 4) },
+	{ Label = "PETS",      Action = "OpenPets",          Icon = UILib.Icons.Pets,      Top = Color3.fromRGB(56, 189, 248), Bottom = Color3.fromRGB(2, 132, 199) },
+	{ Label = "STARS",     Action = "OpenConstellation", Icon = UILib.Icons.Stars,     Top = Color3.fromRGB(216, 180, 254), Bottom = Color3.fromRGB(147, 51, 234) },
+	{ Label = "CODEX",     Action = "OpenCollection",    Icon = UILib.Icons.Codex,     Top = Color3.fromRGB(96, 165, 250), Bottom = Color3.fromRGB(29, 78, 216) },
+	{ Label = "TRANSCEND", Action = "OpenRebirth",       Icon = UILib.Icons.Transcend, Top = Color3.fromRGB(244, 114, 182), Bottom = Color3.fromRGB(190, 24, 93) },
 }
 
 function HUDController.Create()
@@ -78,34 +78,45 @@ function HUDController.Create()
 	actionEvent.Parent = gui
 
 	-- ============================================================
-	-- TOP BAR (Centered floating translucent pill, safely below Roblox CoreGui)
+	-- TOP BAR (Chunky cartoon floating banner, safely below Roblox CoreGui)
 	-- ============================================================
 	local topBar = Instance.new("Frame")
 	topBar.Name = "TopBar"
-	topBar.Size = UDim2.new(0, 840, 0, 48)
+	topBar.Size = UDim2.new(0, 880, 0, 52)
 	topBar.Position = UDim2.new(0.5, 0, 0, 56)
 	topBar.AnchorPoint = Vector2.new(0.5, 0)
 	topBar.BackgroundColor3 = UILib.Colors.Surface0
-	topBar.BackgroundTransparency = 0.16
+	topBar.BackgroundTransparency = 0.05
 	topBar.BorderSizePixel = 0
 	topBar.ZIndex = 5
 	topBar.Parent = gui
-	UILib.ApplyPill(topBar)
-	UILib.ApplyStroke(topBar, UILib.Colors.PurpleDim, 1.2, 0.45)
+	UILib.ApplyCorner(topBar, 16)
+	UILib.ApplyStroke(topBar, UILib.Colors.StrokeDark, 3)
+
+	-- Top Gloss Sheen
+	local topSheen = Instance.new("Frame")
+	topSheen.Name = "TopSheen"
+	topSheen.Size = UDim2.new(1, -24, 0, 6)
+	topSheen.Position = UDim2.new(0, 12, 0, 3)
+	topSheen.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	topSheen.BackgroundTransparency = 0.75
+	topSheen.BorderSizePixel = 0
+	topSheen.ZIndex = 6
+	topSheen.Parent = topBar
+	UILib.ApplyPill(topSheen)
 
 	-- ── Left: Player Profile Badge with Live XP Bar ──
 	local profileCard = Instance.new("TextButton")
 	profileCard.Name = "ProfileCard"
-	profileCard.Size = UDim2.new(0, 190, 0, 38)
-	profileCard.Position = UDim2.new(0, 6, 0.5, -19)
-	profileCard.BackgroundColor3 = UILib.Colors.Surface2
-	profileCard.BackgroundTransparency = 0.2
+	profileCard.Size = UDim2.new(0, 205, 0, 42)
+	profileCard.Position = UDim2.new(0, 6, 0.5, -21)
+	profileCard.BackgroundColor3 = UILib.Colors.Surface1
 	profileCard.BorderSizePixel = 0
 	profileCard.Text = ""
 	profileCard.ZIndex = 6
 	profileCard.Parent = topBar
-	UILib.ApplyCorner(profileCard, 10)
-	UILib.ApplyStroke(profileCard, Color3.fromRGB(56, 189, 248), 1, 0.5)
+	UILib.ApplyCorner(profileCard, 12)
+	UILib.ApplyStroke(profileCard, UILib.Colors.StrokeDark, 2.5)
 
 	profileCard.MouseButton1Click:Connect(function()
 		local sc = getSoundController()
@@ -116,13 +127,14 @@ function HUDController.Create()
 
 	local avatarImg = Instance.new("ImageLabel")
 	avatarImg.Name = "Avatar"
-	avatarImg.Size = UDim2.new(0, 30, 0, 30)
-	avatarImg.Position = UDim2.new(0, 4, 0.5, -15)
-	avatarImg.BackgroundColor3 = UILib.Colors.Surface3
+	avatarImg.Size = UDim2.new(0, 34, 0, 34)
+	avatarImg.Position = UDim2.new(0, 4, 0.5, -17)
+	avatarImg.BackgroundColor3 = UILib.Colors.Surface2
 	avatarImg.BorderSizePixel = 0
 	avatarImg.ZIndex = 7
 	avatarImg.Parent = profileCard
 	UILib.ApplyPill(avatarImg)
+	UILib.ApplyStroke(avatarImg, UILib.Colors.Gold, 2)
 
 	if player.UserId > 0 then
 		task.spawn(function()
@@ -141,37 +153,39 @@ function HUDController.Create()
 
 	local nameLabel = Instance.new("TextLabel")
 	nameLabel.Name = "PlayerName"
-	nameLabel.Size = UDim2.new(1, -42, 0, 13)
-	nameLabel.Position = UDim2.new(0, 38, 0, 3)
+	nameLabel.Size = UDim2.new(1, -44, 0, 14)
+	nameLabel.Position = UDim2.new(0, 42, 0, 3)
 	nameLabel.BackgroundTransparency = 1
 	nameLabel.Text = player.DisplayName
-	nameLabel.TextColor3 = UILib.Colors.TextPrimary
-	nameLabel.TextSize = 11
-	nameLabel.Font = UILib.Fonts.Bold
+	nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+	nameLabel.TextSize = 13
+	nameLabel.Font = UILib.Fonts.Black
 	nameLabel.TextXAlignment = Enum.TextXAlignment.Left
 	nameLabel.TextTruncate = Enum.TextTruncate.AtEnd
 	nameLabel.ZIndex = 7
 	nameLabel.Parent = profileCard
+	UILib.ApplyTextStroke(nameLabel, UILib.Colors.StrokeDark, 2.5)
 
 	local levelLabel = Instance.new("TextLabel")
 	levelLabel.Name = "PlayerLevel"
-	levelLabel.Size = UDim2.new(1, -42, 0, 12)
-	levelLabel.Position = UDim2.new(0, 38, 0, 16)
+	levelLabel.Size = UDim2.new(1, -44, 0, 13)
+	levelLabel.Position = UDim2.new(0, 42, 0, 17)
 	levelLabel.BackgroundTransparency = 1
-	levelLabel.Text = "Level 1 Cosmic Adept"
-	levelLabel.TextColor3 = UILib.Colors.PurpleLight
-	levelLabel.TextSize = 9
-	levelLabel.Font = UILib.Fonts.Medium
+	levelLabel.Text = "LVL 1 ADEPT"
+	levelLabel.TextColor3 = UILib.Colors.GoldBright
+	levelLabel.TextSize = 10
+	levelLabel.Font = UILib.Fonts.Black
 	levelLabel.TextXAlignment = Enum.TextXAlignment.Left
 	levelLabel.ZIndex = 7
 	levelLabel.Parent = profileCard
+	UILib.ApplyTextStroke(levelLabel, UILib.Colors.StrokeDark, 2.5)
 	HUDController._labels.Level = levelLabel
 
 	local xpBarBg = Instance.new("Frame")
 	xpBarBg.Name = "XPBarBg"
-	xpBarBg.Size = UDim2.new(1, -46, 0, 3)
-	xpBarBg.Position = UDim2.new(0, 38, 1, -6)
-	xpBarBg.BackgroundColor3 = Color3.fromRGB(15, 12, 26)
+	xpBarBg.Size = UDim2.new(1, -48, 0, 5)
+	xpBarBg.Position = UDim2.new(0, 42, 1, -7)
+	xpBarBg.BackgroundColor3 = Color3.fromRGB(16, 12, 28)
 	xpBarBg.BorderSizePixel = 0
 	xpBarBg.ZIndex = 7
 	xpBarBg.Parent = profileCard
@@ -180,7 +194,7 @@ function HUDController.Create()
 	local xpFill = Instance.new("Frame")
 	xpFill.Name = "XPFill"
 	xpFill.Size = UDim2.fromScale(0.1, 1)
-	xpFill.BackgroundColor3 = Color3.fromRGB(56, 189, 248)
+	xpFill.BackgroundColor3 = Color3.fromRGB(14, 165, 233)
 	xpFill.BorderSizePixel = 0
 	xpFill.ZIndex = 8
 	xpFill.Parent = xpBarBg
@@ -190,8 +204,8 @@ function HUDController.Create()
 	-- ── Center: Currency Capsules with Real High-Res Asset Icons ──
 	local capsuleContainer = Instance.new("Frame")
 	capsuleContainer.Name = "CurrencyCapsules"
-	capsuleContainer.Size = UDim2.new(0, 480, 0, 34)
-	capsuleContainer.Position = UDim2.new(0.5, -240, 0.5, -17)
+	capsuleContainer.Size = UDim2.new(0, 500, 0, 38)
+	capsuleContainer.Position = UDim2.new(0.5, -250, 0.5, -19)
 	capsuleContainer.BackgroundTransparency = 1
 	capsuleContainer.ZIndex = 6
 	capsuleContainer.Parent = topBar
@@ -261,19 +275,19 @@ function HUDController.Create()
 	UILib.ApplyPadding(seedBar, 2, 6, 2, 6)
 
 	-- ============================================================
-	-- FLOATING NAVIGATION DOCK
+	-- FLOATING NAVIGATION DOCK (Chunky 3D Toy Bar)
 	-- ============================================================
 	local dock = Instance.new("Frame")
 	dock.Name = "NavigationDock"
-	dock.Size = UDim2.new(0, 688, 0, 50)
-	dock.Position = UDim2.new(0.5, -344, 1, -58)
+	dock.Size = UDim2.new(0, 715, 0, 56)
+	dock.Position = UDim2.new(0.5, -357, 1, -66)
 	dock.BackgroundColor3 = UILib.Colors.Surface0
-	dock.BackgroundTransparency = 0.15
+	dock.BackgroundTransparency = 0.05
 	dock.BorderSizePixel = 0
 	dock.ZIndex = 5
 	dock.Parent = gui
-	UILib.ApplyCorner(dock, 14)
-	UILib.ApplyStroke(dock, UILib.Colors.PurpleLight, 1.2, 0.4)
+	UILib.ApplyCorner(dock, 16)
+	UILib.ApplyStroke(dock, UILib.Colors.StrokeDark, 3)
 
 	local dockLayout = Instance.new("UIListLayout")
 	dockLayout.FillDirection = Enum.FillDirection.Horizontal
@@ -283,7 +297,7 @@ function HUDController.Create()
 	dockLayout.Parent = dock
 
 	for _, btnDef in DOCK_BUTTONS do
-		HUDController._createDockButton(dock, btnDef.Label, btnDef.Action, btnDef.Icon, btnDef.Accent)
+		HUDController._createDockButton(dock, btnDef.Label, btnDef.Action, btnDef.Icon, btnDef.Top, btnDef.Bottom)
 	end
 
 	-- Guided Objective Tracker (pinned on left)
@@ -291,171 +305,112 @@ function HUDController.Create()
 end
 
 -- ============================================================
--- CURRENCY CAPSULE FACTORY
+-- CURRENCY CAPSULE FACTORY (Chunky Cartoon Pill)
 -- ============================================================
 function HUDController._createCapsule(parent: Frame, name: string, icon: string, color: Color3, defaultValue: string): TextLabel
 	local capsule = Instance.new("Frame")
 	capsule.Name = name .. "Capsule"
-	capsule.Size = UDim2.new(0, 105, 1, 0)
-	capsule.BackgroundColor3 = UILib.Colors.Surface2
-	capsule.BackgroundTransparency = 0.35
+	capsule.Size = UDim2.new(0, 118, 0, 36)
+	capsule.BackgroundColor3 = UILib.Colors.Surface1
 	capsule.BorderSizePixel = 0
 	capsule.ZIndex = 7
 	capsule.Parent = parent
-	UILib.ApplyPill(capsule)
-	UILib.ApplyStroke(capsule, color, 1, 0.5)
+	UILib.ApplyCorner(capsule, 12)
+	UILib.ApplyStroke(capsule, UILib.Colors.StrokeDark, 2.5)
 
+	-- Icon Emblem Badge (Circular with dark stroke)
 	local iconBg = Instance.new("Frame")
-	iconBg.Size = UDim2.new(0, 20, 0, 20)
-	iconBg.Position = UDim2.new(0, 4, 0.5, -10)
+	iconBg.Name = "Emblem"
+	iconBg.Size = UDim2.new(0, 26, 0, 26)
+	iconBg.Position = UDim2.new(0, 5, 0.5, -13)
 	iconBg.BackgroundColor3 = color
-	iconBg.BackgroundTransparency = 0.8
+	iconBg.BackgroundTransparency = 0.2
 	iconBg.BorderSizePixel = 0
 	iconBg.ZIndex = 8
 	iconBg.Parent = capsule
 	UILib.ApplyPill(iconBg)
+	UILib.ApplyStroke(iconBg, UILib.Colors.StrokeDark, 2)
 
 	local iconImg = Instance.new("ImageLabel")
 	iconImg.Name = "CapsuleIcon"
-	iconImg.Size = UDim2.new(0, 14, 0, 14)
-	iconImg.Position = UDim2.new(0.5, -7, 0.5, -7)
+	iconImg.Size = UDim2.new(0, 18, 0, 18)
+	iconImg.Position = UDim2.new(0.5, -9, 0.5, -9)
 	iconImg.BackgroundTransparency = 1
 	iconImg.Image = icon
-	iconImg.ImageColor3 = color
+	iconImg.ImageColor3 = Color3.fromRGB(255, 255, 255)
 	iconImg.ZIndex = 9
 	iconImg.Parent = iconBg
 
 	local valLabel = Instance.new("TextLabel")
 	valLabel.Name = "Value"
-	valLabel.Size = UDim2.new(1, -30, 1, 0)
-	valLabel.Position = UDim2.new(0, 28, 0, 0)
+	valLabel.Size = UDim2.new(1, -38, 1, 0)
+	valLabel.Position = UDim2.new(0, 35, 0, 0)
 	valLabel.BackgroundTransparency = 1
 	valLabel.Text = defaultValue
-	valLabel.TextColor3 = color
-	valLabel.TextSize = 12
-	valLabel.Font = UILib.Fonts.Bold
+	valLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+	valLabel.TextSize = 13
+	valLabel.Font = UILib.Fonts.Black
 	valLabel.TextXAlignment = Enum.TextXAlignment.Left
 	valLabel.ZIndex = 8
 	valLabel.Parent = capsule
+	UILib.ApplyTextStroke(valLabel, UILib.Colors.StrokeDark, 2.5)
+
+	-- Optional Plus Button for Stardust & Gems
+	if name == "Stardust" or name == "Gems" then
+		local plusBtn = Instance.new("TextButton")
+		plusBtn.Name = "PlusBtn"
+		plusBtn.Size = UDim2.new(0, 18, 0, 18)
+		plusBtn.Position = UDim2.new(1, -22, 0.5, -9)
+		plusBtn.BackgroundColor3 = UILib.Colors.Green
+		plusBtn.Text = "+"
+		plusBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+		plusBtn.TextSize = 14
+		plusBtn.Font = UILib.Fonts.Black
+		plusBtn.ZIndex = 9
+		plusBtn.Parent = capsule
+		UILib.ApplyPill(plusBtn)
+		UILib.ApplyStroke(plusBtn, UILib.Colors.StrokeDark, 1.5)
+
+		plusBtn.MouseButton1Click:Connect(function()
+			local sc = getSoundController()
+			if sc then sc.Play("ButtonClick") end
+			local actionEvent = HUDController._gui and HUDController._gui:FindFirstChild("UIAction") :: BindableEvent?
+			if actionEvent then actionEvent:Fire("OpenShop") end
+		end)
+	end
 
 	return valLabel
 end
 
 -- ============================================================
--- DOCK BUTTON FACTORY
+-- DOCK BUTTON FACTORY (Chunky 3D Toy Button)
 -- ============================================================
-function HUDController._createDockButton(parent: Frame, label: string, actionName: string, iconAssetId: string, accentColor: Color3)
-	local btn = Instance.new("TextButton")
-	btn.Name = actionName
-	btn.Size = UDim2.new(0, 92, 0, 42)
-	btn.BackgroundColor3 = Color3.fromRGB(22, 18, 36)
-	btn.BackgroundTransparency = 0.15
-	btn.BorderSizePixel = 0
-	btn.Text = ""
-	btn.ZIndex = 6
-	btn.Parent = parent
-	UILib.ApplyCorner(btn, 10)
-
-	local stroke = Instance.new("UIStroke")
-	stroke.Name = "ButtonStroke"
-	stroke.Color = accentColor
-	stroke.Thickness = 1.2
-	stroke.Transparency = 0.55
-	stroke.Parent = btn
-
-	local bottomBar = Instance.new("Frame")
-	bottomBar.Name = "BottomAccent"
-	bottomBar.Size = UDim2.new(0.6, 0, 0, 2)
-	bottomBar.Position = UDim2.new(0.2, 0, 1, -3)
-	bottomBar.BackgroundColor3 = accentColor
-	bottomBar.BorderSizePixel = 0
-	bottomBar.ZIndex = 7
-	bottomBar.Parent = btn
-	UILib.ApplyPill(bottomBar)
-
-	local iconImg = Instance.new("ImageLabel")
-	iconImg.Name = "BtnIcon"
-	iconImg.Size = UDim2.new(0, 18, 0, 18)
-	iconImg.Position = UDim2.new(0.5, -9, 0, 4)
-	iconImg.BackgroundTransparency = 1
-	iconImg.Image = iconAssetId
-	iconImg.ImageColor3 = Color3.fromRGB(210, 200, 235)
-	iconImg.ZIndex = 7
-	iconImg.Parent = btn
-
-	local textLabel = Instance.new("TextLabel")
-	textLabel.Name = "BtnLabel"
-	textLabel.Size = UDim2.new(1, 0, 0, 13)
-	textLabel.Position = UDim2.new(0, 0, 0, 24)
-	textLabel.BackgroundTransparency = 1
-	textLabel.Text = label
-	textLabel.TextColor3 = Color3.fromRGB(240, 235, 255)
-	textLabel.TextSize = 9
-	textLabel.Font = UILib.Fonts.Bold
-	textLabel.ZIndex = 7
-	textLabel.Parent = btn
-
-	btn.MouseEnter:Connect(function()
-		local sc = getSoundController()
-		if sc then sc.Play("ButtonHover") end
-		TweenService:Create(btn, UILib.Timing.Fast, {
-			BackgroundColor3 = Color3.fromRGB(36, 28, 58),
-			Size = UDim2.new(0, 94, 0, 44),
-		}):Play()
-		TweenService:Create(stroke, UILib.Timing.Fast, {
-			Transparency = 0.1,
-			Thickness = 1.6,
-		}):Play()
-		TweenService:Create(iconImg, UILib.Timing.Fast, {
-			ImageColor3 = accentColor,
-		}):Play()
-		TweenService:Create(textLabel, UILib.Timing.Fast, {
-			TextColor3 = accentColor,
-		}):Play()
-		TweenService:Create(bottomBar, UILib.Timing.Fast, {
-			Size = UDim2.new(0.9, 0, 0, 3),
-			Position = UDim2.new(0.05, 0, 1, -4),
-		}):Play()
-	end)
-
-	btn.MouseLeave:Connect(function()
-		TweenService:Create(btn, UILib.Timing.Fast, {
-			BackgroundColor3 = Color3.fromRGB(22, 18, 36),
-			Size = UDim2.new(0, 92, 0, 42),
-		}):Play()
-		TweenService:Create(stroke, UILib.Timing.Fast, {
-			Transparency = 0.55,
-			Thickness = 1.2,
-		}):Play()
-		TweenService:Create(iconImg, UILib.Timing.Fast, {
-			ImageColor3 = Color3.fromRGB(210, 200, 235),
-		}):Play()
-		TweenService:Create(textLabel, UILib.Timing.Fast, {
-			TextColor3 = Color3.fromRGB(240, 235, 255),
-		}):Play()
-		TweenService:Create(bottomBar, UILib.Timing.Fast, {
-			Size = UDim2.new(0.6, 0, 0, 2),
-			Position = UDim2.new(0.2, 0, 1, -3),
-		}):Play()
-	end)
+function HUDController._createDockButton(
+	parent: Frame,
+	label: string,
+	actionName: string,
+	iconAssetId: string,
+	topColor: Color3,
+	bottomColor: Color3
+)
+	local btn = UILib.CreateChunkyButton(
+		parent,
+		actionName,
+		label,
+		topColor,
+		bottomColor,
+		UDim2.new(0, 96, 0, 46),
+		UDim2.new(0, 0, 0, 0),
+		iconAssetId
+	)
 
 	btn.MouseButton1Click:Connect(function()
 		local sc = getSoundController()
 		if sc then sc.Play("ButtonClick") end
 
-		TweenService:Create(btn, TweenInfo.new(0.06), {
-			Size = UDim2.new(0, 88, 0, 38),
-		}):Play()
-		task.delay(0.07, function()
-			TweenService:Create(btn, UILib.Timing.Fast, {
-				Size = UDim2.new(0, 92, 0, 42),
-			}):Play()
-		end)
-
 		local actionEvent = HUDController._gui and HUDController._gui:FindFirstChild("UIAction") :: BindableEvent?
 		if actionEvent then
 			actionEvent:Fire(actionName)
-		end
 	end)
 end
 
