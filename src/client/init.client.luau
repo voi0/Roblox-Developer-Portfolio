@@ -122,11 +122,12 @@ local defaultStartingData = {
 	Rebirth = { Level = 0, CosmicMultiplier = 1.0, ConstellationPoints = 0, ConstellationTree = {} },
 	SeedInventory = { starseed_basic = 5 },
 	Garden = {},
+	GardenSize = 6,
 	PlantCollection = {},
 	Pets = {},
 }
 for i = 1, 9 do
-	table.insert(defaultStartingData.Garden, { Index = i, Unlocked = true, Plant = nil })
+	table.insert(defaultStartingData.Garden, { Index = i, Unlocked = (i <= 6), Plant = nil })
 end
 if UIController then UIController.Update(defaultStartingData) end
 if WorldController then WorldController.Update(defaultStartingData) end
@@ -183,6 +184,7 @@ task.spawn(function()
 			if playerData.Garden and playerData.Garden[plotIndex] then
 				playerData.Garden[plotIndex].Plant = data
 			end
+			if SoundController then SoundController.Play("PlantSeed") end
 			if WorldController then WorldController.UpdatePlantVisual(plotIndex, data) end
 			if UIController then UIController.Update(playerData) end
 			if TutorialController then TutorialController.OnPlantPlanted(plotIndex) end
@@ -230,6 +232,9 @@ task.spawn(function()
 						if soil then worldPos = soil.Position end
 					end
 					VFXController.SpawnHarvestBurst(worldPos, tier)
+					if VFXController.SpawnFloatingHarvestText then
+						VFXController.SpawnFloatingHarvestText(worldPos, harvestResult)
+					end
 				end
 
 				if NotificationUI then NotificationUI.ShowHarvest(harvestResult) end

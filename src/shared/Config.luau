@@ -11,12 +11,11 @@ local Config = {}
 -- GARDEN
 -- ============================================================
 Config.Garden = {
-	-- Starting grid size (3x3 = 9 plots)
-	StartingSize = 9,
+	-- Starting grid size (3x3 = 9 plots, 6 unlocked initially)
+	StartingSize = 6,
 	MaxSize = 64, -- 8x8 max grid
 
 	-- Plot unlock costs (Stardust) by plot index
-	-- First 9 are free, then escalating cost
 	PlotUnlockBaseCost = 500,
 	PlotUnlockCostMultiplier = 1.85, -- exponential scaling
 

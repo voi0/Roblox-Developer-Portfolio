@@ -143,6 +143,17 @@ local function _reconcileData(data: any)
 	if data.FirstJoinTimestamp == 0 then
 		data.FirstJoinTimestamp = os.time()
 	end
+
+	-- Reconcile GardenSize based on unlocked plots
+	if data.Garden and #data.Garden > 0 then
+		local count = 0
+		for _, plot in data.Garden do
+			if plot.Unlocked then
+				count = count + 1
+			end
+		end
+		data.GardenSize = math.max(count, Config.Garden.StartingSize)
+	end
 end
 
 local function _handleLoginStreak(data: any)

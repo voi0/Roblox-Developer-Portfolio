@@ -335,7 +335,8 @@ function GardenService.UnlockPlot(player: Player, plotIndex: number): (boolean, 
 	if plot.Unlocked then return false, "Already unlocked." end
 
 	-- Calculate cost (exponential scaling)
-	local unlockedCount = data.GardenSize - Config.Garden.StartingSize
+	local currentGardenSize = data.GardenSize or Config.Garden.StartingSize
+	local unlockedCount = math.max(0, currentGardenSize - Config.Garden.StartingSize)
 	local cost = math.floor(
 		Config.Garden.PlotUnlockBaseCost
 		* (Config.Garden.PlotUnlockCostMultiplier ^ unlockedCount)

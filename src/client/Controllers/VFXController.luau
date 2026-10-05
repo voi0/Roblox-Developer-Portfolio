@@ -211,4 +211,92 @@ function VFXController.CreatePlantingAura(worldPos: Vector3)
 	end)
 end
 
+local function formatNumber(n: number): string
+	if n >= 1e9 then
+		return string.format("%.2fB", n / 1e9)
+	elseif n >= 1e6 then
+		return string.format("%.2fM", n / 1e6)
+	elseif n >= 1e3 then
+		return string.format("%.1fK", n / 1e3)
+	else
+		return tostring(math.floor(n))
+	end
+end
+
+function VFXController.SpawnFloatingHarvestText(worldPos: Vector3, harvestResult: any)
+	local anchor = Instance.new("Part")
+	anchor.Name = "FloatingTextAnchor"
+	anchor.Size = Vector3.new(0.2, 0.2, 0.2)
+	anchor.Position = worldPos + Vector3.new(0, 1.8, 0)
+	anchor.Anchored = true
+	anchor.CanCollide = false
+	anchor.Transparency = 1
+	anchor.Parent = Workspace
+
+	local billboard = Instance.new("BillboardGui")
+	billboard.Name = "HarvestBillboard"
+	billboard.Size = UDim2.new(0, 200, 0, 60)
+	billboard.StudsOffset = Vector3.new(0, 0, 0)
+	billboard.AlwaysOnTop = true
+	billboard.MaxDistance = 60
+	billboard.Parent = anchor
+
+	local container = Instance.new("Frame")
+	container.Size = UDim2.fromScale(1, 1)
+	container.BackgroundTransparency = 1
+	container.Parent = billboard
+
+	local amount = harvestResult and harvestResult.FinalValue or 0
+	local tier = harvestResult and harvestResult.MutationTier or "None"
+	local mult = harvestResult and harvestResult.MutationMultiplier or 1.0
+
+	local mainText = Instance.new("TextLabel")
+	mainText.Size = UDim2.new(1, 0, 0, 28)
+	mainText.Position = UDim2.new(0, 0, 0, 0)
+	mainText.BackgroundTransparency = 1
+	mainText.Text = string.format("+%s Stardust", formatNumber(amount))
+	mainText.TextColor3 = Color3.fromRGB(74, 222, 128)
+	mainText.TextStrokeColor3 = Color3.fromRGB(15, 25, 20)
+	mainText.TextStrokeTransparency = 0.2
+	mainText.TextSize = 20
+	mainText.Font = Enum.Font.GothamBlack
+	mainText.Parent = container
+
+	if tier ~= "None" and mult > 1 then
+		local config = TIER_VFX_CONFIG[tier] or TIER_VFX_CONFIG.Bloom
+		local mutLabel = Instance.new("TextLabel")
+		mutLabel.Size = UDim2.new(1, 0, 0, 22)
+		mutLabel.Position = UDim2.new(0, 0, 0, 28)
+		mutLabel.BackgroundTransparency = 1
+		mutLabel.Text = string.format("★ %s (%.1fx) ★", string.upper(tier), mult)
+		mutLabel.TextColor3 = config.Color
+		mutLabel.TextStrokeColor3 = Color3.fromRGB(20, 10, 30)
+		mutLabel.TextStrokeTransparency = 0.2
+		mutLabel.TextSize = 14
+		mutLabel.Font = Enum.Font.GothamBold
+		mutLabel.Parent = container
+
+		TweenService:Create(mutLabel, TweenInfo.new(1.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+			TextTransparency = 1,
+			TextStrokeTransparency = 1,
+		}):Play()
+	end
+
+	-- Animate floating up and fading
+	local moveTween = TweenService:Create(billboard, TweenInfo.new(1.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+		StudsOffset = Vector3.new(0, 3.8, 0),
+	})
+	local fadeTween = TweenService:Create(mainText, TweenInfo.new(1.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+		TextTransparency = 1,
+		TextStrokeTransparency = 1,
+	})
+
+	moveTween:Play()
+	fadeTween:Play()
+
+	task.delay(1.5, function()
+		anchor:Destroy()
+	end)
+end
+
 return VFXController

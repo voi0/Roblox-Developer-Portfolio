@@ -16,11 +16,78 @@ local Workspace = game:GetService("Workspace")
 
 local SeedData = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("SeedData"))
 local MutationData = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("MutationData"))
+local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
 
 local SoundController: any = nil
 local VFXController: any = nil
 
 local player = Players.LocalPlayer
+
+local function getSoundController(): any?
+	if SoundController then return SoundController end
+	local parent = script.Parent
+	if parent then
+		local mod = parent:FindFirstChild("SoundController")
+		if mod and mod:IsA("ModuleScript") then
+			local ok, res = pcall(require, mod)
+			if ok then
+				SoundController = res
+				return res
+			end
+		end
+	end
+	return nil
+end
+
+local function getVFXController(): any?
+	if VFXController then return VFXController end
+	local parent = script.Parent
+	if parent then
+		local mod = parent:FindFirstChild("VFXController")
+		if mod and mod:IsA("ModuleScript") then
+			local ok, res = pcall(require, mod)
+			if ok then
+				VFXController = res
+				return res
+			end
+		end
+	end
+	return nil
+end
+
+local function getNotificationUI(): any?
+	local uiFolder = script.Parent and script.Parent.Parent:FindFirstChild("UI")
+	if uiFolder then
+		local notifMod = uiFolder:FindFirstChild("NotificationUI")
+		if notifMod and notifMod:IsA("ModuleScript") then
+			local ok, res = pcall(require, notifMod)
+			if ok then return res end
+		end
+	end
+	return nil
+end
+
+local function formatNumber(n: number): string
+	if n >= 1e9 then
+		return string.format("%.2fB", n / 1e9)
+	elseif n >= 1e6 then
+		return string.format("%.2fM", n / 1e6)
+	elseif n >= 1e3 then
+		return string.format("%.1fK", n / 1e3)
+	else
+		return tostring(math.floor(n))
+	end
+end
+
+local function getPlotUnlockCost(gardenSize: number?): number
+	local startingSize = Config.Garden.StartingSize or 6
+	local currentGardenSize = gardenSize or startingSize
+	local unlockedCount = math.max(0, currentGardenSize - startingSize)
+	return math.floor(
+		Config.Garden.PlotUnlockBaseCost
+		* (Config.Garden.PlotUnlockCostMultiplier ^ unlockedCount)
+	)
+end
 
 local WorldController = {}
 WorldController._plotModels = {} :: { [number]: Model }
@@ -219,16 +286,58 @@ function WorldController._handlePlotInteraction(plotIndex: number)
 	if not gardenRequest then return end
 
 	if not plot.Unlocked then
-		gardenRequest:InvokeServer("UnlockPlot", plotIndex)
+		local cost = getPlotUnlockCost(data.GardenSize)
+		if (data.Stardust or 0) < cost then
+			local sound = getSoundController()
+			if sound then sound.Play("Error") end
+			local notif = getNotificationUI()
+			if notif then
+				notif.ShowToast(string.format("Need %s Stardust to unlock Plot #%d!", formatNumber(cost), plotIndex), Color3.fromRGB(239, 68, 68), 3)
+			end
+			return
+		end
+
+		local success, msg = gardenRequest:InvokeServer("UnlockPlot", plotIndex)
+		if success then
+			local sound = getSoundController()
+			if sound then sound.Play("PlantReady") end
+			local notif = getNotificationUI()
+			if notif then
+				notif.ShowToast(string.format("Plot #%d Unlocked! Ready for planting.", plotIndex), Color3.fromRGB(74, 222, 128), 3)
+			end
+		else
+			local sound = getSoundController()
+			if sound then sound.Play("Error") end
+			if msg then
+				local notif = getNotificationUI()
+				if notif then
+					notif.ShowToast(msg, Color3.fromRGB(239, 68, 68), 3)
+				end
+			end
+		end
 		return
 	end
 
 	if plot.Plant == nil then
+		local seedCount = (data.SeedInventory and data.SeedInventory[WorldController._selectedSeedId]) or 0
+		if seedCount <= 0 then
+			local sound = getSoundController()
+			if sound then sound.Play("Error") end
+			local notif = getNotificationUI()
+			if notif then
+				local seedDef = SeedData.GetSeed(WorldController._selectedSeedId)
+				local seedName = seedDef and seedDef.Name or "seed"
+				notif.ShowToast(string.format("No %s left! Open Shop [B] or click Seed Bar to purchase.", seedName), Color3.fromRGB(239, 68, 68), 3)
+			end
+			return
+		end
+
 		local plotModel = WorldController._plotModels[plotIndex]
 		if plotModel then
 			local soil = plotModel:FindFirstChild("Soil") :: BasePart?
-			if soil and VFXController then
-				VFXController.CreatePlantingAura(soil.Position)
+			local vfx = getVFXController()
+			if soil and vfx then
+				vfx.CreatePlantingAura(soil.Position)
 			end
 		end
 		gardenRequest:InvokeServer("Plant", plotIndex, WorldController._selectedSeedId)
@@ -237,7 +346,7 @@ function WorldController._handlePlotInteraction(plotIndex: number)
 	end
 end
 
-function WorldController.UpdatePlantVisual(plotIndex: number, plant: any?)
+function WorldController.UpdatePlantVisual(plotIndex: number, plant: any?, isUnlocked: boolean?)
 	local plotModel = WorldController._plotModels[plotIndex]
 	if not plotModel then return end
 
@@ -255,6 +364,51 @@ function WorldController.UpdatePlantVisual(plotIndex: number, plant: any?)
 	local stroke = badge and badge:FindFirstChild("BadgeStroke") :: UIStroke?
 
 	cropFolder:ClearAllChildren()
+
+	-- Check unlock status
+	if isUnlocked == nil then
+		if WorldController._data and WorldController._data.Garden and WorldController._data.Garden[plotIndex] then
+			isUnlocked = WorldController._data.Garden[plotIndex].Unlocked
+		else
+			isUnlocked = true
+		end
+	end
+
+	-- 0. LOCKED PLOT
+	if not isUnlocked then
+		local gardenSize = WorldController._data and WorldController._data.GardenSize
+		local cost = getPlotUnlockCost(gardenSize)
+		prompt.Enabled = true
+		prompt.ActionText = "Unlock Plot"
+		prompt.ObjectText = string.format("(%s SD)", formatNumber(cost))
+		billboard.Enabled = true
+
+		if titleLabel and subLabel and progressBg and stroke then
+			titleLabel.Text = string.format("LOCKED PLOT #%d", plotIndex)
+			titleLabel.TextColor3 = Color3.fromRGB(245, 158, 11)
+			subLabel.Text = string.format("Cost: %s SD", formatNumber(cost))
+			subLabel.TextColor3 = Color3.fromRGB(253, 230, 138)
+			progressBg.Visible = false
+			stroke.Color = Color3.fromRGB(245, 158, 11)
+		end
+
+		local rune = Instance.new("Part")
+		rune.Name = "LockedRune"
+		rune.Size = Vector3.new(3.0, 0.1, 3.0)
+		rune.Position = soil.Position + Vector3.new(0, 0.25, 0)
+		rune.Anchored = true
+		rune.Material = Enum.Material.Neon
+		rune.Color = Color3.fromRGB(245, 158, 11)
+		rune.Transparency = 0.55
+		rune.Parent = cropFolder
+
+		local sealLight = Instance.new("PointLight")
+		sealLight.Color = Color3.fromRGB(245, 158, 11)
+		sealLight.Brightness = 0.8
+		sealLight.Range = 8
+		sealLight.Parent = rune
+		return
+	end
 
 	-- 1. EMPTY PLOT
 	if not plant then
@@ -289,19 +443,19 @@ function WorldController.UpdatePlantVisual(plotIndex: number, plant: any?)
 		if cropTemplate then
 			local cropClone = cropTemplate:Clone()
 			cropClone.Name = "GrowingCrop"
-			pcall(function() cropClone:ScaleTo(0.5) end)
+			pcall(function() cropClone:ScaleTo(0.25) end)
 			if not cropClone.PrimaryPart then
 				cropClone.PrimaryPart = cropClone:FindFirstChildWhichIsA("BasePart", true)
 			end
 			if cropClone.PrimaryPart then
-				cropClone:PivotTo(CFrame.new(soil.Position + Vector3.new(0, 0.4, 0)))
+				cropClone:PivotTo(CFrame.new(soil.Position + Vector3.new(0, 0.2, 0)))
 			end
 			cropClone.Parent = cropFolder
 		else
 			local stem = Instance.new("Part")
 			stem.Name = "SproutStem"
-			stem.Size = Vector3.new(0.3, 1.4, 0.3)
-			stem.Position = soil.Position + Vector3.new(0, 1.0, 0)
+			stem.Size = Vector3.new(0.3, 0.4, 0.3)
+			stem.Position = soil.Position + Vector3.new(0, 0.4, 0)
 			stem.Anchored = true
 			stem.Material = Enum.Material.SmoothPlastic
 			stem.Color = Color3.fromRGB(52, 211, 153)
@@ -310,8 +464,8 @@ function WorldController.UpdatePlantVisual(plotIndex: number, plant: any?)
 			local bulb = Instance.new("Part")
 			bulb.Name = "SproutBulb"
 			bulb.Shape = Enum.PartType.Ball
-			bulb.Size = Vector3.new(0.9, 0.9, 0.9)
-			bulb.Position = stem.Position + Vector3.new(0, 0.9, 0)
+			bulb.Size = Vector3.new(0.4, 0.4, 0.4)
+			bulb.Position = stem.Position + Vector3.new(0, 0.3, 0)
 			bulb.Anchored = true
 			bulb.Material = Enum.Material.Neon
 			bulb.Color = seedColor
@@ -403,7 +557,8 @@ function WorldController.StartRenderLoop()
 
 						local plotModel = WorldController._plotModels[plotIndex]
 						if plotModel then
-							local soil = plotModel:FindFirstChild("Soil")
+							local soil = plotModel:FindFirstChild("Soil") :: BasePart?
+							local cropFolder = plotModel:FindFirstChild("Crop") :: Folder?
 							local billboard = soil and soil:FindFirstChild("PlotBillboard") :: BillboardGui?
 							local badge = billboard and billboard:FindFirstChild("Badge")
 							local subLabel = badge and badge:FindFirstChild("SubInfo") :: TextLabel?
@@ -415,6 +570,30 @@ function WorldController.StartRenderLoop()
 							end
 							if fill then
 								fill.Size = UDim2.fromScale(progressPct, 1)
+							end
+
+							-- Dynamic Real-Time Growth Scaling
+							if cropFolder and soil then
+								local growingCrop = cropFolder:FindFirstChild("GrowingCrop") :: Model?
+								if growingCrop then
+									local dynamicScale = 0.25 + (0.75 * progressPct)
+									pcall(function() growingCrop:ScaleTo(dynamicScale) end)
+									if growingCrop.PrimaryPart then
+										growingCrop:PivotTo(CFrame.new(soil.Position + Vector3.new(0, 0.2 + (0.5 * progressPct), 0)))
+									end
+								else
+									local stem = cropFolder:FindFirstChild("SproutStem") :: BasePart?
+									local bulb = cropFolder:FindFirstChild("SproutBulb") :: BasePart?
+									if stem and bulb then
+										local stemHeight = 0.4 + (1.2 * progressPct)
+										stem.Size = Vector3.new(0.3, stemHeight, 0.3)
+										stem.Position = soil.Position + Vector3.new(0, stemHeight / 2 + 0.2, 0)
+
+										local bulbSize = 0.4 + (0.6 * progressPct)
+										bulb.Size = Vector3.new(bulbSize, bulbSize, bulbSize)
+										bulb.Position = stem.Position + Vector3.new(0, stemHeight / 2 + bulbSize / 2, 0)
+									end
+								end
 							end
 						end
 					end
@@ -451,7 +630,7 @@ function WorldController.Update(data: any)
 
 	if data.Garden then
 		for index, plot in data.Garden do
-			WorldController.UpdatePlantVisual(index, plot.Plant)
+			WorldController.UpdatePlantVisual(index, plot.Plant, plot.Unlocked)
 		end
 	end
 end
