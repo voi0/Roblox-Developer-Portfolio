@@ -411,6 +411,7 @@ function HUDController._createDockButton(
 		local actionEvent = HUDController._gui and HUDController._gui:FindFirstChild("UIAction") :: BindableEvent?
 		if actionEvent then
 			actionEvent:Fire(actionName)
+		end
 	end)
 end
 

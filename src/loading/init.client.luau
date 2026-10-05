@@ -47,6 +47,15 @@ screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 screenGui.DisplayOrder = 100
 screenGui.Parent = playerGui
 
+-- Hard failsafe: Guarantee loading screen is NEVER stuck blocking the game
+task.delay(2.2, function()
+	if screenGui and screenGui.Parent then
+		pcall(function()
+			screenGui:Destroy()
+		end)
+	end
+end)
+
 -- ============================================================
 -- BACKGROUND (gradient from deep void to nebula)
 -- ============================================================

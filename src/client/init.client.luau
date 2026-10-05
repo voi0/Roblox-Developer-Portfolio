@@ -41,6 +41,8 @@ local function safeRequire(parent: Folder?, name: string): any?
 	end
 end
 
+local ProximityPromptService = game:GetService("ProximityPromptService")
+
 local SoundController = safeRequire(controllersFolder, "SoundController")
 local VFXController = safeRequire(controllersFolder, "VFXController")
 local WorldController = safeRequire(controllersFolder, "WorldController")
@@ -48,6 +50,7 @@ local UIController = safeRequire(controllersFolder, "UIController")
 local PetController = safeRequire(controllersFolder, "PetController")
 local TutorialController = safeRequire(controllersFolder, "TutorialController")
 local NotificationUI = safeRequire(uiFolder, "NotificationUI")
+local UILib = safeRequire(uiFolder, "UILib")
 
 local playerData: any = nil
 
@@ -145,12 +148,24 @@ local function setupCamera(char: Model)
 	camera.CameraSubject = humanoid
 
 	player.CameraMinZoomDistance = 6
-	player.CameraMaxZoomDistance = 35
+	player.CameraMaxZoomDistance = 45
 
-	-- Set comfortable 3rd-person camera framing looking at character from behind
-	task.delay(0.15, function()
+	-- Ensure all character parts are 100% visible (prevent near-clip transparency)
+	for _, part in char:GetDescendants() do
+		if part:IsA("BasePart") then
+			part.LocalTransparencyModifier = 0
+		end
+	end
+	char.DescendantAdded:Connect(function(part)
+		if part:IsA("BasePart") then
+			part.LocalTransparencyModifier = 0
+		end
+	end)
+
+	-- Frame camera naturally behind the character looking towards garden
+	task.delay(0.2, function()
 		if hrp and camera then
-			camera.CFrame = CFrame.lookAt(hrp.Position + Vector3.new(0, 5, -14), hrp.Position + Vector3.new(0, 1.5, 0))
+			camera.CFrame = CFrame.lookAt(hrp.Position + Vector3.new(0, 4.5, -12), hrp.Position + Vector3.new(0, 1.2, 0))
 		end
 	end)
 end
@@ -159,6 +174,28 @@ if player.Character then
 	task.spawn(setupCamera, player.Character)
 end
 player.CharacterAdded:Connect(setupCamera)
+
+-- ============================================================
+-- IN-WORLD 3D PROXIMITY PROMPT ROUTING (CONNECT 3D WORLD TO UI)
+-- ============================================================
+ProximityPromptService.PromptTriggered:Connect(function(prompt: ProximityPrompt, triggerPlayer: Player)
+	if triggerPlayer ~= player then return end
+
+	local name = prompt.Name
+	if name == "AltarForgePrompt" then
+		if UIController then UIController.ToggleModal("Forge") end
+	elseif name == "HatchEggPrompt" then
+		if UIController then UIController.ToggleModal("Pets") end
+	elseif name == "BundlePrompt" or name == "AutoHarvestPrompt" or name == "LuckPotionPrompt" then
+		if UIController then UIController.ToggleModal("Shop") end
+	elseif name == "TelescopePrompt" then
+		if UIController then UIController.ToggleModal("Constellation") end
+	elseif name == "RealmGatePrompt" then
+		if NotificationUI and UILib then
+			NotificationUI.Show("🔒 ASTRAL REALM: Reach Level 5 & Transcend to unlock this realm!", UILib.Colors.Pink)
+		end
+	end
+end)
 
 -- ============================================================
 -- DATA SYNC HANDLER
