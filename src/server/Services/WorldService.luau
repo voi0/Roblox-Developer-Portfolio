@@ -417,6 +417,85 @@ function WorldService.Init()
 		eggLight.Parent = eggPromptPart
 	end
 
+	-- 3.5 DEPLOY CELESTIAL STARDUST WELL (AFK VAULT)
+	local wellPos = Vector3.new(0, 0.4, -22)
+	local wellModel = Instance.new("Model")
+	wellModel.Name = "CelestialWell"
+	wellModel.Parent = gardenFolder
+
+	local wellBase = Instance.new("Part")
+	wellBase.Name = "WellBase"
+	wellBase.Shape = Enum.PartType.Cylinder
+	wellBase.Size = Vector3.new(1.8, 8.0, 8.0)
+	wellBase.Position = wellPos + Vector3.new(0, 0.9, 0)
+	wellBase.Orientation = Vector3.new(0, 0, 90)
+	wellBase.Anchored = true
+	wellBase.Material = Enum.Material.Slate
+	wellBase.Color = Color3.fromRGB(24, 20, 38)
+	wellBase.Parent = wellModel
+
+	local wellRim = Instance.new("Part")
+	wellRim.Name = "WellRim"
+	wellRim.Shape = Enum.PartType.Cylinder
+	wellRim.Size = Vector3.new(0.6, 9.2, 9.2)
+	wellRim.Position = wellPos + Vector3.new(0, 1.8, 0)
+	wellRim.Orientation = Vector3.new(0, 0, 90)
+	wellRim.Anchored = true
+	wellRim.Material = Enum.Material.Slate
+	wellRim.Color = Color3.fromRGB(36, 28, 54)
+	wellRim.Parent = wellModel
+
+	local wellLiquid = Instance.new("Part")
+	wellLiquid.Name = "WellCore"
+	wellLiquid.Shape = Enum.PartType.Cylinder
+	wellLiquid.Size = Vector3.new(0.4, 7.2, 7.2)
+	wellLiquid.Position = wellPos + Vector3.new(0, 1.7, 0)
+	wellLiquid.Orientation = Vector3.new(0, 0, 90)
+	wellLiquid.Anchored = true
+	wellLiquid.Material = Enum.Material.Neon
+	wellLiquid.Color = Color3.fromRGB(250, 204, 21)
+	wellLiquid.Transparency = 0.2
+	wellLiquid.Parent = wellModel
+
+	local wellLight = Instance.new("PointLight")
+	wellLight.Color = Color3.fromRGB(250, 204, 21)
+	wellLight.Brightness = 2.2
+	wellLight.Range = 16
+	wellLight.Parent = wellLiquid
+
+	local wellParticles = Instance.new("ParticleEmitter")
+	wellParticles.Name = "WellParticles"
+	wellParticles.Rate = 18
+	wellParticles.Lifetime = NumberRange.new(2.5, 4.5)
+	wellParticles.Speed = NumberRange.new(1.2, 2.5)
+	wellParticles.SpreadAngle = Vector2.new(30, 30)
+	wellParticles.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(250, 204, 21)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(244, 114, 182)),
+	})
+	wellParticles.Size = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.2),
+		NumberSequenceKeypoint.new(0.5, 0.4),
+		NumberSequenceKeypoint.new(1, 0),
+	})
+	wellParticles.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.1),
+		NumberSequenceKeypoint.new(0.8, 0.3),
+		NumberSequenceKeypoint.new(1, 1),
+	})
+	wellParticles.LightEmission = 0.9
+	wellParticles.Parent = wellLiquid
+
+	local wellPrompt = Instance.new("ProximityPrompt")
+	wellPrompt.Name = "CelestialWellPrompt"
+	wellPrompt.ActionText = "Collect Stardust"
+	wellPrompt.ObjectText = "Celestial Well (AFK Vault)"
+	wellPrompt.KeyboardKeyCode = Enum.KeyCode.E
+	wellPrompt.HoldDuration = 0
+	wellPrompt.MaxActivationDistance = 14
+	wellPrompt.RequiresLineOfSight = false
+	wellPrompt.Parent = wellLiquid
+
 	-- 4. PREPARE 3D PLANTER TEMPLATE & CROP TEMPLATE
 	local planterTemplate: Model? = nil
 	local planterModel = classifiedAssets["PLANTER"]

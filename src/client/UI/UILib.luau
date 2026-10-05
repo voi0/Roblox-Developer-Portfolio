@@ -68,6 +68,22 @@ UILib.Fonts = {
 	Body   = Enum.Font.Gotham,
 }
 
+UILib.Icons = {
+	Stardust     = "rbxassetid://6031075931",
+	NebulaGems   = "rbxassetid://6031075929",
+	Starlight    = "rbxassetid://6031075933",
+	CosmicMult   = "rbxassetid://6031075938",
+	Shop         = "rbxassetid://6031075927",
+	Forge        = "rbxassetid://6031075935",
+	Quests       = "rbxassetid://6031075936",
+	Pets         = "rbxassetid://6031075937",
+	Stars        = "rbxassetid://6031075930",
+	Codex        = "rbxassetid://6031075928",
+	Transcend    = "rbxassetid://6031075934",
+	Checkmark    = "rbxassetid://6031075932",
+	Lock         = "rbxassetid://6031075926",
+}
+
 UILib.Timing = {
 	Fast     = TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
 	Normal   = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),

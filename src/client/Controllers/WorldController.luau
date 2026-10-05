@@ -182,8 +182,48 @@ function WorldController.Init()
 		end
 	end)
 
+	-- Connect Celestial Well Prompt
+	task.spawn(function()
+		local wellPrompt = gardenFolder:FindFirstChild("CelestialWellPrompt", true) :: ProximityPrompt?
+		if wellPrompt then
+			wellPrompt.Triggered:Connect(function()
+				WorldController._handleWellCollection()
+			end)
+		end
+	end)
+
 	WorldController.StartRenderLoop()
 	print("  ✅ [WorldController] Client Spatial Garden Online!")
+end
+
+function WorldController._handleWellCollection()
+	local gardenRequest = ReplicatedStorage:FindFirstChild("GardenRequest") :: RemoteFunction?
+	if not gardenRequest then return end
+
+	local res = gardenRequest:InvokeServer("CollectWell")
+	if res and res.Success and res.Amount and res.Amount > 0 then
+		local sound = getSoundController()
+		if sound then sound.Play("PlantReady") end
+		local notif = getNotificationUI()
+		if notif then
+			notif.ShowToast(string.format("Collected +%s Stardust from Celestial Well!", formatNumber(res.Amount)), Color3.fromRGB(250, 204, 21), 3)
+		end
+		local vfx = getVFXController()
+		if vfx and vfx.SpawnFloatingHarvestText then
+			local gardenFolder = Workspace:FindFirstChild("StarweaveGarden")
+			local well = gardenFolder and gardenFolder:FindFirstChild("CelestialWell", true) :: Model?
+			local core = well and well:FindFirstChild("WellCore") :: BasePart?
+			local pos = (core and core.Position) or Vector3.new(0, 3, -22)
+			vfx.SpawnFloatingHarvestText(pos, { FinalValue = res.Amount, MutationTier = "Celestial", MutationMultiplier = 1.0 })
+		end
+	else
+		local sound = getSoundController()
+		if sound then sound.Play("Error") end
+		local notif = getNotificationUI()
+		if notif then
+			notif.ShowToast("Celestial Well is still gathering stardust. Check back soon!", Color3.fromRGB(168, 162, 190), 2)
+		end
+	end
 end
 
 function WorldController._setupPlotClient(index: number, plotModel: Model)

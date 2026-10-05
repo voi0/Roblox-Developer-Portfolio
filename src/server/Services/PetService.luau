@@ -74,6 +74,7 @@ function PetService.HatchEgg(player: Player): (boolean, string, any?)
 		data.EquippedPetIndex = 1
 	end
 
+	DataService.ProgressObjective(player, "HatchPet", 1, nil)
 	DataService.SyncClient(player)
 	return true, `Awakened a {petDef.Name}!`, petInstance
 end

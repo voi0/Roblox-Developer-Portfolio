@@ -366,6 +366,52 @@ task.spawn(function()
 end)
 
 -- ============================================================
+-- PROGRESSION & OBJECTIVE LISTENERS
+-- ============================================================
+task.spawn(function()
+	local objectiveCompleted = ReplicatedStorage:WaitForChild("ObjectiveCompleted", 20) :: RemoteEvent?
+	if not objectiveCompleted then return end
+
+	objectiveCompleted.OnClientEvent:Connect(function(objDef: any)
+		if NotificationUI then
+			NotificationUI.ShowToast(`✦ OBJECTIVE COMPLETE: {objDef.Title}!`, Color3.fromRGB(234, 179, 8), 4)
+		end
+		if SoundController then
+			SoundController.Play("PlantReady")
+		end
+		if VFXController then
+			VFXController.AddCameraTrauma(0.15)
+		end
+		local ObjectiveTracker = safeRequire(uiFolder, "ObjectiveTracker")
+		if ObjectiveTracker then
+			ObjectiveTracker.OnCompleted(objDef)
+		end
+	end)
+end)
+
+task.spawn(function()
+	local playerLevelUp = ReplicatedStorage:WaitForChild("PlayerLevelUp", 20) :: RemoteEvent?
+	if not playerLevelUp then return end
+
+	playerLevelUp.OnClientEvent:Connect(function(level: number, rewards: any)
+		if NotificationUI then
+			local bonusText = ""
+			if rewards and rewards.Stardust then
+				bonusText = string.format(" (+%s Stardust, +%d Gems)", tostring(rewards.Stardust), rewards.Gems or 0)
+			end
+			NotificationUI.ShowToast(`🌟 LEVEL UP! Reached Level {level}{bonusText}!`, Color3.fromRGB(56, 189, 248), 5)
+		end
+		if SoundController then
+			SoundController.Play("RebirthAscend")
+		end
+		if VFXController then
+			VFXController.FlashScreen(Color3.fromRGB(56, 189, 248), 0.35, 0.7)
+			VFXController.AddCameraTrauma(0.2)
+		end
+	end)
+end)
+
+-- ============================================================
 -- KEYBOARD HOTKEYS & SHORTCUTS (1-7, B, F, Q, P, C, R, Tab, Esc)
 -- ============================================================
 local UserInputService = game:GetService("UserInputService")

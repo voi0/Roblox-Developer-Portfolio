@@ -171,6 +171,9 @@ function GardenService.PlantSeed(player: Player, plotIndex: number, seedId: stri
 		QuestService.TrackProgress(player, "plant_crops", 1)
 	end
 
+	-- Track active objective
+	DataService.ProgressObjective(player, "Plant", 1, nil)
+
 	return true, "Planted!"
 end
 
@@ -319,6 +322,12 @@ function GardenService.HarvestPlant(player: Player, plotIndex: number): (boolean
 		end
 	end
 
+	-- Track active objectives
+	DataService.ProgressObjective(player, "Harvest", 1, nil)
+	if harvestResult.MutationTier and harvestResult.MutationTier ~= "None" then
+		DataService.ProgressObjective(player, "HarvestMutation", 1, nil)
+	end
+
 	return true, harvestResult
 end
 
@@ -349,6 +358,7 @@ function GardenService.UnlockPlot(player: Player, plotIndex: number): (boolean, 
 
 	-- Unlock
 	DataService.UnlockPlot(player, plotIndex)
+	DataService.ProgressObjective(player, "UnlockPlot", 1, plotIndex)
 
 	-- Notify client
 	local gardenEvent = ReplicatedStorage:FindFirstChild("GardenUpdate")
@@ -403,6 +413,7 @@ function GardenService.BuySeed(player: Player, seedId: string, count: number): (
 
 	-- Add seeds
 	DataService.AddSeeds(player, seedId, count)
+	DataService.ProgressObjective(player, "BuySeed", count, nil)
 
 	return true, `Bought {count}x {seed.Name}!`
 end
@@ -451,6 +462,9 @@ function GardenService.ForgeSeed(player: Player, seedId: string): (boolean, stri
 
 	-- Grant upgraded seed
 	DataService.AddSeeds(player, nextSeed.Id, 1)
+
+	-- Track active objective
+	DataService.ProgressObjective(player, "Forge", 1, nil)
 
 	-- Track daily quest
 	if QuestService then
@@ -592,6 +606,10 @@ function GardenService.Init()
 			local seedId = ...
 			local success, message, newSeedId = GardenService.ForgeSeed(player, seedId :: string)
 			return { Success = success, Message = message, NewSeedId = newSeedId }
+
+		elseif action == "CollectWell" then
+			local success, amount = DataService.CollectWell(player)
+			return { Success = success, Amount = amount }
 		end
 
 		return { Success = false, Message = "Unknown action." }

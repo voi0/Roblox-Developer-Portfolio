@@ -22,6 +22,7 @@ else
 end
 
 local Config = require(ReplicatedStorage.Shared.Config)
+local ObjectiveData = require(ReplicatedStorage.Shared.ObjectiveData)
 
 -- ============================================================
 -- DATA TEMPLATE (Default values for new players)
@@ -31,6 +32,14 @@ local DATA_TEMPLATE = {
 	Stardust = Config.Economy.StartingStardust,
 	NebulaGems = Config.Economy.StartingNebulaGems,
 	Starlight = Config.Economy.StartingStarlight,
+
+	-- Objective Progression Ladder
+	CurrentObjectiveId = 1,
+	ObjectiveProgress = 0,
+
+	-- AFK Celestial Well
+	WellAccumulatedStardust = 0,
+	LastWellCollectTimestamp = 0,
 
 	-- Garden (initialized as 3x3 grid of unlocked empty plots)
 	Garden = {}, -- populated in _initializeGarden
@@ -153,6 +162,18 @@ local function _reconcileData(data: any)
 			end
 		end
 		data.GardenSize = math.max(count, Config.Garden.StartingSize)
+	end
+
+	-- Reconcile Objective Progression
+	if data.CurrentObjectiveId == nil then
+		data.CurrentObjectiveId = 1
+		data.ObjectiveProgress = 0
+	end
+
+	-- Reconcile Celestial Well
+	if data.WellAccumulatedStardust == nil then
+		data.WellAccumulatedStardust = 0
+		data.LastWellCollectTimestamp = os.time()
 	end
 end
 
@@ -303,6 +324,7 @@ function DataService.AddCurrency(player: Player, currencyType: string, amount: n
 
 	if currencyType == "Stardust" then
 		data.TotalStardustEarned = data.TotalStardustEarned + amount
+		DataService.ProgressObjective(player, "ReachStardust", data.Stardust, nil)
 	end
 
 	DataService.SyncClient(player)
@@ -410,13 +432,114 @@ function DataService.AddExperience(player: Player, amount: number)
 	data.Experience = data.Experience + amount
 
 	-- Check for level up
-	local requiredXP = Config.Leveling.LevelUpBase * (data.Level ^ Config.Leveling.LevelUpExponent)
+	local requiredXP = math.floor(Config.Leveling.LevelUpBase * (data.Level ^ Config.Leveling.LevelUpExponent))
+	local didLevelUp = false
+	local oldLevel = data.Level
+
 	while data.Experience >= requiredXP and data.Level < Config.Leveling.MaxLevel do
 		data.Experience = data.Experience - requiredXP
 		data.Level = data.Level + 1
-		requiredXP = Config.Leveling.LevelUpBase * (data.Level ^ Config.Leveling.LevelUpExponent)
+		didLevelUp = true
+
+		-- Immediate Level-Up Rewards!
+		local bonusSD = data.Level * 250
+		local bonusGems = math.max(5, math.floor(data.Level / 2) * 5)
+		data.Stardust = data.Stardust + bonusSD
+		data.NebulaGems = data.NebulaGems + bonusGems
+
+		if data.Level % 5 == 0 then
+			data.Rebirth.ConstellationPoints = (data.Rebirth.ConstellationPoints or 0) + 1
+		end
+
+		requiredXP = math.floor(Config.Leveling.LevelUpBase * (data.Level ^ Config.Leveling.LevelUpExponent))
 	end
+
+	if didLevelUp then
+		DataService.ProgressObjective(player, "ReachLevel", data.Level, nil)
+		local levelUpRemote = ReplicatedStorage:FindFirstChild("PlayerLevelUp") :: RemoteEvent?
+		if levelUpRemote then
+			levelUpRemote:FireClient(player, data.Level, oldLevel)
+		end
+	end
+
 	DataService.SyncClient(player)
+end
+
+function DataService.ProgressObjective(player: Player, actionType: string, amount: number?, specificArg: any?): boolean
+	local data = DataService.GetData(player)
+	if not data then return false end
+
+	local currentId = data.CurrentObjectiveId or 1
+	local objDef = ObjectiveData.GetObjective(currentId)
+	if not objDef then return false end
+
+	if objDef.ActionType ~= actionType then return false end
+
+	local inc = amount or 1
+	if actionType == "ReachLevel" then
+		data.ObjectiveProgress = data.Level
+	elseif actionType == "ReachStardust" then
+		data.ObjectiveProgress = data.Stardust
+	elseif actionType == "UnlockPlot" then
+		if specificArg and specificArg == objDef.Target then
+			data.ObjectiveProgress = objDef.Target
+		end
+	else
+		data.ObjectiveProgress = (data.ObjectiveProgress or 0) + inc
+	end
+
+	-- Check completion
+	if data.ObjectiveProgress >= objDef.Target then
+		-- Grant reward
+		DataService.AddCurrency(player, "Stardust", objDef.RewardStardust)
+		if objDef.RewardGems > 0 then
+			DataService.AddCurrency(player, "NebulaGems", objDef.RewardGems)
+		end
+		if objDef.RewardXP > 0 then
+			DataService.AddExperience(player, objDef.RewardXP)
+		end
+
+		-- Advance to next objective
+		data.CurrentObjectiveId = currentId + 1
+		data.ObjectiveProgress = 0
+
+		-- Notify client
+		local notifRemote = ReplicatedStorage:FindFirstChild("ObjectiveCompleted") :: RemoteEvent?
+		if notifRemote then
+			notifRemote:FireClient(player, objDef)
+		end
+	end
+
+	DataService.SyncClient(player)
+	return true
+end
+
+function DataService.CollectWell(player: Player): (boolean, number)
+	local data = DataService.GetData(player)
+	if not data then return false, 0 end
+
+	local amount = data.WellAccumulatedStardust or 0
+	if amount <= 0 then return false, 0 end
+
+	data.Stardust = (data.Stardust or 0) + amount
+	data.WellAccumulatedStardust = 0
+	data.LastWellCollectTimestamp = os.time()
+
+	DataService.ProgressObjective(player, "CollectWell", 1, nil)
+	DataService.SyncClient(player)
+	return true, amount
+end
+
+function DataService.TickWell(player: Player, elapsedSeconds: number)
+	local data = DataService.GetData(player)
+	if not data then return end
+
+	local ratePerMinute = 50 + (data.Level * 20)
+	local add = math.floor((ratePerMinute / 60) * elapsedSeconds)
+	if add > 0 then
+		local cap = 5000 + (data.Level * 1000)
+		data.WellAccumulatedStardust = math.min(cap, (data.WellAccumulatedStardust or 0) + add)
+	end
 end
 
 function DataService.IncrementHarvests(player: Player)
@@ -500,6 +623,26 @@ function DataService.Init()
 	local dataReady = Instance.new("RemoteEvent")
 	dataReady.Name = "DataReady"
 	dataReady.Parent = ReplicatedStorage
+
+	-- Create PlayerLevelUp remote event
+	local playerLevelUp = Instance.new("RemoteEvent")
+	playerLevelUp.Name = "PlayerLevelUp"
+	playerLevelUp.Parent = ReplicatedStorage
+
+	-- Create ObjectiveCompleted remote event
+	local objectiveCompleted = Instance.new("RemoteEvent")
+	objectiveCompleted.Name = "ObjectiveCompleted"
+	objectiveCompleted.Parent = ReplicatedStorage
+
+	-- Start Celestial Well 10-second ticker
+	task.spawn(function()
+		while true do
+			task.wait(10)
+			for _, player in Players:GetPlayers() do
+				DataService.TickWell(player, 10)
+			end
+		end
+	end)
 
 	-- Create GetData remote function for reliable client-side bootstrap
 	local getData = Instance.new("RemoteFunction")
