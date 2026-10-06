@@ -461,22 +461,6 @@ function WorldController.UpdatePlantVisual(plotIndex: number, plant: any?, isUnl
 			progressBg.Visible = false
 			stroke.Color = Color3.fromRGB(245, 158, 11)
 		end
-
-		local rune = Instance.new("Part")
-		rune.Name = "LockedRune"
-		rune.Size = Vector3.new(3.0, 0.1, 3.0)
-		rune.Position = soil.Position + Vector3.new(0, 0.25, 0)
-		rune.Anchored = true
-		rune.Material = Enum.Material.Neon
-		rune.Color = Color3.fromRGB(245, 158, 11)
-		rune.Transparency = 0.55
-		rune.Parent = cropFolder
-
-		local sealLight = Instance.new("PointLight")
-		sealLight.Color = Color3.fromRGB(245, 158, 11)
-		sealLight.Brightness = 0.8
-		sealLight.Range = 8
-		sealLight.Parent = rune
 		return
 	end
 
@@ -577,21 +561,6 @@ function WorldController.UpdatePlantVisual(plotIndex: number, plant: any?, isUnl
 			progressBg.Visible = false
 			stroke.Color = Color3.fromRGB(250, 204, 21)
 		end
-
-		-- Floating Beacon Halo Ring (Celebratory 3D visual cue)
-		local halo = Instance.new("Part")
-		halo.Name = "BeaconHalo"
-		halo.Shape = Enum.PartType.Cylinder
-		halo.Size = Vector3.new(0.1, 3.2, 3.2)
-		halo.Position = soil.Position + Vector3.new(0, 3.4, 0)
-		halo.Orientation = Vector3.new(0, 0, 90)
-		halo.Anchored = true
-		halo.CanCollide = false
-		halo.Material = Enum.Material.Neon
-		halo.Color = Color3.fromRGB(250, 204, 21)
-		halo.Transparency = 0.35
-		halo.Parent = cropFolder
-		table.insert(WorldController._rotatingCores, halo)
 
 		if cropTemplate then
 			local cropClone = cropTemplate:Clone()

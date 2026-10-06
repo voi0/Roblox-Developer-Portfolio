@@ -133,81 +133,17 @@ function PlaytimeService._buildAFKPool()
 	local garden = Workspace:WaitForChild("StarweaveGarden", 15) :: Folder?
 	if not garden then return end
 
-	local poolCenter = Vector3.new(32, 0.1, 2)
+	local poolCenter = Vector3.new(0, 1.0, 24)
 
-	-- Circular Meditation Pool Dais
-	local poolModel = Instance.new("Model")
-	poolModel.Name = "CosmicAFKPool"
-	poolModel.Parent = garden
-
-	local border = Instance.new("Part")
-	border.Name = "PoolRim"
-	border.Shape = Enum.PartType.Cylinder
-	border.Size = Vector3.new(0.6, 16, 16)
-	border.CFrame = CFrame.new(poolCenter) * CFrame.Angles(0, 0, math.rad(90))
-	border.Material = Enum.Material.Slate
-	border.Color = Color3.fromRGB(36, 30, 56)
-	border.Anchored = true
-	border.CanCollide = true
-	border.Parent = poolModel
-
+	-- Completely invisible AFK trigger volume - zero procedural neon shapes, zero 2D billboards
 	local water = Instance.new("Part")
-	water.Name = "MeditationWater"
-	water.Shape = Enum.PartType.Cylinder
-	water.Size = Vector3.new(0.4, 14.5, 14.5)
-	water.CFrame = CFrame.new(poolCenter + Vector3.new(0, 0.2, 0)) * CFrame.Angles(0, 0, math.rad(90))
-	water.Material = Enum.Material.Neon
-	water.Color = Color3.fromRGB(56, 189, 248)
-	water.Transparency = 0.45
-	water.Anchored = true
+	water.Name = "MeditationTrigger"
+	water.Size = Vector3.new(24, 8, 24)
+	water.CFrame = CFrame.new(poolCenter)
+	water.Transparency = 1
 	water.CanCollide = false
-	water.Parent = poolModel
-
-	-- Rising Stardust Column
-	local emitter = Instance.new("ParticleEmitter")
-	emitter.Color = ColorSequence.new({
-		ColorSequenceKeypoint.new(0, Color3.fromRGB(56, 189, 248)),
-		ColorSequenceKeypoint.new(1, Color3.fromRGB(168, 85, 247)),
-	})
-	emitter.Size = NumberSequence.new({
-		NumberSequenceKeypoint.new(0, 0.2),
-		NumberSequenceKeypoint.new(0.5, 0.5),
-		NumberSequenceKeypoint.new(1, 0),
-	})
-	emitter.Lifetime = NumberRange.new(3, 5)
-	emitter.Rate = 24
-	emitter.Speed = NumberRange.new(1, 3)
-	emitter.SpreadAngle = Vector2.new(20, 20)
-	emitter.LightEmission = 0.9
-	emitter.Parent = water
-
-	-- Floating 3D Title
-	local tag = Instance.new("BillboardGui")
-	tag.Name = "PoolTitle"
-	tag.Size = UDim2.new(0, 200, 0, 50)
-	tag.StudsOffset = Vector3.new(0, 4.0, 0)
-	tag.AlwaysOnTop = false
-	tag.MaxDistance = 50
-	tag.Parent = water
-
-	local titleLabel = Instance.new("TextLabel")
-	titleLabel.Size = UDim2.new(1, 0, 0, 22)
-	titleLabel.BackgroundTransparency = 1
-	titleLabel.Text = "✦ COSMIC MEDITATION POOL ✦"
-	titleLabel.TextColor3 = Color3.fromRGB(56, 189, 248)
-	titleLabel.TextSize = 13
-	titleLabel.Font = Enum.Font.GothamBold
-	titleLabel.Parent = tag
-
-	local subLabel = Instance.new("TextLabel")
-	subLabel.Size = UDim2.new(1, 0, 0, 16)
-	subLabel.Position = UDim2.new(0, 0, 0, 22)
-	subLabel.BackgroundTransparency = 1
-	subLabel.Text = "Stand here for +75 Stardust/30s & +15% Luck"
-	subLabel.TextColor3 = Color3.fromRGB(240, 230, 255)
-	subLabel.TextSize = 10
-	subLabel.Font = Enum.Font.GothamMedium
-	subLabel.Parent = tag
+	water.Anchored = true
+	water.Parent = garden
 
 	-- Zone Detection
 	water.Touched:Connect(function(hit)
@@ -223,7 +159,7 @@ function PlaytimeService._buildAFKPool()
 		local player = char and Players:GetPlayerFromCharacter(char)
 		if player then
 			task.delay(1, function()
-				if player.Character and (player.Character:GetPivot().Position - poolCenter).Magnitude > 8 then
+				if player.Character and (player.Character:GetPivot().Position - poolCenter).Magnitude > 14 then
 					PlaytimeService._inAFKPool[player] = false
 				end
 			end)
