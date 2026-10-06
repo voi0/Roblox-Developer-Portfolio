@@ -11,6 +11,18 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
 
 local player = Players.LocalPlayer
+local StarterGui = game:GetService("StarterGui")
+
+-- Disable default Roblox hotbar so it does not overlap custom bottom dock
+task.spawn(function()
+	for _ = 1, 15 do
+		local ok = pcall(function()
+			StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, false)
+		end)
+		if ok then break end
+		task.wait(0.2)
+	end
+end)
 
 print("========================================")
 print("  ✨ STARWEAVE Client Starting...")

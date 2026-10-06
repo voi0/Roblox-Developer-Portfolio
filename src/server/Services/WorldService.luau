@@ -1,9 +1,9 @@
 --!strict
 --[[
-	WorldService.luau — Pure 3D Model Spatial Sanctuary for STARWEAVE
+	WorldService.luau — Pure 3D Spatial Sanctuary for STARWEAVE
 	Faithfully realizes the Unified Concept Art (media_1791217248028.jpg).
-	Uses 100% of the User's imported 3D Models.
-	ZERO procedural primitive blocks, ZERO neon discs, ZERO yellow/cyan toy shapes.
+	100% powered by the User's 14 imported 3D Models (glTF nodes).
+	ZERO procedural primitive blocks, ZERO clunky graybox curbs, ZERO flat parking lots.
 ]]
 
 local Workspace = game:GetService("Workspace")
@@ -15,24 +15,24 @@ local Players = game:GetService("Players")
 local WorldService = {}
 
 -- ============================================================
--- SATELLITE & PLOT COORDINATES
+-- SATELLITE & PLOT COORDINATES (Spacious Grand Promenade Layout)
 -- ============================================================
--- 9 Garden Plots arranged in two clean symmetrical beds flanking the walkway
+-- 9 Garden Plots arranged in two spacious flanking wings with a 36-stud central walkway
 local PLOT_POSITIONS = {
-	-- West Bed (Quadrant 1)
-	Vector3.new(-13.0, 0.5, 2.0),
-	Vector3.new(-6.5, 0.5, 2.0),
-	Vector3.new(-13.0, 0.5, 10.0),
-	Vector3.new(-6.5, 0.5, 10.0),
+	-- West Garden Wing (Quadrant 1)
+	Vector3.new(-18.0, 0.4, -4.0),
+	Vector3.new(-28.0, 0.4, -4.0),
+	Vector3.new(-18.0, 0.4, 7.0),
+	Vector3.new(-28.0, 0.4, 7.0),
 
-	-- Centerpiece Plot (Between walkway & altar)
-	Vector3.new(0.0, 0.5, 7.0),
+	-- Centerpiece Plot (Framed right before the Sacred Altar)
+	Vector3.new(0.0, 0.4, 4.0),
 
-	-- East Bed (Quadrant 2)
-	Vector3.new(6.5, 0.5, 2.0),
-	Vector3.new(13.0, 0.5, 2.0),
-	Vector3.new(6.5, 0.5, 10.0),
-	Vector3.new(13.0, 0.5, 10.0),
+	-- East Garden Wing (Quadrant 2)
+	Vector3.new(18.0, 0.4, -4.0),
+	Vector3.new(28.0, 0.4, -4.0),
+	Vector3.new(18.0, 0.4, 7.0),
+	Vector3.new(28.0, 0.4, 7.0),
 }
 
 -- ============================================================
@@ -152,7 +152,7 @@ local function pivotModelBottomFlush(model: Model, targetXZ: Vector3, targetBott
 	end
 end
 
--- Places the TOP surface of an island rock exactly at targetTopY (so the rock hangs underneath)
+-- Places the TOP surface of an island rock exactly at targetTopY
 local function pivotIslandTopFlush(model: Model, targetXZ: Vector3, targetTopY: number)
 	local cf, sz = getContainerBounds(model)
 	local currentTop = cf.Position.Y + sz.Y / 2
@@ -177,7 +177,7 @@ local function pivotIslandTopFlush(model: Model, targetXZ: Vector3, targetTopY: 
 end
 
 -- ============================================================
--- 3D MODEL CLASSIFIER (Exact glTF Node Hashes + Keywords)
+-- 3D MODEL CLASSIFIER (Exact glTF Node Hashes for all 14 Models)
 -- ============================================================
 local function classifyModel(inst: Instance): string?
 	local allNames = { inst.Name }
@@ -193,58 +193,64 @@ local function classifyModel(inst: Instance): string?
 	end
 	local combined = string.lower(table.concat(allNames, " "))
 
-	-- 1. Unified Full-Map / Multi-Structure Mesh File
-	if string.find(combined, "unified") or string.find(combined, "structures") or string.find(combined, "full_map") or string.find(combined, "vision") or string.find(combined, "master_map") or string.find(combined, "archipelago") or string.find(combined, "environment") or string.find(combined, "main_map") or string.find(combined, "fullmap") or string.find(combined, "master") or string.find(combined, "scene") or string.find(combined, "all_models") or string.find(combined, "combined") then
+	-- 1. The 14th Model: Master Unified Vision Scene
+	if string.find(combined, "ynrolxdcxfktt2p42y4l") or string.find(combined, "unified") or string.find(combined, "structures") or string.find(combined, "full_map") or string.find(combined, "vision") or string.find(combined, "master_map") or string.find(combined, "archipelago") or string.find(combined, "environment") or string.find(combined, "main_map") or string.find(combined, "fullmap") or string.find(combined, "all_models") or string.find(combined, "combined") then
 		return "MAP_UNIFIED"
-	-- 2. Exact glTF Node Hashes & Keywords from User's Imports
-	elseif string.find(combined, "agdrm0mbeo3gylxitymk") or string.find(combined, "bzvomeysheglnysxnymr") or string.find(combined, "floating%-sanctuary") or string.find(combined, "floating sanctuary") or string.find(combined, "central sanctuary") or string.find(combined, "island") or string.find(combined, "sanctuary") or string.find(combined, "rock") or string.find(combined, "ground") or string.find(combined, "mountain") then
+	-- 2. Floating Sanctuary Islands (Main & Satellite)
+	elseif string.find(combined, "bzvomeysheglnysxnymr") or string.find(combined, "floating%-sanctuary") or string.find(combined, "floating sanctuary") or string.find(combined, "central sanctuary") or string.find(combined, "main_island") then
 		return "ISLAND"
-	elseif string.find(combined, "ivdfl4qeemqt7ve4qcvs") or string.find(combined, "gardner") or string.find(combined, "plant%-box") or string.find(combined, "plant_box") or string.find(combined, "planter") or string.find(combined, "plot") or string.find(combined, "pot") or string.find(combined, "box") then
-		return "PLANTER"
-	elseif string.find(combined, "12lquskllicosvzozjaa") or string.find(combined, "transmutation") or string.find(combined, "altar") or string.find(combined, "forge") or string.find(combined, "shrine") or string.find(combined, "monolith") or string.find(combined, "pedestal") or string.find(combined, "table") then
+	elseif string.find(combined, "agdrm0mbeo3gylxitymk") or string.find(combined, "satellite_island") then
+		return "ISLAND_SATELLITE"
+	-- 3. Sacred Altar
+	elseif string.find(combined, "12lquskllicosvzozjaa") or string.find(combined, "transmutation") or string.find(combined, "altar") or string.find(combined, "forge") or string.find(combined, "shrine") or string.find(combined, "monolith") or string.find(combined, "pedestal") then
 		return "ALTAR"
-	elseif string.find(combined, "wumxsfiy9i8durscm3vv") or string.find(combined, "crystal%-bloom") or string.find(combined, "crystal bloom") or string.find(combined, "cosmic%-crystal") or string.find(combined, "bloom") or string.find(combined, "flower") or string.find(combined, "crop") then
-		return "BLOOM"
-	elseif string.find(combined, "pftfbiaqxyqqa70eng8j") or string.find(combined, "mystery%-egg") or string.find(combined, "mystery egg") or string.find(combined, "celestial%-egg") or (string.find(combined, "egg") and not string.find(combined, "dragon")) then
-		return "EGG"
-	elseif string.find(combined, "b9yu9dueystnk3weda6y") or string.find(combined, "ioluminescent") or string.find(combined, "bioluminescent") or string.find(combined, "willow") or string.find(combined, "tree") or string.find(combined, "foliage") or string.find(combined, "wood") or string.find(combined, "branch") then
+	-- 4. Ornate Cosmic Planter Box
+	elseif string.find(combined, "ivdfl4qeemqt7ve4qcvs") or string.find(combined, "gardner") or string.find(combined, "plant%-box") or string.find(combined, "plant_box") or string.find(combined, "planter") or string.find(combined, "plot") or string.find(combined, "pot") then
+		return "PLANTER"
+	-- 5. Bioluminescent Weeping Willow Tree
+	elseif string.find(combined, "b9yu9dueystnk3weda6y") or string.find(combined, "ioluminescent") or string.find(combined, "bioluminescent") or string.find(combined, "willow") or string.find(combined, "tree") or string.find(combined, "foliage") or string.find(combined, "wood") then
 		return "TREE_WILLOW"
-	elseif string.find(combined, "88k2rzresq5xhd5bkrt8") or string.find(combined, "gazebo") or string.find(combined, "merchant stall") or string.find(combined, "market") or string.find(combined, "stall") or string.find(combined, "shop") or string.find(combined, "pavilion") or string.find(combined, "kiosk") then
+	-- 6. Merchant Gazebo / Market Pavilion
+	elseif string.find(combined, "88k2rzresq5xhd5bkrt8") or string.find(combined, "gazebo") or string.find(combined, "merchant stall") or string.find(combined, "market") or string.find(combined, "stall") or string.find(combined, "shop") or string.find(combined, "pavilion") then
 		return "GAZEBO"
+	-- 7. Ancient Cosmic Realm Gate
 	elseif string.find(combined, "k4xcbxw5jiktsvfs6rvn") or string.find(combined, "realm gate") or string.find(combined, "locked portal") or string.find(combined, "cosmic realm gate") or string.find(combined, "gate") or string.find(combined, "portal") or string.find(combined, "arch") then
 		return "GATE_ARCH"
+	-- 8. Astral Kitsune Companion Fox
 	elseif string.find(combined, "dy37cblwfrngvdahv9wz") or string.find(combined, "kitsune") or string.find(combined, "astral kitsune") or string.find(combined, "fox") then
 		return "PET_KITSUNE"
+	-- 9. Starlight Hatchling Dragon
 	elseif string.find(combined, "wvkryjmfl8csk8tlfsxr") or string.find(combined, "hatchling dragon") or string.find(combined, "dragon pet") or string.find(combined, "dragon") or string.find(combined, "drake") then
 		return "PET_DRAGON"
-	elseif string.find(combined, "well") or string.find(combined, "fountain") or string.find(combined, "vault") or string.find(combined, "pool") then
-		return "WELL"
-	elseif string.find(combined, "4wvlmpkfjpttoq4rws4") or string.find(combined, "bgcdryd1jxdfkwvccuxn") or string.find(combined, "meshentity") or string.find(combined, "crystal") or string.find(combined, "geode") or string.find(combined, "ore") or string.find(combined, "gem") then
+	-- 10. Celestial Mystery Egg
+	elseif string.find(combined, "pftfbiaqxyqqa70eng8j") or string.find(combined, "mystery%-egg") or string.find(combined, "mystery egg") or string.find(combined, "celestial%-egg") or (string.find(combined, "egg") and not string.find(combined, "dragon")) then
+		return "EGG"
+	-- 11. Crystal Bloom Crop
+	elseif string.find(combined, "wumxsfiy9i8durscm3vv") or string.find(combined, "crystal%-bloom") or string.find(combined, "crystal bloom") or string.find(combined, "cosmic%-crystal") or string.find(combined, "bloom") or string.find(combined, "flower") or string.find(combined, "crop") then
+		return "BLOOM"
+	-- 12. Amethyst Crystal Cluster / Geode
+	elseif string.find(combined, "bgcdryd1jxdfkwvccuxn") or string.find(combined, "meshentity") or string.find(combined, "crystal") or string.find(combined, "geode") or string.find(combined, "ore") or string.find(combined, "gem") then
 		return "DECOR_CRYSTAL"
+	-- 13. Celestial Stardust Well (AFK Vault)
+	elseif string.find(combined, "4wvlmwpkfjpttoq4rws4") or string.find(combined, "4wvlmpkfjpttoq4rws4") or string.find(combined, "well") or string.find(combined, "fountain") or string.find(combined, "vault") or string.find(combined, "pool") then
+		return "WELL"
+	-- Fallback Keyword Matches
+	elseif string.find(combined, "island") or string.find(combined, "rock") or string.find(combined, "ground") then
+		return "ISLAND"
 	end
 
-	-- 3. Geometric Aspect Ratio Signature Fallback
+	-- Geometric Fallbacks
 	local parts = getContainerParts(inst)
 	local _, sz = getContainerBounds(inst)
 	if sz.X > 0.05 and sz.Z > 0.05 then
-		-- Multi-mesh composite or very large footprint -> MAP_UNIFIED or ISLAND
 		if #parts >= 4 or (sz.X > 40 and sz.Z > 40) then
 			return "MAP_UNIFIED"
-		-- Tall vertical object -> TREE
 		elseif sz.Y > 10 and sz.Y > sz.X * 1.1 then
 			return "TREE_WILLOW"
-		-- Medium altar or pedestal
 		elseif (sz.X >= 4 and sz.X <= 18) and (sz.Y >= 1.5 and sz.Y <= 10) then
 			return "ALTAR"
-		-- Planter box shape
 		elseif (sz.X >= 2.5 and sz.X <= 9) and (sz.Y <= 4) and (sz.X / sz.Z >= 0.7 and sz.X / sz.Z <= 1.4) then
 			return "PLANTER"
-		-- Small flower or crystal
-		elseif (sz.X <= 5 and sz.Y <= 6) and (sz.Y > sz.X * 1.3) then
-			return "BLOOM"
-		-- Egg shape
-		elseif (sz.X <= 6 and sz.Y <= 8) and (sz.Y > sz.X * 1.05 and sz.Y < sz.X * 1.8) then
-			return "EGG"
 		end
 	end
 
@@ -259,40 +265,40 @@ function WorldService.Init()
 	print("  🌌 [WorldService] Crafting Pure 3D Sanctuary from User Models...")
 	print("========================================")
 
-	-- 1. Setup Cinematic Atmospheric Lighting (Soft twilight fantasy, NO nuclear bloom)
-	Lighting.ClockTime = 15.0
-	Lighting.GeographicLatitude = 25
-	Lighting.Brightness = 1.6
-	Lighting.Ambient = Color3.fromRGB(90, 80, 120)
-	Lighting.OutdoorAmbient = Color3.fromRGB(110, 100, 140)
-	Lighting.ColorShift_Top = Color3.fromRGB(240, 230, 255)
-	Lighting.ColorShift_Bottom = Color3.fromRGB(60, 50, 80)
-	Lighting.FogColor = Color3.fromRGB(140, 120, 190)
-	Lighting.FogEnd = 30000
-	Lighting.ExposureCompensation = -0.10
+	-- 1. Setup Cinematic Atmospheric Lighting (Matching the Midjourney AI Concept Art)
+	Lighting.ClockTime = 19.8
+	Lighting.GeographicLatitude = 30
+	Lighting.Brightness = 2.4
+	Lighting.Ambient = Color3.fromRGB(30, 24, 46)
+	Lighting.OutdoorAmbient = Color3.fromRGB(50, 40, 72)
+	Lighting.ColorShift_Top = Color3.fromRGB(255, 210, 160)
+	Lighting.ColorShift_Bottom = Color3.fromRGB(90, 50, 130)
+	Lighting.FogColor = Color3.fromRGB(80, 55, 120)
+	Lighting.FogEnd = 35000
+	Lighting.ExposureCompensation = -0.05
 
 	local bloom = Lighting:FindFirstChildOfClass("BloomEffect") or Instance.new("BloomEffect")
 	bloom.Name = "SanctuaryBloom"
-	bloom.Intensity = 0.12
-	bloom.Size = 12
-	bloom.Threshold = 0.95
+	bloom.Intensity = 0.22
+	bloom.Size = 16
+	bloom.Threshold = 0.90
 	bloom.Parent = Lighting
 
 	local colorCorrection = Lighting:FindFirstChildOfClass("ColorCorrectionEffect") or Instance.new("ColorCorrectionEffect")
 	colorCorrection.Name = "SanctuaryColorCorrection"
-	colorCorrection.Saturation = 0.12
-	colorCorrection.Contrast = 0.05
-	colorCorrection.TintColor = Color3.fromRGB(255, 250, 255)
+	colorCorrection.Saturation = 0.16
+	colorCorrection.Contrast = 0.08
+	colorCorrection.TintColor = Color3.fromRGB(255, 245, 255)
 	colorCorrection.Parent = Lighting
 
 	local atmosphere = Lighting:FindFirstChildOfClass("Atmosphere") or Instance.new("Atmosphere")
 	atmosphere.Name = "SanctuaryAtmosphere"
-	atmosphere.Density = 0.25
-	atmosphere.Offset = 0.15
-	atmosphere.Color = Color3.fromRGB(160, 140, 210)
-	atmosphere.Decay = Color3.fromRGB(110, 85, 150)
-	atmosphere.Glare = 0.10
-	atmosphere.Haze = 0.35
+	atmosphere.Density = 0.32
+	atmosphere.Offset = 0.22
+	atmosphere.Color = Color3.fromRGB(115, 85, 165)
+	atmosphere.Decay = Color3.fromRGB(55, 30, 90)
+	atmosphere.Glare = 0.25
+	atmosphere.Haze = 1.10
 	atmosphere.Parent = Lighting
 
 	-- Destroy Baseplate
@@ -326,7 +332,7 @@ function WorldService.Init()
 	gardenFolder.Name = "StarweaveGarden"
 	gardenFolder.Parent = Workspace
 
-	-- SanctuarySpawn: Placed on solid arrival dais facing into the garden
+	-- SanctuarySpawn: Placed naturally on the arrival edge looking down the garden promenade
 	local spawn = Workspace:FindFirstChild("SanctuarySpawn") :: SpawnLocation?
 	if not spawn then
 		spawn = Instance.new("SpawnLocation")
@@ -334,12 +340,11 @@ function WorldService.Init()
 		spawn.Parent = Workspace
 	end
 	spawn.Size = Vector3.new(12, 1, 12)
-	spawn.Position = Vector3.new(0, 0.7, -22)
-	spawn.CFrame = CFrame.lookAt(Vector3.new(0, 0.7, -22), Vector3.new(0, 0.7, 10))
+	spawn.Position = Vector3.new(0, 1.2, -22)
+	spawn.CFrame = CFrame.lookAt(Vector3.new(0, 1.2, -22), Vector3.new(0, 1.2, 10))
 	spawn.Anchored = true
 	spawn.CanCollide = true
-	spawn.Material = Enum.Material.Slate
-	spawn.Color = Color3.fromRGB(48, 42, 68)
+	spawn.Transparency = 1
 	spawn.TopSurface = Enum.SurfaceType.Smooth
 	for _, child in spawn:GetChildren() do
 		if child:IsA("Decal") or child:IsA("Texture") then
@@ -348,11 +353,12 @@ function WorldService.Init()
 	end
 
 	-- ========================================================
-	-- COMPREHENSIVE SCANNER ACROSS WORKSPACE, SERVERSTORAGE, REPLICATEDSTORAGE
+	-- COMPREHENSIVE SCANNER ACROSS ALL 14 USER 3D MODELS
 	-- ========================================================
 	local classifiedAssets: { [string]: { Model } } = {
 		MAP_UNIFIED = {},
 		ISLAND = {},
+		ISLAND_SATELLITE = {},
 		PLANTER = {},
 		ALTAR = {},
 		BLOOM = {},
@@ -366,7 +372,6 @@ function WorldService.Init()
 		DECOR_CRYSTAL = {},
 	}
 	local strayAssets: { Model } = {}
-
 	local scannedInstances: { [Instance]: boolean } = {}
 
 	local function processCandidate(inst: Instance)
@@ -393,7 +398,6 @@ function WorldService.Init()
 				continue
 			end
 
-			-- If inside UserImportedAssets from a previous session, inspect all children
 			if child.Name == "UserImportedAssets" or child:IsA("Folder") or child:IsA("Configuration") then
 				for _, sub in child:GetChildren() do
 					if sub:IsA("Model") or sub:IsA("BasePart") then
@@ -401,7 +405,6 @@ function WorldService.Init()
 					end
 				end
 			elseif child:IsA("Model") or child:IsA("BasePart") then
-				-- Check if model is a container with submodels
 				local hasSubModels = false
 				for _, sub in child:GetChildren() do
 					if sub:IsA("Model") then
@@ -421,242 +424,93 @@ function WorldService.Init()
 	scanContainer(ReplicatedStorage)
 
 	-- ========================================================
-	-- GREEDY ASSIGNMENT FOR STRAYS (FAIL-SAFE DISCOVERY)
-	-- ========================================================
-	-- Sort strays by footprint area (X * Z) descending
-	table.sort(strayAssets, function(a, b)
-		local _, sza = getContainerBounds(a)
-		local _, szb = getContainerBounds(b)
-		return (sza.X * sza.Z) > (szb.X * szb.Z)
-	end)
-
-	local usedStrays: { [Model]: boolean } = {}
-
-	-- If MAP_UNIFIED & ISLAND are both empty, assign the largest stray
-	if #classifiedAssets["MAP_UNIFIED"] == 0 and #classifiedAssets["ISLAND"] == 0 then
-		for _, stray in strayAssets do
-			if not usedStrays[stray] then
-				local _, sz = getContainerBounds(stray)
-				if (sz.X * sz.Z) > 80 or #getContainerParts(stray) >= 3 then
-					table.insert(classifiedAssets["MAP_UNIFIED"], stray)
-					usedStrays[stray] = true
-					print(string.format("  🪄 [WorldService] Greedy Assign: '%s' -> MAP_UNIFIED (Footprint: %.1f)", stray.Name, sz.X * sz.Z))
-					break
-				end
-			end
-		end
-	end
-
-	-- If ALTAR is empty, find best medium pedestal stray
-	if #classifiedAssets["ALTAR"] == 0 then
-		for _, stray in strayAssets do
-			if not usedStrays[stray] then
-				local _, sz = getContainerBounds(stray)
-				if sz.X >= 3 and sz.X <= 20 and sz.Y >= 1.5 and sz.Y <= 12 then
-					table.insert(classifiedAssets["ALTAR"], stray)
-					usedStrays[stray] = true
-					print(string.format("  🪄 [WorldService] Greedy Assign: '%s' -> ALTAR", stray.Name))
-					break
-				end
-			end
-		end
-	end
-
-	-- If GAZEBO is empty, find building/stall stray
-	if #classifiedAssets["GAZEBO"] == 0 then
-		for _, stray in strayAssets do
-			if not usedStrays[stray] then
-				local _, sz = getContainerBounds(stray)
-				if sz.X >= 8 and sz.X <= 28 and sz.Y >= 4 then
-					table.insert(classifiedAssets["GAZEBO"], stray)
-					usedStrays[stray] = true
-					print(string.format("  🪄 [WorldService] Greedy Assign: '%s' -> GAZEBO", stray.Name))
-					break
-				end
-			end
-		end
-	end
-
-	-- If GATE_ARCH is empty, find tall portal stray
-	if #classifiedAssets["GATE_ARCH"] == 0 then
-		for _, stray in strayAssets do
-			if not usedStrays[stray] then
-				local _, sz = getContainerBounds(stray)
-				if sz.Y >= 8 and sz.X >= 6 then
-					table.insert(classifiedAssets["GATE_ARCH"], stray)
-					usedStrays[stray] = true
-					print(string.format("  🪄 [WorldService] Greedy Assign: '%s' -> GATE_ARCH", stray.Name))
-					break
-				end
-			end
-		end
-	end
-
-	-- If PLANTER is empty, find small planter box stray
-	if #classifiedAssets["PLANTER"] == 0 then
-		for _, stray in strayAssets do
-			if not usedStrays[stray] then
-				local _, sz = getContainerBounds(stray)
-				if sz.X >= 2 and sz.X <= 9 and sz.Y <= 5 then
-					table.insert(classifiedAssets["PLANTER"], stray)
-					usedStrays[stray] = true
-					print(string.format("  🪄 [WorldService] Greedy Assign: '%s' -> PLANTER", stray.Name))
-					break
-				end
-			end
-		end
-	end
-
-	-- If TREE_WILLOW is empty, find tall foliage strays
-	if #classifiedAssets["TREE_WILLOW"] == 0 then
-		for _, stray in strayAssets do
-			if not usedStrays[stray] then
-				local _, sz = getContainerBounds(stray)
-				if sz.Y > 8 and sz.Y > sz.X * 1.05 then
-					table.insert(classifiedAssets["TREE_WILLOW"], stray)
-					usedStrays[stray] = true
-					print(string.format("  🪄 [WorldService] Greedy Assign: '%s' -> TREE_WILLOW", stray.Name))
-					if #classifiedAssets["TREE_WILLOW"] >= 4 then break end
-				end
-			end
-		end
-	end
-
-	-- Preserve any remaining unused strays safely
-	local userAssetsFolder = Workspace:FindFirstChild("UserImportedAssets")
-	if not userAssetsFolder then
-		userAssetsFolder = Instance.new("Folder")
-		userAssetsFolder.Name = "UserImportedAssets"
-		userAssetsFolder.Parent = Workspace
-	end
-
-	for _, stray in strayAssets do
-		if not usedStrays[stray] then
-			stray.Parent = userAssetsFolder
-			anchorAllParts(stray, true)
-		end
-	end
-
-	-- ========================================================
-	-- GUARANTEED SOLID PHYSICAL SANCTUARY DAIS & PLAZAS
-	-- (Ensures player ALWAYS stands on rich stone architecture)
-	-- ========================================================
-	local architectureFolder = Instance.new("Folder")
-	architectureFolder.Name = "SanctuaryArchitecture"
-	architectureFolder.Parent = gardenFolder
-
-	-- Central Stone Plaza (Solid slate disc, diameter 92 studs, top at Y = 0.5)
-	local centerPlaza = Instance.new("Part")
-	centerPlaza.Name = "SanctuaryCenterPlaza"
-	centerPlaza.Size = Vector3.new(92, 2.0, 92)
-	centerPlaza.Position = Vector3.new(0, -0.5, 4)
-	centerPlaza.Anchored = true
-	centerPlaza.CanCollide = true
-	centerPlaza.Material = Enum.Material.Slate
-	centerPlaza.Color = Color3.fromRGB(44, 38, 62)
-	centerPlaza.TopSurface = Enum.SurfaceType.Smooth
-	centerPlaza.Parent = architectureFolder
-
-	-- Inner Starlight Concentric Rune Ring
-	local innerRing = Instance.new("Part")
-	innerRing.Name = "CenterRuneRing"
-	innerRing.Size = Vector3.new(62, 0.1, 62)
-	innerRing.Position = Vector3.new(0, 0.55, 4)
-	innerRing.Anchored = true
-	innerRing.CanCollide = false
-	innerRing.Material = Enum.Material.SmoothPlastic
-	innerRing.Color = Color3.fromRGB(76, 56, 110)
-	innerRing.TopSurface = Enum.SurfaceType.Smooth
-	innerRing.Parent = architectureFolder
-
-	-- South Arrival Promenade (Stone path from spawn to center plaza)
-	local promenade = Instance.new("Part")
-	promenade.Name = "SouthArrivalPromenade"
-	promenade.Size = Vector3.new(14, 2.0, 26)
-	promenade.Position = Vector3.new(0, -0.5, -19)
-	promenade.Anchored = true
-	promenade.CanCollide = true
-	promenade.Material = Enum.Material.Slate
-	promenade.Color = Color3.fromRGB(44, 38, 62)
-	promenade.TopSurface = Enum.SurfaceType.Smooth
-	promenade.Parent = architectureFolder
-
-	-- East Market Plaza (Diameter 52 studs, top at Y = 0.5)
-	local eastPlaza = Instance.new("Part")
-	eastPlaza.Name = "EastMarketPlaza"
-	eastPlaza.Size = Vector3.new(52, 2.0, 52)
-	eastPlaza.Position = Vector3.new(62, -0.5, 4)
-	eastPlaza.Anchored = true
-	eastPlaza.CanCollide = true
-	eastPlaza.Material = Enum.Material.Slate
-	eastPlaza.Color = Color3.fromRGB(48, 40, 70)
-	eastPlaza.TopSurface = Enum.SurfaceType.Smooth
-	eastPlaza.Parent = architectureFolder
-
-	-- West Shrine Plaza (Diameter 52 studs, top at Y = 0.5)
-	local westPlaza = Instance.new("Part")
-	westPlaza.Name = "WestShrinePlaza"
-	westPlaza.Size = Vector3.new(52, 2.0, 52)
-	westPlaza.Position = Vector3.new(-62, -0.5, 4)
-	westPlaza.Anchored = true
-	westPlaza.CanCollide = true
-	westPlaza.Material = Enum.Material.Slate
-	westPlaza.Color = Color3.fromRGB(42, 38, 64)
-	westPlaza.TopSurface = Enum.SurfaceType.Smooth
-	westPlaza.Parent = architectureFolder
-
-	-- ========================================================
-	-- 0. MASTER UNIFIED SANCTUARY MAP (User-Modeled Multi-Structure Mesh)
+	-- 0. MASTER UNIFIED SANCTUARY MAP (User-Modeled Multi-Structure Mesh: YNrolxdcxfktT2p42Y4L)
 	-- ========================================================
 	local masterUnified = classifiedAssets["MAP_UNIFIED"] and classifiedAssets["MAP_UNIFIED"][1]
 	if masterUnified then
-		print("  🌟 [WorldService] Master Unified 3D Sanctuary Detected! Deploying to Garden...")
+		print("  🌟 [WorldService] Master Unified 3D Sanctuary Mesh Detected! Deploying to Garden...")
 		masterUnified.Name = "MasterUnifiedSanctuary"
 		masterUnified.Parent = gardenFolder
 		anchorAllParts(masterUnified, true)
-		pivotModelBottomFlush(masterUnified, Vector3.new(0, 0, 0), 0.5)
+		scaleModelToDimension(masterUnified, 125.0)
+		pivotModelBottomFlush(masterUnified, Vector3.new(0, 0, 4), 0.0)
 	end
 
 	-- ========================================================
-	-- 1. CENTRAL SANCTUARY FLOATING ISLAND (Main Floating Rock)
+	-- 1. CENTRAL SANCTUARY FLOATING ISLAND ROCK (BZvOmeysHEgLnYsXNYmR)
 	-- ========================================================
-	local islandTemplate = classifiedAssets["ISLAND"] and classifiedAssets["ISLAND"][1]
-	if islandTemplate then
-		print("  ✨ [WorldService] Deploying 3D Central Sanctuary Island Rock...")
-		local centerIsland = islandTemplate
-		centerIsland.Name = "CenterSanctuaryIsland"
-		centerIsland.Parent = gardenFolder
-		anchorAllParts(centerIsland, true)
-		scaleModelToDimension(centerIsland, 105)
-		-- Top surface of island rock flush with underside of stone plaza
-		pivotIslandTopFlush(centerIsland, Vector3.new(0, 0, 4), 0.4)
+	local mainIsland = classifiedAssets["ISLAND"] and classifiedAssets["ISLAND"][1]
+	if mainIsland then
+		print("  ✨ [WorldService] Deploying 3D Central Sanctuary Floating Island...")
+		mainIsland.Name = "CenterSanctuaryIsland"
+		mainIsland.Parent = gardenFolder
+		anchorAllParts(mainIsland, true)
+		scaleModelToDimension(mainIsland, 115.0)
+		pivotIslandTopFlush(mainIsland, Vector3.new(0, 0, 4), 0.0)
+	end
 
-		-- Clone for East and West satellite islands
-		local eastIsland = centerIsland:Clone()
+	-- Invisible Safety Floor inside main island (Prevents player falling through mesh gaps)
+	local floorCollision = Instance.new("Part")
+	floorCollision.Name = "SanctuaryFloorCollision"
+	floorCollision.Shape = Enum.PartType.Cylinder
+	floorCollision.Size = Vector3.new(1.5, 96, 96)
+	floorCollision.CFrame = CFrame.new(0, -0.6, 4) * CFrame.Angles(0, 0, math.rad(90))
+	floorCollision.Anchored = true
+	floorCollision.CanCollide = true
+	floorCollision.Transparency = 1
+	floorCollision.Parent = gardenFolder
+
+	-- Satellite Islands (East Market & West Shrine)
+	local satelliteTemplate = (classifiedAssets["ISLAND_SATELLITE"] and classifiedAssets["ISLAND_SATELLITE"][1]) or (mainIsland and mainIsland:Clone())
+	if satelliteTemplate then
+		print("  ✨ [WorldService] Deploying 3D Satellite Floating Islands...")
+		local eastIsland = satelliteTemplate:Clone()
 		eastIsland.Name = "EastMarketIsland"
 		eastIsland.Parent = gardenFolder
-		scaleModelToDimension(eastIsland, 55)
-		pivotIslandTopFlush(eastIsland, Vector3.new(62, 0, 4), 0.4)
+		anchorAllParts(eastIsland, true)
+		scaleModelToDimension(eastIsland, 60.0)
+		pivotIslandTopFlush(eastIsland, Vector3.new(65, 0, 4), -0.2)
 
-		local westIsland = centerIsland:Clone()
+		local eastCollision = Instance.new("Part")
+		eastCollision.Name = "EastFloorCollision"
+		eastCollision.Shape = Enum.PartType.Cylinder
+		eastCollision.Size = Vector3.new(1.5, 52, 52)
+		eastCollision.CFrame = CFrame.new(65, -0.8, 4) * CFrame.Angles(0, 0, math.rad(90))
+		eastCollision.Anchored = true
+		eastCollision.CanCollide = true
+		eastCollision.Transparency = 1
+		eastCollision.Parent = gardenFolder
+
+		local westIsland = satelliteTemplate:Clone()
 		westIsland.Name = "WestShrineIsland"
 		westIsland.Parent = gardenFolder
-		scaleModelToDimension(westIsland, 55)
-		pivotIslandTopFlush(westIsland, Vector3.new(-62, 0, 4), 0.4)
+		anchorAllParts(westIsland, true)
+		scaleModelToDimension(westIsland, 60.0)
+		pivotIslandTopFlush(westIsland, Vector3.new(-65, 0, 4), -0.2)
+
+		local westCollision = Instance.new("Part")
+		westCollision.Name = "WestFloorCollision"
+		westCollision.Shape = Enum.PartType.Cylinder
+		westCollision.Size = Vector3.new(1.5, 52, 52)
+		westCollision.CFrame = CFrame.new(-65, -0.8, 4) * CFrame.Angles(0, 0, math.rad(90))
+		westCollision.Anchored = true
+		westCollision.CanCollide = true
+		westCollision.Transparency = 1
+		westCollision.Parent = gardenFolder
 	end
 
 	-- ========================================================
-	-- 2. CENTERPIECE: 3D TRANSMUTATION ALTAR
+	-- 2. CENTERPIECE: 3D SACRED TRANSMUTATION ALTAR (12lQusKLlIcOsvzOzjaa)
 	-- ========================================================
-	local altarPos = Vector3.new(0, 0.5, 18)
+	local altarPos = Vector3.new(0, 0.4, 22)
 	local userAltar = classifiedAssets["ALTAR"] and classifiedAssets["ALTAR"][1]
 	if userAltar then
-		print("  ✨ [WorldService] Deploying 3D Transmutation Altar centerpiece...")
+		print("  ✨ [WorldService] Deploying 3D Sacred Transmutation Altar (11 studs)...")
 		userAltar.Name = "SacredTransmutationAltar"
 		userAltar.Parent = gardenFolder
 		anchorAllParts(userAltar, true)
-		scaleModelToDimension(userAltar, 9.0)
-		pivotModelBottomFlush(userAltar, altarPos, 0.5, math.rad(180))
+		scaleModelToDimension(userAltar, 11.0)
+		pivotModelBottomFlush(userAltar, altarPos, 0.4, math.rad(180))
 
 		local promptPart = userAltar.PrimaryPart or Instance.new("Part")
 		if promptPart.Parent ~= userAltar then
@@ -680,22 +534,22 @@ function WorldService.Init()
 
 		local altarLight = Instance.new("PointLight")
 		altarLight.Color = Color3.fromRGB(168, 85, 247)
-		altarLight.Brightness = 2.0
-		altarLight.Range = 16
+		altarLight.Brightness = 3.5
+		altarLight.Range = 22
 		altarLight.Parent = promptPart
 	end
 
 	-- ========================================================
-	-- 3. THE 9 GARDEN PLOTS (Architectural Curbs + Loam Soil + 3D Planters)
+	-- 3. THE 9 GARDEN PLOTS (Spacious Wings, Pure Ornate 3D Planters: IVdfl4QeEMqt7VE4qcvS)
 	-- ========================================================
-	local planterTemplate: Model? = nil
 	local userPlanter = classifiedAssets["PLANTER"] and classifiedAssets["PLANTER"][1]
+	local planterTemplate: Model? = nil
 	if userPlanter then
 		print("  ✨ [WorldService] Configuring 3D Planter Box Template (6.5 studs)...")
 		anchorAllParts(userPlanter, true)
 		scaleModelToDimension(userPlanter, 6.5)
 		planterTemplate = userPlanter:Clone()
-		userPlanter.Parent = userAssetsFolder
+		userPlanter.Parent = gardenFolder
 	end
 
 	local userBloom = classifiedAssets["BLOOM"] and classifiedAssets["BLOOM"][1]
@@ -705,7 +559,7 @@ function WorldService.Init()
 		if not userBloom.PrimaryPart then
 			userBloom.PrimaryPart = userBloom:FindFirstChildWhichIsA("BasePart", true)
 		end
-		scaleModelToDimension(userBloom, 3.2)
+		scaleModelToDimension(userBloom, 3.5)
 		userBloom.Name = "CropTemplate"
 		userBloom.Parent = assetsFolder
 	end
@@ -716,37 +570,20 @@ function WorldService.Init()
 		plotModel.Name = `Plot_{i}`
 		plotModel.Parent = gardenFolder
 
-		-- Raised Stone Planter Curb Border
-		local curb = Instance.new("Part")
-		curb.Name = "PlanterCurb"
-		curb.Size = Vector3.new(6.8, 0.6, 6.8)
-		curb.Position = plotPos + Vector3.new(0, 0.3, 0)
-		curb.Anchored = true
-		curb.CanCollide = true
-		curb.Material = Enum.Material.Slate
-		curb.Color = Color3.fromRGB(56, 48, 80)
-		curb.TopSurface = Enum.SurfaceType.Smooth
-		curb.Parent = plotModel
-
-		-- Rich Dark Loam Soil Bed
-		local soilBed = Instance.new("Part")
-		soilBed.Name = "SoilBed"
-		soilBed.Size = Vector3.new(5.8, 0.5, 5.8)
-		soilBed.Position = plotPos + Vector3.new(0, 0.35, 0)
-		soilBed.Anchored = true
-		soilBed.CanCollide = false
-		soilBed.Material = Enum.Material.Ground
-		soilBed.Color = Color3.fromRGB(28, 22, 38)
-		soilBed.TopSurface = Enum.SurfaceType.Smooth
-		soilBed.Parent = plotModel
-
-		-- User's 3D Planter Mesh (if available)
+		-- Deploy the user's ornate 3D planter mesh with cosmic runes and purple corner crystals
 		if planterTemplate then
 			local planterClone = planterTemplate:Clone()
 			planterClone.Name = "PlanterMesh"
 			anchorAllParts(planterClone, true)
-			pivotModelBottomFlush(planterClone, plotPos, 0.5)
+			pivotModelBottomFlush(planterClone, plotPos, 0.4)
 			planterClone.Parent = plotModel
+
+			-- Subtle radiant starlight glow inside the planter bed
+			local pLight = Instance.new("PointLight")
+			pLight.Color = Color3.fromRGB(192, 132, 252)
+			pLight.Brightness = 1.0
+			pLight.Range = 8
+			pLight.Parent = planterClone.PrimaryPart or planterClone:FindFirstChildWhichIsA("BasePart", true)
 		end
 
 		-- Transparent Soil interaction zone for client WorldController
@@ -776,7 +613,7 @@ function WorldService.Init()
 	end
 
 	-- ========================================================
-	-- 4. 4 GRAND BIOLUMINESCENT WEEPING WILLOW TREES
+	-- 4. 5 GRAND BIOLUMINESCENT WEEPING WILLOW TREES (B9yU9Dueystnk3wEDa6Y)
 	-- ========================================================
 	local userWillows = classifiedAssets["TREE_WILLOW"] or {}
 	local function deployWillowTree(pos: Vector3, foliageColor: Color3, name: string)
@@ -789,42 +626,48 @@ function WorldService.Init()
 			for _, part in getContainerParts(treeClone) do
 				part.CanCollide = false
 			end
-			scaleModelToDimension(treeClone, 18.0)
-			pivotModelBottomFlush(treeClone, pos, 0.5)
+			scaleModelToDimension(treeClone, 24.0)
+			pivotModelBottomFlush(treeClone, pos, 0.4)
 
 			local sporePart = treeClone.PrimaryPart or treeClone:FindFirstChildWhichIsA("BasePart", true)
 			if sporePart then
 				local spores = Instance.new("ParticleEmitter")
 				spores.Name = "WillowSpores"
-				spores.Rate = 14
-				spores.Lifetime = NumberRange.new(3.5, 6.0)
-				spores.Speed = NumberRange.new(0.4, 1.2)
+				spores.Rate = 18
+				spores.Lifetime = NumberRange.new(4.0, 7.0)
+				spores.Speed = NumberRange.new(0.5, 1.5)
 				spores.SpreadAngle = Vector2.new(50, 50)
 				spores.Color = ColorSequence.new(foliageColor)
-				spores.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.25), NumberSequenceKeypoint.new(1, 0) })
-				spores.LightEmission = 0.80
+				spores.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.35), NumberSequenceKeypoint.new(1, 0) })
+				spores.LightEmission = 0.85
 				spores.Parent = sporePart
+
+				local treeLight = Instance.new("PointLight")
+				treeLight.Color = foliageColor
+				treeLight.Brightness = 2.2
+				treeLight.Range = 26
+				treeLight.Parent = sporePart
 			end
 		end
 	end
 
-	deployWillowTree(Vector3.new(-22, 0.5, 28), Color3.fromRGB(244, 114, 182), "Willow_Pink_RearLeft")
-	deployWillowTree(Vector3.new(-14, 0.5, 38), Color3.fromRGB(56, 189, 248), "Willow_Cyan_FrontLeft")
-	deployWillowTree(Vector3.new(14, 0.5, 38), Color3.fromRGB(56, 189, 248), "Willow_Cyan_FrontRight")
-	deployWillowTree(Vector3.new(22, 0.5, 28), Color3.fromRGB(244, 114, 182), "Willow_Pink_RearRight")
+	deployWillowTree(Vector3.new(-32, 0.4, 26), Color3.fromRGB(244, 114, 182), "Willow_Pink_RearLeft")
+	deployWillowTree(Vector3.new(32, 0.4, 26), Color3.fromRGB(56, 189, 248), "Willow_Cyan_RearRight")
+	deployWillowTree(Vector3.new(0, 0.4, 34), Color3.fromRGB(56, 189, 248), "Willow_Cyan_OverlookCenter")
+	deployWillowTree(Vector3.new(-36, 0.4, -18), Color3.fromRGB(168, 85, 247), "Willow_Violet_EntranceLeft")
+	deployWillowTree(Vector3.new(36, 0.4, -18), Color3.fromRGB(250, 204, 21), "Willow_Gold_EntranceRight")
 
 	-- ========================================================
-	-- 5. LEFT ISLAND: WEALTH & MARKET GAZEBO & CELESTIAL WELL
+	-- 5. EAST SATELLITE ISLAND: MARKET GAZEBO & CELESTIAL WELL
 	-- ========================================================
-	local gazeboCenter = Vector3.new(62, 0.5, 10)
 	local userGazebo = classifiedAssets["GAZEBO"] and classifiedAssets["GAZEBO"][1]
 	if userGazebo then
-		print("  ✨ [WorldService] Deploying 3D Floating Market Gazebo...")
+		print("  ✨ [WorldService] Deploying 3D Floating Market Gazebo (18 studs)...")
 		userGazebo.Name = "FloatingMarketGazebo"
 		userGazebo.Parent = gardenFolder
 		anchorAllParts(userGazebo, true)
-		scaleModelToDimension(userGazebo, 16.0)
-		pivotModelBottomFlush(userGazebo, gazeboCenter, 0.5)
+		scaleModelToDimension(userGazebo, 18.0)
+		pivotModelBottomFlush(userGazebo, Vector3.new(65, 0.2, 4), 0.2)
 
 		local shopPromptPart = userGazebo.PrimaryPart or Instance.new("Part")
 		local shopPrompt = Instance.new("ProximityPrompt")
@@ -836,18 +679,23 @@ function WorldService.Init()
 		shopPrompt.MaxActivationDistance = 14
 		shopPrompt.RequiresLineOfSight = false
 		shopPrompt.Parent = shopPromptPart
+
+		local shopLight = Instance.new("PointLight")
+		shopLight.Color = Color3.fromRGB(251, 191, 36)
+		shopLight.Brightness = 3.0
+		shopLight.Range = 24
+		shopLight.Parent = shopPromptPart
 	end
 
-	-- CELESTIAL WEALTH WELL (AFK Stardust Vault)
-	local wellPos = Vector3.new(62, 0.5, -6)
+	-- Celestial Stardust Well (AFK Meditation Vault: 4WVlMWpKFjPTTOQ4RwS4)
 	local userWell = classifiedAssets["WELL"] and classifiedAssets["WELL"][1]
 	if userWell then
-		print("  ✨ [WorldService] Deploying 3D Celestial Well...")
+		print("  ✨ [WorldService] Deploying 3D Celestial Well (9 studs)...")
 		userWell.Name = "CelestialWell"
 		userWell.Parent = gardenFolder
 		anchorAllParts(userWell, true)
 		scaleModelToDimension(userWell, 9.0)
-		pivotModelBottomFlush(userWell, wellPos, 0.5)
+		pivotModelBottomFlush(userWell, Vector3.new(65, 0.2, -14), 0.2)
 
 		local wellPrompt = Instance.new("ProximityPrompt")
 		wellPrompt.Name = "CelestialWellPrompt"
@@ -865,21 +713,17 @@ function WorldService.Init()
 		end)
 	end
 
-	-- Golden Willow Tree framing the market plaza
-	deployWillowTree(Vector3.new(75, 0.5, 2), Color3.fromRGB(250, 204, 21), "GoldenAutumnTree")
-
 	-- ========================================================
-	-- 6. RIGHT ISLAND: REALM PORTAL & PET SANCTUARY
+	-- 6. WEST SATELLITE ISLAND: REALM GATE, MYSTERY EGG & PET SANCTUARY
 	-- ========================================================
 	local userGate = classifiedAssets["GATE_ARCH"] and classifiedAssets["GATE_ARCH"][1]
-	local gatePos = Vector3.new(-62, 0.5, 14)
 	if userGate then
-		print("  ✨ [WorldService] Deploying 3D Ancient Cosmic Realm Gate...")
+		print("  ✨ [WorldService] Deploying 3D Ancient Cosmic Realm Gate (22 studs)...")
 		userGate.Name = "AncientCosmicRealmGate"
 		userGate.Parent = gardenFolder
 		anchorAllParts(userGate, true)
 		scaleModelToDimension(userGate, 22.0)
-		pivotModelBottomFlush(userGate, gatePos, 0.5)
+		pivotModelBottomFlush(userGate, Vector3.new(-65, 0.2, 8), 0.2)
 
 		local gatePrompt = Instance.new("ProximityPrompt")
 		gatePrompt.Name = "RealmGatePrompt"
@@ -890,18 +734,23 @@ function WorldService.Init()
 		gatePrompt.MaxActivationDistance = 14
 		gatePrompt.RequiresLineOfSight = false
 		gatePrompt.Parent = userGate.PrimaryPart or userGate:FindFirstChildWhichIsA("BasePart", true)
+
+		local gateLight = Instance.new("PointLight")
+		gateLight.Color = Color3.fromRGB(56, 189, 248)
+		gateLight.Brightness = 3.0
+		gateLight.Range = 22
+		gateLight.Parent = userGate.PrimaryPart or userGate:FindFirstChildWhichIsA("BasePart", true)
 	end
 
-	-- CELESTIAL MYSTERY EGG
-	local eggPos = Vector3.new(-62, 0.5, 0)
+	-- Celestial Mystery Egg (PftfbIAqxyQQaT0eng8J)
 	local userEgg = classifiedAssets["EGG"] and classifiedAssets["EGG"][1]
 	if userEgg then
-		print("  ✨ [WorldService] Deploying 3D Celestial Mystery Egg...")
+		print("  ✨ [WorldService] Deploying 3D Celestial Mystery Egg (5 studs)...")
 		userEgg.Name = "CelestialMysteryEgg"
 		userEgg.Parent = gardenFolder
 		anchorAllParts(userEgg, true)
-		scaleModelToDimension(userEgg, 4.5)
-		pivotModelBottomFlush(userEgg, eggPos, 0.5)
+		scaleModelToDimension(userEgg, 5.0)
+		pivotModelBottomFlush(userEgg, Vector3.new(-65, 0.2, -6), 0.2)
 
 		local eggPrompt = Instance.new("ProximityPrompt")
 		eggPrompt.Name = "HatchEggPrompt"
@@ -915,56 +764,50 @@ function WorldService.Init()
 
 		local eggLight = Instance.new("PointLight")
 		eggLight.Color = Color3.fromRGB(244, 114, 182)
-		eggLight.Brightness = 1.8
-		eggLight.Range = 14
+		eggLight.Brightness = 2.5
+		eggLight.Range = 16
 		eggLight.Parent = userEgg.PrimaryPart or userEgg:FindFirstChildWhichIsA("BasePart", true)
 	end
 
-	-- ASTRAL KITSUNE COMPANION PET
+	-- Astral Kitsune Companion Pet (dy37cbLWfRNgVdahv9wz)
 	local userKitsune = classifiedAssets["PET_KITSUNE"] and classifiedAssets["PET_KITSUNE"][1]
 	if userKitsune then
 		print("  ✨ [WorldService] Deploying 3D Astral Kitsune Companion...")
 		userKitsune.Name = "AstralKitsuneDais"
 		userKitsune.Parent = gardenFolder
 		anchorAllParts(userKitsune, true)
-		scaleModelToDimension(userKitsune, 3.5)
-		pivotModelBottomFlush(userKitsune, Vector3.new(-56, 0.5, 0), 0.5, math.rad(45))
+		scaleModelToDimension(userKitsune, 3.8)
+		pivotModelBottomFlush(userKitsune, Vector3.new(-57, 0.2, -6), 0.2, math.rad(45))
 
 		if assetsFolder then
 			local petTemplate = userKitsune:Clone()
 			petTemplate.Name = "Pet_celestial_kitsune"
 			anchorAllParts(petTemplate, true)
-			if not petTemplate.PrimaryPart then
-				petTemplate.PrimaryPart = petTemplate:FindFirstChildWhichIsA("BasePart", true)
-			end
 			scaleModelToDimension(petTemplate, 2.2)
 			petTemplate.Parent = assetsFolder
 		end
 	end
 
-	-- STARLIGHT DRAGON PET
+	-- Starlight Dragon Pet (wvKRYjmFL8CSK8TLfSXr)
 	local userDragon = classifiedAssets["PET_DRAGON"] and classifiedAssets["PET_DRAGON"][1]
 	if userDragon then
 		print("  ✨ [WorldService] Deploying 3D Starlight Hatchling Dragon...")
 		userDragon.Name = "StarlightDragonDais"
 		userDragon.Parent = gardenFolder
 		anchorAllParts(userDragon, true)
-		scaleModelToDimension(userDragon, 3.5)
-		pivotModelBottomFlush(userDragon, Vector3.new(-68, 0.5, 0), 0.5, math.rad(-45))
+		scaleModelToDimension(userDragon, 3.8)
+		pivotModelBottomFlush(userDragon, Vector3.new(-73, 0.2, -6), 0.2, math.rad(-45))
 
 		if assetsFolder then
 			local petTemplate = userDragon:Clone()
 			petTemplate.Name = "Pet_astral_dragon"
 			anchorAllParts(petTemplate, true)
-			if not petTemplate.PrimaryPart then
-				petTemplate.PrimaryPart = petTemplate:FindFirstChildWhichIsA("BasePart", true)
-			end
 			scaleModelToDimension(petTemplate, 2.2)
 			petTemplate.Parent = assetsFolder
 		end
 	end
 
-	-- AMETHYST CRYSTALS DECOR
+	-- Amethyst Crystal Cluster Decor (bgcDryd1JXdfkwvccUxN)
 	local userCrystals = classifiedAssets["DECOR_CRYSTAL"] or {}
 	if #userCrystals > 0 then
 		for idx, cModel in userCrystals do
@@ -973,13 +816,13 @@ function WorldService.Init()
 				clone.Parent = gardenFolder
 				anchorAllParts(clone, true)
 				scaleModelToDimension(clone, 6.0)
-				pivotModelBottomFlush(clone, Vector3.new(-74 + idx * 4, 0.5, 10), 0.5)
+				pivotModelBottomFlush(clone, Vector3.new(-78 + idx * 4, 0.2, 6), 0.2)
 			end
 		end
 	end
 
 	-- ========================================================
-	-- 7. CRYSTALLINE BRIDGES (SOLID CONNECTORS BETWEEN ISLANDS)
+	-- 7. CRYSTALLINE BRIDGES (Connecting Main Island to Satellites)
 	-- ========================================================
 	local function createCrystallineBridge(name: string, startX: number, endX: number, color: Color3)
 		local bridgeModel = Instance.new("Model")
@@ -991,26 +834,26 @@ function WorldService.Init()
 
 		local deck = Instance.new("Part")
 		deck.Name = "BridgeDeck"
-		deck.Size = Vector3.new(length, 1.0, 7.0)
-		deck.Position = Vector3.new(midX, 0.0, 4)
+		deck.Size = Vector3.new(length, 0.8, 7.0)
+		deck.Position = Vector3.new(midX, -0.2, 4)
 		deck.Anchored = true
 		deck.CanCollide = true
 		deck.Material = Enum.Material.Glass
 		deck.Color = color
 		deck.Transparency = 0.35
-		deck.Reflectance = 0.25
+		deck.Reflectance = 0.30
 		deck.TopSurface = Enum.SurfaceType.Smooth
 		deck.Parent = bridgeModel
 
 		local sparks = Instance.new("ParticleEmitter")
 		sparks.Name = "BridgeSparks"
-		sparks.Rate = 6
+		sparks.Rate = 8
 		sparks.Lifetime = NumberRange.new(2, 4)
 		sparks.Speed = NumberRange.new(0.3, 0.8)
 		sparks.SpreadAngle = Vector2.new(30, 30)
 		sparks.Color = ColorSequence.new(color)
-		sparks.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.15), NumberSequenceKeypoint.new(1, 0) })
-		sparks.LightEmission = 0.8
+		sparks.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.20), NumberSequenceKeypoint.new(1, 0) })
+		sparks.LightEmission = 0.85
 		sparks.Parent = deck
 
 		return bridgeModel
@@ -1023,18 +866,18 @@ function WorldService.Init()
 	-- 8. ATMOSPHERIC CLOUD SEA & HIGH-ALTITUDE AURORA
 	-- ========================================================
 	local cloudPositions = {
-		Vector3.new(0, -32, 6),
-		Vector3.new(-42, -30, 14),
-		Vector3.new(42, -30, 14),
-		Vector3.new(-70, -32, 0),
-		Vector3.new(70, -32, 0),
-		Vector3.new(0, -34, -28),
+		Vector3.new(0, -34, 6),
+		Vector3.new(-46, -32, 14),
+		Vector3.new(46, -32, 14),
+		Vector3.new(-74, -34, 0),
+		Vector3.new(74, -34, 0),
+		Vector3.new(0, -36, -30),
 	}
 	for idx, cPos in cloudPositions do
 		local cloud = Instance.new("Part")
 		cloud.Name = "CloudBank_" .. idx
 		cloud.Shape = Enum.PartType.Ball
-		cloud.Size = Vector3.new(52, 18, 52)
+		cloud.Size = Vector3.new(58, 20, 58)
 		cloud.Position = cPos
 		cloud.Anchored = true
 		cloud.CanCollide = false
@@ -1073,7 +916,7 @@ function WorldService.Init()
 	local safetyFloor = Instance.new("Part")
 	safetyFloor.Name = "SanctuarySafetyFloor"
 	safetyFloor.Size = Vector3.new(1200, 4, 1200)
-	safetyFloor.Position = Vector3.new(0, -36, 0)
+	safetyFloor.Position = Vector3.new(0, -38, 0)
 	safetyFloor.Anchored = true
 	safetyFloor.CanCollide = false
 	safetyFloor.Transparency = 1
@@ -1200,7 +1043,7 @@ function WorldService.Init()
 	end
 
 	print("========================================")
-	print("  ✅ [WorldService] Pure 3D Sanctuary Online! All Foundations & Models Deployed.")
+	print("  ✅ [WorldService] Pure 3D Sanctuary Online! All 14 Models Deployed.")
 	print("========================================")
 end
 
