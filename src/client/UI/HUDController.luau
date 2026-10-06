@@ -78,13 +78,13 @@ function HUDController.Create()
 	actionEvent.Parent = gui
 
 	-- ============================================================
-	-- TOP BAR (Chunky cartoon floating banner, safely below Roblox CoreGui)
+	-- TOP BAR (Chunky floating banner anchored top-right clear of Chat & CoreGui)
 	-- ============================================================
 	local topBar = Instance.new("Frame")
 	topBar.Name = "TopBar"
-	topBar.Size = UDim2.new(0, 880, 0, 52)
-	topBar.Position = UDim2.new(0.5, 0, 0, 56)
-	topBar.AnchorPoint = Vector2.new(0.5, 0)
+	topBar.Size = UDim2.new(0, 840, 0, 52)
+	topBar.Position = UDim2.new(1, -20, 0, 52)
+	topBar.AnchorPoint = Vector2.new(1, 0)
 	topBar.BackgroundColor3 = UILib.Colors.Surface0
 	topBar.BackgroundTransparency = 0.05
 	topBar.BorderSizePixel = 0

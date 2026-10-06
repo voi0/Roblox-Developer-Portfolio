@@ -191,45 +191,57 @@ local function classifyModel(inst: Instance): string?
 	end
 	local combined = string.lower(table.concat(allNames, " "))
 
-	-- 1. The 14th Model: Master Unified Vision Scene (Grand Celestial Temple)
-	if string.find(combined, "ynrolxdcxfktt2p42y4l") or string.find(combined, "unified") or string.find(combined, "structures") or string.find(combined, "full_map") or string.find(combined, "vision") or string.find(combined, "master_map") or string.find(combined, "temple") or string.find(combined, "pavilion") then
+	-- 1. Dedicated Grand Celestial Temple / Pagoda (High Detail Individual Structure)
+	if string.find(combined, "temple") or string.find(combined, "pagoda") or string.find(combined, "grand_pavilion") or string.find(combined, "sanctuary_hall") or string.find(combined, "palace") then
+		return "TEMPLE"
+	-- 2. Master Unified Vision Scene (Monolithic whole-photo AI draft blob — kept for reference, not spawned)
+	elseif string.find(combined, "ynrolxdcxfktt2p42y4l") or string.find(combined, "unified") or string.find(combined, "full_map") or string.find(combined, "vision") then
 		return "MAP_UNIFIED"
-	-- 2. Floating Sanctuary Islands
+	-- 3. Dedicated 3D Bridges
+	elseif string.find(combined, "bridge") or string.find(combined, "arch_bridge") then
+		return "BRIDGE"
+	-- 4. Tree Variations (Cherry Blossom, Sakura, Bonsai, Pine, Elder Tree)
+	elseif string.find(combined, "cherry") or string.find(combined, "sakura") or string.find(combined, "bonsai") or string.find(combined, "pine") or string.find(combined, "elder") then
+		return "TREE_VARIATION"
+	-- 5. Decorative Props (Lanterns, Torii Gate, Benches, Stepping Stones)
+	elseif string.find(combined, "lantern") or string.find(combined, "lamp") or string.find(combined, "torii") or string.find(combined, "bench") or string.find(combined, "statue") then
+		return "DECOR_PROP"
+	-- 6. Floating Sanctuary Islands
 	elseif string.find(combined, "bzvomeysheglnysxnymr") or string.find(combined, "floating%-sanctuary") or string.find(combined, "central sanctuary") or string.find(combined, "main_island") then
 		return "ISLAND"
 	elseif string.find(combined, "agdrm0mbeo3gylxitymk") or string.find(combined, "satellite_island") then
 		return "ISLAND_SATELLITE"
-	-- 3. Sacred Altar
+	-- 7. Sacred Altar
 	elseif string.find(combined, "12lquskllicosvzozjaa") or string.find(combined, "transmutation") or string.find(combined, "altar") or string.find(combined, "forge") or string.find(combined, "shrine") or string.find(combined, "monolith") or string.find(combined, "pedestal") then
 		return "ALTAR"
-	-- 4. Ornate Cosmic Planter Box
+	-- 8. Ornate Cosmic Planter Box
 	elseif string.find(combined, "ivdfl4qeemqt7ve4qcvs") or string.find(combined, "gardner") or string.find(combined, "plant%-box") or string.find(combined, "plant_box") or string.find(combined, "planter") or string.find(combined, "plot") or string.find(combined, "pot") then
 		return "PLANTER"
-	-- 5. Bioluminescent Weeping Willow Tree
+	-- 9. Bioluminescent Weeping Willow Tree
 	elseif string.find(combined, "b9yu9dueystnk3weda6y") or string.find(combined, "ioluminescent") or string.find(combined, "bioluminescent") or string.find(combined, "willow") or string.find(combined, "tree") or string.find(combined, "foliage") or string.find(combined, "wood") then
 		return "TREE_WILLOW"
-	-- 6. Merchant Gazebo / Market Pavilion
+	-- 10. Merchant Gazebo / Market Pavilion
 	elseif string.find(combined, "88k2rzresq5xhd5bkrt8") or string.find(combined, "gazebo") or string.find(combined, "merchant stall") or string.find(combined, "market") or string.find(combined, "stall") or string.find(combined, "shop") or string.find(combined, "tent") then
 		return "GAZEBO"
-	-- 7. Ancient Cosmic Realm Gate
+	-- 11. Ancient Cosmic Realm Gate
 	elseif string.find(combined, "k4xcbxw5jiktsvfs6rvn") or string.find(combined, "realm gate") or string.find(combined, "locked portal") or string.find(combined, "cosmic realm gate") or string.find(combined, "gate") or string.find(combined, "portal") or string.find(combined, "arch") then
 		return "GATE_ARCH"
-	-- 8. Astral Kitsune Companion Fox
+	-- 12. Astral Kitsune Companion Fox
 	elseif string.find(combined, "dy37cblwfrngvdahv9wz") or string.find(combined, "kitsune") or string.find(combined, "astral kitsune") or string.find(combined, "fox") then
 		return "PET_KITSUNE"
-	-- 9. Starlight Hatchling Dragon
+	-- 13. Starlight Hatchling Dragon
 	elseif string.find(combined, "wvkryjmfl8csk8tlfsxr") or string.find(combined, "hatchling dragon") or string.find(combined, "dragon pet") or string.find(combined, "dragon") or string.find(combined, "drake") then
 		return "PET_DRAGON"
-	-- 10. Celestial Mystery Egg
+	-- 14. Celestial Mystery Egg
 	elseif string.find(combined, "pftfbiaqxyqqa70eng8j") or string.find(combined, "mystery%-egg") or string.find(combined, "mystery egg") or string.find(combined, "celestial%-egg") or (string.find(combined, "egg") and not string.find(combined, "dragon")) then
 		return "EGG"
-	-- 11. Crystal Bloom Crop
+	-- 15. Crystal Bloom Crop
 	elseif string.find(combined, "wumxsfiy9i8durscm3vv") or string.find(combined, "crystal%-bloom") or string.find(combined, "crystal bloom") or string.find(combined, "cosmic%-crystal") or string.find(combined, "bloom") or string.find(combined, "flower") or string.find(combined, "crop") then
 		return "BLOOM"
-	-- 12. Amethyst Crystal Cluster / Geode
+	-- 16. Amethyst Crystal Cluster / Geode
 	elseif string.find(combined, "bgcdryd1jxdfkwvccuxn") or string.find(combined, "meshentity") or string.find(combined, "crystal") or string.find(combined, "geode") or string.find(combined, "ore") or string.find(combined, "gem") then
 		return "DECOR_CRYSTAL"
-	-- 13. Celestial Stardust Well (AFK Vault)
+	-- 17. Celestial Stardust Well (AFK Vault)
 	elseif string.find(combined, "4wvlmwpkfjpttoq4rws4") or string.find(combined, "4wvlmpkfjpttoq4rws4") or string.find(combined, "well") or string.find(combined, "fountain") or string.find(combined, "vault") or string.find(combined, "pool") then
 		return "WELL"
 	-- Fallback Keyword Matches
@@ -575,17 +587,22 @@ function WorldService.Init()
 	end
 
 	-- ========================================================
-	-- 4. MASTER UNIFIED MODEL: GRAND CELESTIAL TEMPLE BACKDROP
-	-- (YNrolxdcxfktT2p42Y4L — Elevated at rear overlook at Z = 28)
+	-- 4. DEDICATED GRAND CELESTIAL TEMPLE / PAGODA BACKDROP
+	-- (Framing the Sacred Altar from the North Overlook at Z = 26)
 	-- ========================================================
-	local masterUnified = classifiedAssets["MAP_UNIFIED"] and classifiedAssets["MAP_UNIFIED"][1]
-	if masterUnified then
-		print("  🌟 [WorldService] Deploying Grand Celestial Temple Pavilion at Rear Overlook...")
-		masterUnified.Name = "GrandCelestialTemple"
-		masterUnified.Parent = gardenFolder
-		anchorAllParts(masterUnified, true)
-		scaleModelToDimension(masterUnified, 45.0)
-		pivotModelBottomFlush(masterUnified, Vector3.new(0, 0.45, 28), 0.45)
+	local userTemple = classifiedAssets["TEMPLE"] and classifiedAssets["TEMPLE"][1]
+	if userTemple then
+		print("  🌟 [WorldService] Deploying Dedicated High-Detail Grand Celestial Temple...")
+		userTemple.Name = "GrandCelestialTemple"
+		userTemple.Parent = gardenFolder
+		anchorAllParts(userTemple, true)
+		scaleModelToDimension(userTemple, 42.0)
+		pivotModelBottomFlush(userTemple, Vector3.new(0, 0.45, 26), 0.45, math.rad(180))
+	else
+		-- Log that the monolithic whole-scene draft blob is bypassed
+		if classifiedAssets["MAP_UNIFIED"] then
+			print("  ℹ️ [WorldService] Monolithic whole-scene draft blob (YNrolxdcxfktT2p42Y4L) bypassed — ready for high-detail Temple model.")
+		end
 	end
 
 	-- ========================================================
@@ -889,6 +906,68 @@ function WorldService.Init()
 
 	createCrystallineBridge("EastCrystallineBridge", 40, 52, Color3.fromRGB(160, 210, 245))
 	createCrystallineBridge("WestAmethystBridge", -40, -52, Color3.fromRGB(200, 170, 245))
+
+	-- User Imported 3D Bridge Overrides
+	local userBridges = classifiedAssets["BRIDGE"] or {}
+	if #userBridges > 0 then
+		local bTemplate = userBridges[1]
+		local east3DBridge = bTemplate:Clone()
+		east3DBridge.Name = "3D_EastBridge"
+		east3DBridge.Parent = gardenFolder
+		anchorAllParts(east3DBridge, true)
+		scaleModelToDimension(east3DBridge, 16.0)
+		pivotModelBottomFlush(east3DBridge, Vector3.new(46, 0.45, 0), 0.45, math.rad(90))
+
+		local west3DBridge = bTemplate:Clone()
+		west3DBridge.Name = "3D_WestBridge"
+		west3DBridge.Parent = gardenFolder
+		anchorAllParts(west3DBridge, true)
+		scaleModelToDimension(west3DBridge, 16.0)
+		pivotModelBottomFlush(west3DBridge, Vector3.new(-46, 0.45, 0), 0.45, math.rad(-90))
+	end
+
+	-- User Imported Tree Variations (Cherry Blossom, Bonsai, Pine)
+	local treeVariations = classifiedAssets["TREE_VARIATION"] or {}
+	if #treeVariations > 0 then
+		local vTemplate = treeVariations[1]
+		local varPositions = {
+			Vector3.new(-22, 0.45, 20),
+			Vector3.new(22, 0.45, 20),
+			Vector3.new(-26, 0.45, -24),
+			Vector3.new(26, 0.45, -24),
+		}
+		for i, vPos in ipairs(varPositions) do
+			local treeV = vTemplate:Clone()
+			treeV.Name = "TreeVariation_" .. i
+			treeV.Parent = gardenFolder
+			anchorAllParts(treeV, true)
+			for _, part in getContainerParts(treeV) do
+				part.CanCollide = false
+			end
+			scaleModelToDimension(treeV, 14.0)
+			pivotModelBottomFlush(treeV, vPos, 0.45)
+		end
+	end
+
+	-- User Imported Decorative Props (Lanterns, Benches, Torii)
+	local decorProps = classifiedAssets["DECOR_PROP"] or {}
+	if #decorProps > 0 then
+		local propTemplate = decorProps[1]
+		local propPositions = {
+			Vector3.new(-6, 0.45, -18),
+			Vector3.new(6, 0.45, -18),
+			Vector3.new(-6, 0.45, -2),
+			Vector3.new(6, 0.45, -2),
+		}
+		for i, pPos in ipairs(propPositions) do
+			local pClone = propTemplate:Clone()
+			pClone.Name = "SanctuaryProp_" .. i
+			pClone.Parent = gardenFolder
+			anchorAllParts(pClone, true)
+			scaleModelToDimension(pClone, 4.0)
+			pivotModelBottomFlush(pClone, pPos, 0.45)
+		end
+	end
 
 	-- ========================================================
 	-- 9. VOID SAFETY RESPAWN NET
