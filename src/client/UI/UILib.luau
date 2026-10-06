@@ -46,6 +46,8 @@ UILib.Colors = {
 	Purple      = Color3.fromRGB(168, 85, 247),     -- Arcane Amethyst
 	PurpleLight = Color3.fromRGB(216, 180, 254),
 	PurpleDark  = Color3.fromRGB(126, 34, 206),
+	PurpleDim   = Color3.fromRGB(109, 40, 217),
+	GreenDim    = Color3.fromRGB(22, 101, 52),
 	Red         = Color3.fromRGB(239, 68, 68),
 	Orange      = Color3.fromRGB(249, 115, 22),
 
@@ -96,6 +98,7 @@ UILib.Icons = {
 
 UILib.Timing = {
 	Fast     = TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+	Standard = TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
 	Normal   = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
 	Smooth   = TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
 	ModalIn  = TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
@@ -121,10 +124,10 @@ function UILib.ApplyPill(parent: GuiObject): UICorner
 	return corner
 end
 
-function UILib.ApplyStroke(parent: GuiObject, color: Color3, thickness: number, transparency: number?): UIStroke
+function UILib.ApplyStroke(parent: GuiObject, color: Color3?, thickness: number?, transparency: number?): UIStroke
 	local stroke = Instance.new("UIStroke")
-	stroke.Color = color
-	stroke.Thickness = thickness
+	stroke.Color = color or Color3.fromRGB(16, 12, 28)
+	stroke.Thickness = thickness or 2
 	stroke.Transparency = transparency or 0
 	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 	stroke.Parent = parent

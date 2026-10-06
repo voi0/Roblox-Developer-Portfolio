@@ -59,6 +59,16 @@ local playerData: any = nil
 -- ============================================================
 print("  [Client] Initializing subsystems immediately...")
 
+-- Initialize UI FIRST so the player always has the HUD and interface instantly on frame 1
+if UIController then
+	local s, err = pcall(function() UIController.Init() end)
+	if s then
+		print("  [Client] UIController (HUD & Modals) mounted ✓")
+	else
+		warn(`  [Client] UIController Init error: {tostring(err)}`)
+	end
+end
+
 if SoundController then
 	local s, err = pcall(function() SoundController.Init() end)
 	if s then
@@ -77,18 +87,6 @@ if VFXController then
 	end
 end
 
-if WorldController then
-	local s, err = pcall(function()
-		WorldController.Init()
-		WorldController.StartRenderLoop()
-	end)
-	if s then
-		print("  [Client] WorldController (3D Sanctuary) ready ✓")
-	else
-		warn(`  [Client] WorldController Init error: {tostring(err)}`)
-	end
-end
-
 if PetController then
 	local s, err = pcall(function() PetController.Init() end)
 	if s then
@@ -98,13 +96,18 @@ if PetController then
 	end
 end
 
-if UIController then
-	local s, err = pcall(function() UIController.Init() end)
-	if s then
-		print("  [Client] UIController (HUD & Modals) ready ✓")
-	else
-		warn(`  [Client] UIController Init error: {tostring(err)}`)
-	end
+if WorldController then
+	task.spawn(function()
+		local s, err = pcall(function()
+			WorldController.Init()
+			WorldController.StartRenderLoop()
+		end)
+		if s then
+			print("  [Client] WorldController (3D Sanctuary) ready ✓")
+		else
+			warn(`  [Client] WorldController Init error: {tostring(err)}`)
+		end
+	end)
 end
 
 if TutorialController then
