@@ -60,7 +60,7 @@ function TutorialController.Init()
 	local banner = Instance.new("Frame")
 	banner.Name = "GuideBanner"
 	banner.Size = UDim2.new(0, 360, 0, 36)
-	banner.Position = UDim2.new(0.5, -180, 0, 66)
+	banner.Position = UDim2.new(0.5, -180, 0, 114)
 	banner.BackgroundColor3 = Color3.fromRGB(15, 11, 26)
 	banner.BackgroundTransparency = 0.15
 	banner.BorderSizePixel = 0
@@ -127,10 +127,9 @@ function TutorialController.SetStep(stepIndex: number)
 	if titleLabel then titleLabel.Text = stepData.Title end
 	if descLabel then descLabel.Text = stepData.Description end
 
-	banner.Visible = true
-	banner.Position = UDim2.new(0.5, -180, 0, 56)
+	banner.Position = UDim2.new(0.5, -180, 0, 106)
 	TweenService:Create(banner, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-		Position = UDim2.new(0.5, -180, 0, 66),
+		Position = UDim2.new(0.5, -180, 0, 114),
 	}):Play()
 
 	SoundController.Play("PlantReady")

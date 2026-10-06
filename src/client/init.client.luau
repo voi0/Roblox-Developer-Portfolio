@@ -143,34 +143,14 @@ if WorldController then WorldController.Update(defaultStartingData) end
 -- ============================================================
 local function setupCamera(char: Model)
 	local humanoid = char:WaitForChild("Humanoid", 10) :: Humanoid?
-	local hrp = char:WaitForChild("HumanoidRootPart", 10) :: BasePart?
-	if not (humanoid and hrp) then return end
+	if not humanoid then return end
 
 	local camera = Workspace.CurrentCamera or Workspace:WaitForChild("Camera") :: Camera
 	camera.CameraType = Enum.CameraType.Custom
 	camera.CameraSubject = humanoid
 
-	player.CameraMinZoomDistance = 6
-	player.CameraMaxZoomDistance = 45
-
-	-- Ensure all character parts are 100% visible (prevent near-clip transparency)
-	for _, part in char:GetDescendants() do
-		if part:IsA("BasePart") then
-			part.LocalTransparencyModifier = 0
-		end
-	end
-	char.DescendantAdded:Connect(function(part)
-		if part:IsA("BasePart") then
-			part.LocalTransparencyModifier = 0
-		end
-	end)
-
-	-- Frame camera naturally behind the character looking towards garden
-	task.delay(0.2, function()
-		if hrp and camera then
-			camera.CFrame = CFrame.lookAt(hrp.Position + Vector3.new(0, 4.5, -12), hrp.Position + Vector3.new(0, 1.2, 0))
-		end
-	end)
+	player.CameraMinZoomDistance = 2
+	player.CameraMaxZoomDistance = 50
 end
 
 if player.Character then

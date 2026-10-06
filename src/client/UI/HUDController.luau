@@ -108,8 +108,8 @@ function HUDController.Create()
 	-- ── Left: Player Profile Badge with Live XP Bar ──
 	local profileCard = Instance.new("TextButton")
 	profileCard.Name = "ProfileCard"
-	profileCard.Size = UDim2.new(0, 205, 0, 42)
-	profileCard.Position = UDim2.new(0, 6, 0.5, -21)
+	profileCard.Size = UDim2.new(0, 175, 0, 40)
+	profileCard.Position = UDim2.new(0, 8, 0.5, -20)
 	profileCard.BackgroundColor3 = UILib.Colors.Surface1
 	profileCard.BorderSizePixel = 0
 	profileCard.Text = ""
