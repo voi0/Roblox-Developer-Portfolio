@@ -186,14 +186,12 @@ ProximityPromptService.PromptTriggered:Connect(function(prompt: ProximityPrompt,
 		if UIController then UIController.ToggleModal("Forge") end
 	elseif name == "HatchEggPrompt" then
 		if UIController then UIController.ToggleModal("Pets") end
-	elseif name == "BundlePrompt" or name == "AutoHarvestPrompt" or name == "LuckPotionPrompt" then
+	elseif name == "ShopPrompt" or name == "MarketPrompt" or name == "MerchantPrompt" or name == "BundlePrompt" or name == "AutoHarvestPrompt" or name == "LuckPotionPrompt" then
 		if UIController then UIController.ToggleModal("Shop") end
 	elseif name == "TelescopePrompt" then
 		if UIController then UIController.ToggleModal("Constellation") end
 	elseif name == "RealmGatePrompt" then
-		if NotificationUI and UILib then
-			NotificationUI.Show("🔒 ASTRAL REALM: Reach Level 5 & Transcend to unlock this realm!", UILib.Colors.Pink)
-		end
+		if UIController then UIController.ToggleModal("Transcend") end
 	end
 end)
 

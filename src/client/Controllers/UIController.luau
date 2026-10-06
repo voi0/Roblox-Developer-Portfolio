@@ -67,17 +67,10 @@ function UIController.Init()
 		end
 	end
 
-	-- Wire Direct Callback + BindableEvent for 100% Reliable Dock Action Execution
+	-- Wire Direct Callback for 100% Reliable Dock Action Execution
 	HUDController.SetActionCallback(function(actionName: string)
 		UIController.HandleDockAction(actionName)
 	end)
-
-	local actionEvent = HUDController.GetUIActionEvent()
-	if actionEvent then
-		actionEvent.Event:Connect(function(actionName: string)
-			UIController.HandleDockAction(actionName)
-		end)
-	end
 end
 
 function UIController.HandleDockAction(actionName: string)
@@ -100,7 +93,12 @@ function UIController.HandleDockAction(actionName: string)
 	end
 end
 
+local lastModalToggleTime = 0
 function UIController.ToggleModal(modalName: string)
+	local now = os.clock()
+	if now - lastModalToggleTime < 0.25 then return end
+	lastModalToggleTime = now
+
 	if UIController._currentOpenModal == modalName then
 		UIController.CloseAllModals()
 		return

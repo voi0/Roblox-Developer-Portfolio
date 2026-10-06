@@ -140,8 +140,11 @@ local function classifyModel(inst: Instance): string?
 	end
 	local combined = string.lower(table.concat(allNames, " "))
 
-	-- 1. Exact glTF Node Hashes & Keywords from User's Imports
-	if string.find(combined, "agdrm0mbeo3gylxitymk") or string.find(combined, "bzvomeysheglnysxnymr") or string.find(combined, "floating%-sanctuary") or string.find(combined, "floating sanctuary") or string.find(combined, "central sanctuary") or string.find(combined, "island") then
+	-- 1. Unified Full-Map / Multi-Structure Mesh File
+	if string.find(combined, "unified") or string.find(combined, "structures") or string.find(combined, "full_map") or string.find(combined, "vision") or string.find(combined, "master_map") or string.find(combined, "archipelago") or string.find(combined, "environment") or string.find(combined, "main_map") or string.find(combined, "fullmap") or string.find(combined, "master") then
+		return "MAP_UNIFIED"
+	-- 2. Exact glTF Node Hashes & Keywords from User's Imports
+	elseif string.find(combined, "agdrm0mbeo3gylxitymk") or string.find(combined, "bzvomeysheglnysxnymr") or string.find(combined, "floating%-sanctuary") or string.find(combined, "floating sanctuary") or string.find(combined, "central sanctuary") or string.find(combined, "island") then
 		return "ISLAND"
 	elseif string.find(combined, "ivdfl4qeemqt7ve4qcvs") or string.find(combined, "gardner") or string.find(combined, "plant%-box") or string.find(combined, "plant_box") or string.find(combined, "planter") then
 		return "PLANTER"
@@ -301,6 +304,7 @@ function WorldService.Init()
 	-- COMPREHENSIVE SCANNER: INGEST ALL USER 3D ASSETS
 	-- ========================================================
 	local classifiedAssets: { [string]: { Model } } = {
+		MAP_UNIFIED = {},
 		ISLAND = {},
 		PLANTER = {},
 		ALTAR = {},
@@ -361,6 +365,23 @@ function WorldService.Init()
 	for _, stray in strayAssets do
 		stray.Parent = userAssetsFolder
 		anchorAllParts(stray, true)
+	end
+
+	-- ========================================================
+	-- 0. MASTER UNIFIED SANCTUARY MAP (User-Modeled Multi-Structure Mesh)
+	-- ========================================================
+	local masterUnified = classifiedAssets["MAP_UNIFIED"] and classifiedAssets["MAP_UNIFIED"][1]
+	if masterUnified then
+		print("  🌟 [WorldService] Master Unified 3D Sanctuary Detected! Deploying to Garden...")
+		masterUnified.Name = "MasterUnifiedSanctuary"
+		masterUnified.Parent = gardenFolder
+		anchorAllParts(masterUnified, true)
+		if not masterUnified.PrimaryPart then
+			masterUnified.PrimaryPart = masterUnified:FindFirstChildWhichIsA("BasePart", true)
+		end
+		if masterUnified.PrimaryPart then
+			masterUnified:PivotTo(CFrame.new(0, 0, 0))
+		end
 	end
 
 	-- ========================================================
@@ -456,6 +477,9 @@ function WorldService.Init()
 	if userBloom and assetsFolder then
 		print("  ✨ [WorldService] Storing 3D Crystal Bloom Template in ReplicatedStorage...")
 		anchorAllParts(userBloom, false)
+		if not userBloom.PrimaryPart then
+			userBloom.PrimaryPart = userBloom:FindFirstChildWhichIsA("BasePart", true)
+		end
 		scaleModelToDimension(userBloom, 3.2)
 		userBloom.Name = "CropTemplate"
 		userBloom.Parent = assetsFolder
@@ -741,6 +765,17 @@ function WorldService.Init()
 		if userKitsune.PrimaryPart then
 			userKitsune:PivotTo(CFrame.new(-56, 0.4, 0) * CFrame.Angles(0, math.rad(45), 0))
 		end
+
+		if assetsFolder then
+			local petTemplate = userKitsune:Clone()
+			petTemplate.Name = "Pet_celestial_kitsune"
+			anchorAllParts(petTemplate, true)
+			if not petTemplate.PrimaryPart then
+				petTemplate.PrimaryPart = petTemplate:FindFirstChildWhichIsA("BasePart", true)
+			end
+			scaleModelToDimension(petTemplate, 2.2)
+			petTemplate.Parent = assetsFolder
+		end
 	end
 
 	-- STARLIGHT DRAGON PET (wvKRYjmFL8CSK8TLfSXr)
@@ -756,6 +791,17 @@ function WorldService.Init()
 		end
 		if userDragon.PrimaryPart then
 			userDragon:PivotTo(CFrame.new(-68, 0.4, 0) * CFrame.Angles(0, math.rad(-45), 0))
+		end
+
+		if assetsFolder then
+			local petTemplate = userDragon:Clone()
+			petTemplate.Name = "Pet_astral_dragon"
+			anchorAllParts(petTemplate, true)
+			if not petTemplate.PrimaryPart then
+				petTemplate.PrimaryPart = petTemplate:FindFirstChildWhichIsA("BasePart", true)
+			end
+			scaleModelToDimension(petTemplate, 2.2)
+			petTemplate.Parent = assetsFolder
 		end
 	end
 
@@ -868,14 +914,73 @@ function WorldService.Init()
 	end
 
 	-- ========================================================
-	-- 9. RELIABLE CHARACTER SPAWN POSITIONING
+	-- 9. RELIABLE CHARACTER SPAWN POSITIONING & STARTER TOOL
 	-- ========================================================
-	local function onCharacterAdded(player: Player, character: Model)
+	local function giveStarterTool(targetPlayer: Player)
+		local backpack = targetPlayer:FindFirstChildOfClass("Backpack")
+		local starterGear = targetPlayer:FindFirstChild("StarterGear")
+		if not backpack then return end
+
+		if backpack:FindFirstChild("Cosmic Trowel") or (targetPlayer.Character and targetPlayer.Character:FindFirstChild("Cosmic Trowel")) then
+			return
+		end
+
+		local tool = Instance.new("Tool")
+		tool.Name = "Cosmic Trowel"
+		tool.ToolTip = "Sacred cosmic gardening trowel. Infused with starlight."
+		tool.RequiresHandle = true
+		tool.CanBeDropped = false
+
+		local handle = Instance.new("Part")
+		handle.Name = "Handle"
+		handle.Size = Vector3.new(0.6, 2.0, 0.6)
+		handle.Material = Enum.Material.SmoothPlastic
+		handle.Color = Color3.fromRGB(168, 85, 247)
+		handle.TopSurface = Enum.SurfaceType.Smooth
+		handle.BottomSurface = Enum.SurfaceType.Smooth
+		handle.CanCollide = false
+		handle.Parent = tool
+
+		local tipSparkles = Instance.new("ParticleEmitter")
+		tipSparkles.Name = "CosmicSparks"
+		tipSparkles.Rate = 10
+		tipSparkles.Lifetime = NumberRange.new(0.4, 0.9)
+		tipSparkles.Speed = NumberRange.new(0.4, 1.0)
+		tipSparkles.SpreadAngle = Vector2.new(45, 45)
+		tipSparkles.Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(250, 204, 21)),
+			ColorSequenceKeypoint.new(0.5, Color3.fromRGB(168, 85, 247)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(56, 189, 248)),
+		})
+		tipSparkles.Size = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0.22),
+			NumberSequenceKeypoint.new(1, 0),
+		})
+		tipSparkles.LightEmission = 0.9
+		tipSparkles.Parent = handle
+
+		local light = Instance.new("PointLight")
+		light.Color = Color3.fromRGB(216, 180, 254)
+		light.Brightness = 1.2
+		light.Range = 8
+		light.Parent = handle
+
+		tool.Grip = CFrame.new(0, -0.6, 0) * CFrame.Angles(math.rad(-90), 0, 0)
+		tool.Parent = backpack
+
+		if starterGear and not starterGear:FindFirstChild("Cosmic Trowel") then
+			local gearClone = tool:Clone()
+			gearClone.Parent = starterGear
+		end
+	end
+
+	local function onCharacterAdded(targetPlayer: Player, character: Model)
 		local hrp = character:WaitForChild("HumanoidRootPart", 10) :: BasePart?
 		if hrp then
 			task.wait(0.08)
 			hrp.CFrame = CFrame.lookAt(Vector3.new(0, 3.5, -16), Vector3.new(0, 3.5, 0))
 		end
+		giveStarterTool(targetPlayer)
 	end
 
 	Players.PlayerAdded:Connect(function(player)

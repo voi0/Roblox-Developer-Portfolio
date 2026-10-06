@@ -158,6 +158,17 @@ function WorldController.Init()
 		end
 	end)
 
+	-- Connect Market Gazebo Shop Prompt
+	task.spawn(function()
+		local shopPrompt = gardenFolder:FindFirstChild("ShopPrompt", true) :: ProximityPrompt?
+		if shopPrompt then
+			shopPrompt.Triggered:Connect(function()
+				local ui = getUIController()
+				if ui and ui.ToggleModal then ui.ToggleModal("Shop") end
+			end)
+		end
+	end)
+
 	-- Connect Pet Egg Prompt & Setup Hover Bob
 	task.spawn(function()
 		local eggPrompt = gardenFolder:FindFirstChild("HatchEggPrompt", true) :: ProximityPrompt?
@@ -237,67 +248,68 @@ function WorldController._setupPlotClient(index: number, plotModel: Model)
 		end)
 	end
 
-	-- Create Client-Side Status Billboard (Juicy Simulator Badge)
+	-- Create Client-Side Status Billboard (Juicy Simulator Pill Badge)
 	local billboard = Instance.new("BillboardGui")
 	billboard.Name = "PlotBillboard"
-	billboard.Size = UDim2.new(0, 160, 0, 52)
-	billboard.StudsOffset = Vector3.new(0, 4.2, 0)
+	billboard.Size = UDim2.new(0, 175, 0, 56)
+	billboard.StudsOffset = Vector3.new(0, 4.4, 0)
 	billboard.AlwaysOnTop = true
-	billboard.MaxDistance = 35
+	billboard.MaxDistance = 40
 	billboard.Enabled = false
 	billboard.Parent = soil
 
 	local badgeFrame = Instance.new("Frame")
 	badgeFrame.Name = "Badge"
 	badgeFrame.Size = UDim2.fromScale(1, 1)
-	badgeFrame.BackgroundColor3 = Color3.fromRGB(24, 18, 44)
-	badgeFrame.BackgroundTransparency = 0.08
+	badgeFrame.BackgroundColor3 = Color3.fromRGB(15, 12, 30)
+	badgeFrame.BackgroundTransparency = 0.12
 	badgeFrame.BorderSizePixel = 0
 	badgeFrame.Parent = billboard
 
 	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 14)
+	corner.CornerRadius = UDim.new(0, 16)
 	corner.Parent = badgeFrame
 
 	local stroke = Instance.new("UIStroke")
 	stroke.Name = "BadgeStroke"
-	stroke.Color = Color3.fromRGB(16, 12, 28)
-	stroke.Thickness = 2.5
+	stroke.Color = Color3.fromRGB(168, 85, 247)
+	stroke.Thickness = 1.8
 	stroke.Parent = badgeFrame
 
 	-- Top Gloss Sheen
 	local sheen = Instance.new("Frame")
 	sheen.Name = "Sheen"
-	sheen.Size = UDim2.new(1, -16, 0, 4)
-	sheen.Position = UDim2.new(0, 8, 0, 3)
+	sheen.Size = UDim2.new(1, -20, 0, 3)
+	sheen.Position = UDim2.new(0, 10, 0, 3)
 	sheen.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-	sheen.BackgroundTransparency = 0.7
+	sheen.BackgroundTransparency = 0.75
 	sheen.BorderSizePixel = 0
 	sheen.Parent = badgeFrame
+
 	local sCorner = Instance.new("UICorner")
 	sCorner.CornerRadius = UDim.new(1, 0)
 	sCorner.Parent = sheen
 
 	local titleLabel = Instance.new("TextLabel")
 	titleLabel.Name = "StatusTitle"
-	titleLabel.Size = UDim2.new(1, -12, 0, 18)
-	titleLabel.Position = UDim2.new(0, 6, 0, 6)
+	titleLabel.Size = UDim2.new(1, -16, 0, 18)
+	titleLabel.Position = UDim2.new(0, 8, 0, 6)
 	titleLabel.BackgroundTransparency = 1
 	titleLabel.Text = ""
 	titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-	titleLabel.TextSize = 13
-	titleLabel.Font = Enum.Font.FredokaOne
+	titleLabel.TextSize = 12
+	titleLabel.Font = Enum.Font.GothamBold
 	titleLabel.Parent = badgeFrame
 
 	local tStroke = Instance.new("UIStroke")
-	tStroke.Color = Color3.fromRGB(16, 12, 28)
-	tStroke.Thickness = 2.0
+	tStroke.Color = Color3.fromRGB(10, 8, 20)
+	tStroke.Thickness = 1.8
 	tStroke.Parent = titleLabel
 
 	local subLabel = Instance.new("TextLabel")
 	subLabel.Name = "SubInfo"
-	subLabel.Size = UDim2.new(1, -12, 0, 14)
-	subLabel.Position = UDim2.new(0, 6, 0, 24)
+	subLabel.Size = UDim2.new(1, -16, 0, 14)
+	subLabel.Position = UDim2.new(0, 8, 0, 24)
 	subLabel.BackgroundTransparency = 1
 	subLabel.Text = ""
 	subLabel.TextColor3 = Color3.fromRGB(254, 240, 138)
@@ -306,15 +318,15 @@ function WorldController._setupPlotClient(index: number, plotModel: Model)
 	subLabel.Parent = badgeFrame
 
 	local sStroke = Instance.new("UIStroke")
-	sStroke.Color = Color3.fromRGB(16, 12, 28)
-	sStroke.Thickness = 1.5
+	sStroke.Color = Color3.fromRGB(10, 8, 20)
+	sStroke.Thickness = 1.2
 	sStroke.Parent = subLabel
 
 	local progressBarBg = Instance.new("Frame")
 	progressBarBg.Name = "ProgressBarBg"
-	progressBarBg.Size = UDim2.new(1, -16, 0, 7)
-	progressBarBg.Position = UDim2.new(0, 8, 1, -11)
-	progressBarBg.BackgroundColor3 = Color3.fromRGB(16, 12, 28)
+	progressBarBg.Size = UDim2.new(1, -20, 0, 6)
+	progressBarBg.Position = UDim2.new(0, 10, 1, -11)
+	progressBarBg.BackgroundColor3 = Color3.fromRGB(10, 8, 20)
 	progressBarBg.BorderSizePixel = 0
 	progressBarBg.Visible = false
 	progressBarBg.Parent = badgeFrame
@@ -336,10 +348,10 @@ function WorldController._setupPlotClient(index: number, plotModel: Model)
 
 	local fillGrad = Instance.new("UIGradient")
 	fillGrad.Color = ColorSequence.new({
-		ColorSequenceKeypoint.new(0, Color3.fromRGB(134, 239, 172)),
-		ColorSequenceKeypoint.new(1, Color3.fromRGB(34, 197, 94)),
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(56, 189, 248)),
+		ColorSequenceKeypoint.new(0.5, Color3.fromRGB(74, 222, 128)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(250, 204, 21)),
 	})
-	fillGrad.Rotation = 90
 	fillGrad.Parent = progressFill
 
 	WorldController._plotModels[index] = plotModel
@@ -512,19 +524,25 @@ function WorldController.UpdatePlantVisual(plotIndex: number, plant: any?, isUnl
 		if cropTemplate then
 			local cropClone = cropTemplate:Clone()
 			cropClone.Name = "GrowingCrop"
-			pcall(function() cropClone:ScaleTo(0.25) end)
+			for _, p in cropClone:GetDescendants() do
+				if p:IsA("BasePart") then
+					p.Anchored = true
+					p.CanCollide = false
+				end
+			end
 			if not cropClone.PrimaryPart then
 				cropClone.PrimaryPart = cropClone:FindFirstChildWhichIsA("BasePart", true)
 			end
+			pcall(function() cropClone:ScaleTo(0.25) end)
 			if cropClone.PrimaryPart then
-				cropClone:PivotTo(CFrame.new(soil.Position + Vector3.new(0, 0.2, 0)))
+				cropClone:PivotTo(CFrame.new(soil.Position + Vector3.new(0, 0.15, 0)))
 			end
 			cropClone.Parent = cropFolder
 		else
 			local stem = Instance.new("Part")
 			stem.Name = "SproutStem"
 			stem.Size = Vector3.new(0.3, 0.4, 0.3)
-			stem.Position = soil.Position + Vector3.new(0, 0.4, 0)
+			stem.Position = soil.Position + Vector3.new(0, 0.25, 0)
 			stem.Anchored = true
 			stem.Material = Enum.Material.SmoothPlastic
 			stem.Color = Color3.fromRGB(52, 211, 153)
@@ -565,11 +583,18 @@ function WorldController.UpdatePlantVisual(plotIndex: number, plant: any?, isUnl
 		if cropTemplate then
 			local cropClone = cropTemplate:Clone()
 			cropClone.Name = "MatureBloom"
+			for _, p in cropClone:GetDescendants() do
+				if p:IsA("BasePart") then
+					p.Anchored = true
+					p.CanCollide = false
+				end
+			end
 			if not cropClone.PrimaryPart then
 				cropClone.PrimaryPart = cropClone:FindFirstChildWhichIsA("BasePart", true)
 			end
+			pcall(function() cropClone:ScaleTo(1.15) end)
 			if cropClone.PrimaryPart then
-				cropClone:PivotTo(CFrame.new(soil.Position + Vector3.new(0, 0.8, 0)))
+				cropClone:PivotTo(CFrame.new(soil.Position + Vector3.new(0, 0.85, 0)))
 			end
 			cropClone.Parent = cropFolder
 
@@ -578,8 +603,8 @@ function WorldController.UpdatePlantVisual(plotIndex: number, plant: any?, isUnl
 				table.insert(WorldController._rotatingCores, corePart)
 				local bloomLight = Instance.new("PointLight")
 				bloomLight.Color = seedColor
-				bloomLight.Brightness = 2.0
-				bloomLight.Range = 14
+				bloomLight.Brightness = 2.2
+				bloomLight.Range = 16
 				bloomLight.Parent = corePart
 			end
 		else
@@ -638,8 +663,29 @@ function WorldController.StartRenderLoop()
 							local progressBg = badge and badge:FindFirstChild("ProgressBarBg")
 							local fill = progressBg and progressBg:FindFirstChild("Fill") :: Frame?
 
+							local stageName = "🌱 SPROUTING"
+							local dynamicScale = 0.25
+							local yOffset = 0.15
+
+							if progressPct < 0.30 then
+								local p = progressPct / 0.30
+								stageName = "🌱 SPROUTING"
+								dynamicScale = 0.25 + (0.20 * p)
+								yOffset = 0.15 + (0.15 * p)
+							elseif progressPct < 0.70 then
+								local p = (progressPct - 0.30) / 0.40
+								stageName = "🌿 GROWING"
+								dynamicScale = 0.45 + (0.35 * p)
+								yOffset = 0.30 + (0.30 * p)
+							else
+								local p = (progressPct - 0.70) / 0.30
+								stageName = "✨ BUDDING"
+								dynamicScale = 0.80 + (0.35 * p)
+								yOffset = 0.60 + (0.25 * p)
+							end
+
 							if subLabel then
-								subLabel.Text = string.format("GROWING • %02ds (%d%%)", remaining, math.floor(progressPct * 100))
+								subLabel.Text = string.format("%s • %02ds (%d%%)", stageName, remaining, math.floor(progressPct * 100))
 							end
 							if fill then
 								fill.Size = UDim2.fromScale(progressPct, 1)
@@ -649,24 +695,38 @@ function WorldController.StartRenderLoop()
 							if cropFolder and soil then
 								local growingCrop = cropFolder:FindFirstChild("GrowingCrop") :: Model?
 								if growingCrop then
-									local dynamicScale = 0.25 + (0.75 * progressPct)
+									if not growingCrop.PrimaryPart then
+										growingCrop.PrimaryPart = growingCrop:FindFirstChildWhichIsA("BasePart", true)
+									end
 									pcall(function() growingCrop:ScaleTo(dynamicScale) end)
 									if growingCrop.PrimaryPart then
-										growingCrop:PivotTo(CFrame.new(soil.Position + Vector3.new(0, 0.2 + (0.5 * progressPct), 0)))
+										growingCrop:PivotTo(CFrame.new(soil.Position + Vector3.new(0, yOffset, 0)))
 									end
 								else
 									local stem = cropFolder:FindFirstChild("SproutStem") :: BasePart?
 									local bulb = cropFolder:FindFirstChild("SproutBulb") :: BasePart?
 									if stem and bulb then
-										local stemHeight = 0.4 + (1.2 * progressPct)
+										local stemHeight = 0.4 + (1.6 * progressPct)
 										stem.Size = Vector3.new(0.3, stemHeight, 0.3)
-										stem.Position = soil.Position + Vector3.new(0, stemHeight / 2 + 0.2, 0)
+										stem.Position = soil.Position + Vector3.new(0, stemHeight / 2 + 0.15, 0)
 
-										local bulbSize = 0.4 + (0.6 * progressPct)
+										local bulbSize = 0.4 + (0.8 * progressPct)
 										bulb.Size = Vector3.new(bulbSize, bulbSize, bulbSize)
 										bulb.Position = stem.Position + Vector3.new(0, stemHeight / 2 + bulbSize / 2, 0)
 									end
 								end
+							end
+						end
+					elseif plot.Plant and plot.Plant.State == "Ready" then
+						-- Smooth sine wave hovering for mature flowers
+						local plotModel = WorldController._plotModels[plotIndex]
+						local cropFolder = plotModel and plotModel:FindFirstChild("Crop") :: Folder?
+						local soil = plotModel and plotModel:FindFirstChild("Soil") :: BasePart?
+						if cropFolder and soil then
+							local matureBloom = cropFolder:FindFirstChild("MatureBloom") :: Model?
+							if matureBloom and matureBloom.PrimaryPart then
+								local bobY = math.sin(os.clock() * 2.5 + plotIndex) * 0.12
+								matureBloom:PivotTo(CFrame.new(soil.Position + Vector3.new(0, 0.85 + bobY, 0)) * CFrame.Angles(0, os.clock() * 0.5 + plotIndex, 0))
 							end
 						end
 					end

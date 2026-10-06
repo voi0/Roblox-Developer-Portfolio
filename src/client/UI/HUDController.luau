@@ -410,7 +410,12 @@ function HUDController._createDockButton(
 		iconAssetId
 	)
 
+	local lastClickTime = 0
 	local function triggerAction()
+		local now = os.clock()
+		if now - lastClickTime < 0.25 then return end
+		lastClickTime = now
+
 		local sc = getSoundController()
 		if sc then sc.Play("ButtonClick") end
 
@@ -418,16 +423,15 @@ function HUDController._createDockButton(
 			pcall(function()
 				HUDController._onActionCallback(actionName)
 			end)
-		end
-
-		local actionEvent = HUDController._gui and HUDController._gui:FindFirstChild("UIAction") :: BindableEvent?
-		if actionEvent then
-			actionEvent:Fire(actionName)
+		else
+			local actionEvent = HUDController._gui and HUDController._gui:FindFirstChild("UIAction") :: BindableEvent?
+			if actionEvent then
+				actionEvent:Fire(actionName)
+			end
 		end
 	end
 
 	btn.Activated:Connect(triggerAction)
-	btn.MouseButton1Click:Connect(triggerAction)
 end
 
 function HUDController.RefreshSeedBar(data: any)
