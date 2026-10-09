@@ -187,7 +187,12 @@ function DataService.DeductUnbanked(player: Player, amount: number): number
 	local data = DataService.GetData(player)
 	if not data then return 0 end
 
-	local actual = math.min(data.UnbankedCash, math.floor(amount))
+	local deduction = amount
+	if data.HasOfflineShield then
+		deduction = math.floor(amount * 0.5)
+	end
+
+	local actual = math.min(data.UnbankedCash, math.floor(deduction))
 	data.UnbankedCash -= actual
 	data.TotalHeistsLost += 1
 	DataService.SyncClient(player)

@@ -75,7 +75,12 @@ function MintService._mintLoop()
 			end
 			MintService._activeItems[i] = cleanList
 
-			if #cleanList >= Config.Mint.MaxUnbankedItemsPerPlot then
+			local maxCapacity = Config.Mint.MaxUnbankedItemsPerPlot
+			if data.HasDoubleCapacity then
+				maxCapacity *= 2
+			end
+
+			if #cleanList >= maxCapacity then
 				-- Conveyor is full, stall drop
 				continue
 			end
@@ -98,11 +103,17 @@ function MintService._mintLoop()
 				end
 			end
 
-			-- Add to owner's unbanked value
-			dataSvc.AddUnbanked(owner, finalValue)
-
-			-- Spawn physical visual item on conveyor
-			MintService.SpawnConveyorItem(plot, finalValue, relicDef)
+			-- If Auto-Collector Drone is owned, directly deposit into bank
+			if data.HasAutoCollector then
+				dataSvc.AddBanked(owner, finalValue)
+				if relicDef then
+					dataSvc.AddRelic(owner, relicDef.Id, 1)
+				end
+			else
+				dataSvc.AddUnbanked(owner, finalValue)
+				-- Spawn physical visual item on conveyor
+				MintService.SpawnConveyorItem(plot, finalValue, relicDef)
+			end
 		end
 	end
 end

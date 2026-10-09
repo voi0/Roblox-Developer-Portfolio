@@ -1,14 +1,13 @@
 --!strict
 --[[
-	SoundController.luau — Audio and Acoustic Experience for STARWEAVE
-	Handles sound effects for UI micro-interactions, planting, harvesting,
-	rare mutation fanfares, ambient celestial tone, and looping BGM.
+	SoundController.luau — Acoustic & Sound Engine for VAULT WARS: STEAL & DEFEND TYCOON
+	Handles tactical audio feedback for Cash Banking, Laser Tripwire Shocks,
+	Breach Siren Alarms, Security Tackles, Relic Drops, and Altar Synthesis.
 	Located in: StarterPlayerScripts.Client.Controllers.SoundController
 ]]
 
 local SoundService = game:GetService("SoundService")
 local ContentProvider = game:GetService("ContentProvider")
-local TweenService = game:GetService("TweenService")
 
 local SoundController = {}
 SoundController._sounds = {} :: { [string]: Sound }
@@ -16,7 +15,7 @@ SoundController._soundGroup = nil :: SoundGroup?
 SoundController._bgmSound = nil :: Sound?
 SoundController._isMuted = false
 
--- Curated Roblox universal sound assets for crisp, satisfying game feel
+-- Curated high-impact audio assets for tactical cyber-heist feel
 local SOUND_CONFIG = {
 	ButtonClick = {
 		Id = "rbxassetid://6895079853",
@@ -28,49 +27,49 @@ local SOUND_CONFIG = {
 		Volume = 0.25,
 		PitchRange = { 1.0, 1.1 },
 	},
-	PlantSeed = {
-		Id = "rbxassetid://9114223170",
-		Volume = 0.65,
-		PitchRange = { 0.9, 1.1 },
-	},
-	PlantReady = {
-		Id = "rbxassetid://9069609200",
-		Volume = 0.7,
-		PitchRange = { 0.98, 1.02 },
-	},
-	HarvestCommon = {
+	CashCollect = {
 		Id = "rbxassetid://6026978586",
-		Volume = 0.6,
+		Volume = 0.7,
 		PitchRange = { 0.95, 1.05 },
 	},
-	HarvestRare = {
-		Id = "rbxassetid://5153734608",
-		Volume = 0.85,
-		PitchRange = { 1.0, 1.05 },
+	VaultBank = {
+		Id = "rbxassetid://9069609200",
+		Volume = 0.8,
+		PitchRange = { 0.98, 1.02 },
 	},
-	HarvestPrimordial = {
+	BreachAlarm = {
+		Id = "rbxassetid://5530115049",
+		Volume = 0.85,
+		PitchRange = { 1.0, 1.0 },
+	},
+	LaserZap = {
+		Id = "rbxassetid://9114223170",
+		Volume = 0.75,
+		PitchRange = { 0.9, 1.1 },
+	},
+	TackleHit = {
+		Id = "rbxassetid://5153734608",
+		Volume = 0.9,
+		PitchRange = { 0.95, 1.05 },
+	},
+	RelicDropRare = {
 		Id = "rbxassetid://138090596",
 		Volume = 1.0,
-		PitchRange = { 0.95, 1.0 },
+		PitchRange = { 0.98, 1.02 },
 	},
-	RebirthAscend = {
+	FusionSynth = {
 		Id = "rbxassetid://4590662766",
-		Volume = 0.9,
-		PitchRange = { 1.0, 1.0 },
-	},
-	StormAlert = {
-		Id = "rbxassetid://5530115049",
-		Volume = 0.75,
-		PitchRange = { 1.0, 1.0 },
+		Volume = 0.95,
+		PitchRange = { 1.0, 1.05 },
 	},
 }
 
--- Ethereal cosmic soundtrack
+-- Cyberpunk industrial ambient background track
 local BGM_ASSET_ID = "rbxassetid://1843404009"
 
 function SoundController.Init()
 	local soundGroup = Instance.new("SoundGroup")
-	soundGroup.Name = "StarweaveAudio"
+	soundGroup.Name = "VaultWarsAudio"
 	soundGroup.Volume = 0.85
 	soundGroup.Parent = SoundService
 	SoundController._soundGroup = soundGroup
@@ -90,9 +89,9 @@ function SoundController.Init()
 
 	-- Ambient Looping BGM
 	local bgm = Instance.new("Sound")
-	bgm.Name = "CosmicAmbianceBGM"
+	bgm.Name = "VaultWarsAmbiance"
 	bgm.SoundId = BGM_ASSET_ID
-	bgm.Volume = 0.28
+	bgm.Volume = 0.22
 	bgm.Looped = true
 	bgm.SoundGroup = soundGroup
 	bgm.Parent = soundGroup
@@ -103,11 +102,12 @@ function SoundController.Init()
 		pcall(function()
 			ContentProvider:PreloadAsync(soundsToPreload)
 		end)
-		-- Start soft BGM fade-in
 		if SoundController._bgmSound and not SoundController._isMuted then
 			SoundController._bgmSound:Play()
 		end
 	end)
+
+	print("  [SoundController] Vault Wars Acoustic Engine online ✓")
 end
 
 function SoundController.Play(name: string, customPitch: number?)

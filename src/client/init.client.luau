@@ -55,13 +55,28 @@ local Types = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Typ
 local VaultHUD = safeRequire(uiFolder, "VaultHUD")
 local UpgradesModal = safeRequire(uiFolder, "UpgradesModal")
 local FusionModal = safeRequire(uiFolder, "FusionModal")
+local NotificationUI = safeRequire(uiFolder, "NotificationUI")
 local HeistController = safeRequire(controllersFolder, "HeistController")
+local SoundController = safeRequire(controllersFolder, "SoundController")
+local VFXController = safeRequire(controllersFolder, "VFXController")
 
 local localPlayerData: any = nil
 
 -- ============================================================
 -- 1. INITIALIZE UI & CONTROLLERS
 -- ============================================================
+if NotificationUI then
+	pcall(function() NotificationUI.Create() end)
+end
+
+if SoundController then
+	pcall(function() SoundController.Init() end)
+end
+
+if VFXController then
+	pcall(function() VFXController.Init() end)
+end
+
 if VaultHUD then
 	VaultHUD.Create()
 
@@ -109,6 +124,18 @@ player.CharacterAdded:Connect(setupCamera)
 -- ============================================================
 local function onDataReceived(data: any)
 	if not data then return end
+	if localPlayerData and data.BankedCash and localPlayerData.BankedCash then
+		local gain = data.BankedCash - localPlayerData.BankedCash
+		if gain > 0 then
+			if SoundController then SoundController.Play("CashCollect") end
+			if VFXController and player.Character then
+				local root = player.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
+				if root then
+					VFXController.PlayCashDepositBurst(root.Position, `+${gain}`)
+				end
+			end
+		end
+	end
 	localPlayerData = data
 	if VaultHUD then VaultHUD.Update(data) end
 	if UpgradesModal then UpgradesModal.Update(data) end

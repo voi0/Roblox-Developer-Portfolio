@@ -55,7 +55,63 @@ function EconomyService.Init()
 		return Enum.ProductPurchaseDecision.PurchaseGranted
 	end
 
+	-- Check gamepass ownership on join
+	local function onPlayerJoined(player: Player)
+		task.delay(1.5, function()
+			EconomyService.CheckGamepasses(player)
+		end)
+	end
+
+	for _, p in Players:GetPlayers() do
+		task.spawn(onPlayerJoined, p)
+	end
+	Players.PlayerAdded:Connect(onPlayerJoined)
+
+	MarketplaceService.PromptGamePassPurchaseFinished:Connect(function(player: Player, passId: number, wasPurchased: boolean)
+		if wasPurchased then
+			EconomyService.CheckGamepasses(player)
+		end
+	end)
+
 	print("  [EconomyService] Monetization Engine ready ✓")
+end
+
+function EconomyService.CheckGamepasses(player: Player)
+	local dataSvc = getDataService()
+	if not dataSvc then return end
+	local data = dataSvc.GetData(player)
+	if not data then return end
+
+	local gp = Config.Monetization.Gamepasses
+	if gp.AutoDroneAndShield.Id > 0 then
+		local ok, owns = pcall(function()
+			return MarketplaceService:UserOwnsGamePassAsync(player.UserId, gp.AutoDroneAndShield.Id)
+		end)
+		if ok and owns then
+			data.HasAutoCollector = true
+			data.HasOfflineShield = true
+		end
+	end
+
+	if gp.DoubleCapacity.Id > 0 then
+		local ok, owns = pcall(function()
+			return MarketplaceService:UserOwnsGamePassAsync(player.UserId, gp.DoubleCapacity.Id)
+		end)
+		if ok and owns then
+			data.HasDoubleCapacity = true
+		end
+	end
+
+	if gp.TitaniumLasers.Id > 0 then
+		local ok, owns = pcall(function()
+			return MarketplaceService:UserOwnsGamePassAsync(player.UserId, gp.TitaniumLasers.Id)
+		end)
+		if ok and owns then
+			data.HasTitaniumLasers = true
+		end
+	end
+
+	dataSvc.SyncClient(player)
 end
 
 return EconomyService

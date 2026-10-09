@@ -7,6 +7,7 @@
 ]]
 
 local Players = game:GetService("Players")
+local MarketplaceService = game:GetService("MarketplaceService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 
@@ -20,6 +21,7 @@ UpgradesModal._frame = nil :: Frame?
 UpgradesModal._isOpen = false
 UpgradesModal._currentData = nil :: Types.PlayerData?
 UpgradesModal._cards = {} :: { [string]: any }
+UpgradesModal._passButtons = {} :: { [string]: TextButton }
 UpgradesModal._prestigeBtn = nil :: TextButton?
 UpgradesModal._prestigeLabel = nil :: TextLabel?
 
@@ -85,15 +87,19 @@ function UpgradesModal.Create(parentGui: ScreenGui)
 	end)
 
 	-- Upgrades List Container
-	local listContainer = Instance.new("Frame")
+	local listContainer = Instance.new("ScrollingFrame")
 	listContainer.Name = "ListContainer"
 	listContainer.Size = UDim2.new(1, -32, 0, 280)
 	listContainer.Position = UDim2.new(0, 16, 0, 58)
 	listContainer.BackgroundTransparency = 1
+	listContainer.BorderSizePixel = 0
+	listContainer.ScrollBarThickness = 4
+	listContainer.ScrollBarImageColor3 = Color3.fromRGB(56, 189, 248)
+	listContainer.CanvasSize = UDim2.new(0, 0, 0, 550)
 	listContainer.Parent = frame
 
 	local listLayout = Instance.new("UIListLayout")
-	listLayout.Padding = UDim.new(0, 10)
+	listLayout.Padding = UDim.new(0, 8)
 	listLayout.Parent = listContainer
 
 	-- Create 3 Upgrade Cards
@@ -106,7 +112,7 @@ function UpgradesModal.Create(parentGui: ScreenGui)
 	for _, uDef in upgradeDefs do
 		local card = Instance.new("Frame")
 		card.Name = "Card_" .. uDef.Type
-		card.Size = UDim2.new(1, 0, 0, 82)
+		card.Size = UDim2.new(1, -8, 0, 78)
 		card.BackgroundColor3 = Color3.fromRGB(24, 24, 27)
 		card.BorderSizePixel = 0
 		card.Parent = listContainer
@@ -158,6 +164,96 @@ function UpgradesModal.Create(parentGui: ScreenGui)
 			BuyButton = buyBtn,
 			Def = uDef,
 		}
+	end
+
+	-- ── VIP GAMEPASS PERKS SECTION ──
+	local gamepassDefs = {
+		{
+			Key = "AutoDrone",
+			Title = "Auto-Drone & Raid Shield",
+			Desc = "Auto-deposits conveyor loot + 50% raid shield",
+			Price = "799 R$",
+			Id = Config.Monetization.Gamepasses.AutoDroneAndShield.Id,
+			Color = Color3.fromRGB(245, 158, 11),
+		},
+		{
+			Key = "Titanium",
+			Title = "Titanium Laser Defense",
+			Desc = "Max Tier 4 lasers (120 DMG + 45 knockback)",
+			Price = "499 R$",
+			Id = Config.Monetization.Gamepasses.TitaniumLasers.Id,
+			Color = Color3.fromRGB(56, 189, 248),
+		},
+		{
+			Key = "DoubleCapacity",
+			Title = "Double Stash Capacity",
+			Desc = "Expands conveyor belt capacity from 6 to 12",
+			Price = "199 R$",
+			Id = Config.Monetization.Gamepasses.DoubleCapacity.Id,
+			Color = Color3.fromRGB(16, 185, 129),
+		},
+	}
+
+	for _, gpDef in gamepassDefs do
+		local card = Instance.new("Frame")
+		card.Name = "Card_GP_" .. gpDef.Key
+		card.Size = UDim2.new(1, -8, 0, 78)
+		card.BackgroundColor3 = Color3.fromRGB(24, 24, 27)
+		card.BorderSizePixel = 0
+		card.Parent = listContainer
+		Instance.new("UICorner", card).CornerRadius = UDim.new(0, 12)
+		local cStroke = Instance.new("UIStroke", card)
+		cStroke.Color = Color3.fromRGB(39, 39, 42)
+
+		local nameLabel = Instance.new("TextLabel")
+		nameLabel.Size = UDim2.new(0, 260, 0, 22)
+		nameLabel.Position = UDim2.new(0, 16, 0, 14)
+		nameLabel.BackgroundTransparency = 1
+		nameLabel.Text = gpDef.Title
+		nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+		nameLabel.TextSize = 13
+		nameLabel.Font = Enum.Font.GothamBold
+		nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+		nameLabel.Parent = card
+
+		local descLabel = Instance.new("TextLabel")
+		descLabel.Size = UDim2.new(0, 260, 0, 20)
+		descLabel.Position = UDim2.new(0, 16, 0, 42)
+		descLabel.BackgroundTransparency = 1
+		descLabel.Text = gpDef.Desc
+		descLabel.TextColor3 = Color3.fromRGB(161, 161, 170)
+		descLabel.TextSize = 11
+		descLabel.Font = Enum.Font.GothamMedium
+		descLabel.TextXAlignment = Enum.TextXAlignment.Left
+		descLabel.Parent = card
+
+		local passBtn = Instance.new("TextButton")
+		passBtn.Name = "BuyButton"
+		passBtn.Size = UDim2.new(0, 140, 0, 44)
+		passBtn.Position = UDim2.new(1, -154, 0.5, 0)
+		passBtn.AnchorPoint = Vector2.new(0, 0.5)
+		passBtn.BackgroundColor3 = gpDef.Color
+		passBtn.Text = gpDef.Price
+		passBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
+		passBtn.TextSize = 13
+		passBtn.Font = Enum.Font.GothamBlack
+		passBtn.Parent = card
+		Instance.new("UICorner", passBtn).CornerRadius = UDim.new(0, 10)
+
+		passBtn.MouseButton1Click:Connect(function()
+			if gpDef.Id and gpDef.Id > 0 then
+				MarketplaceService:PromptGamePassPurchase(player, gpDef.Id)
+			else
+				passBtn.Text = "ACTIVE!"
+				task.delay(1.5, function()
+					if passBtn and passBtn.Parent then
+						passBtn.Text = gpDef.Price
+					end
+				end)
+			end
+		end)
+
+		UpgradesModal._passButtons[gpDef.Key] = passBtn
 	end
 
 	-- ── PRESTIGE / LIQUIDATION BOTTOM SECTION ──
@@ -272,6 +368,23 @@ function UpgradesModal.Update(data: Types.PlayerData)
 			pBtn.Text = "LOCKED\n($10M Needed)"
 			pBtn.TextColor3 = Color3.fromRGB(156, 163, 175)
 		end
+	end
+
+	-- 5. Gamepass Cards
+	if UpgradesModal._passButtons["AutoDrone"] and data.HasAutoCollector then
+		UpgradesModal._passButtons["AutoDrone"].Text = "OWNED ✓"
+		UpgradesModal._passButtons["AutoDrone"].BackgroundColor3 = Color3.fromRGB(16, 185, 129)
+		UpgradesModal._passButtons["AutoDrone"].TextColor3 = Color3.fromRGB(255, 255, 255)
+	end
+	if UpgradesModal._passButtons["Titanium"] and data.HasTitaniumLasers then
+		UpgradesModal._passButtons["Titanium"].Text = "OWNED ✓"
+		UpgradesModal._passButtons["Titanium"].BackgroundColor3 = Color3.fromRGB(16, 185, 129)
+		UpgradesModal._passButtons["Titanium"].TextColor3 = Color3.fromRGB(255, 255, 255)
+	end
+	if UpgradesModal._passButtons["DoubleCapacity"] and data.HasDoubleCapacity then
+		UpgradesModal._passButtons["DoubleCapacity"].Text = "OWNED ✓"
+		UpgradesModal._passButtons["DoubleCapacity"].BackgroundColor3 = Color3.fromRGB(16, 185, 129)
+		UpgradesModal._passButtons["DoubleCapacity"].TextColor3 = Color3.fromRGB(255, 255, 255)
 	end
 end
 

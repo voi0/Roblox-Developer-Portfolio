@@ -106,7 +106,8 @@ function LaserService.HandleTrespasserHit(intruder: Player, plot: any)
 	local dataSvc = getDataService()
 	local ownerData = plot.Owner and dataSvc and dataSvc.GetData(plot.Owner)
 	local tier = ownerData and ownerData.LaserTier or 1
-	local dmg = Config.Heist.LaserDamageByTier[tier] or 25
+	local isTitanium = ownerData and (ownerData.HasTitaniumLasers or ownerData.LaserTier >= 4)
+	local dmg = isTitanium and 120 or (Config.Heist.LaserDamageByTier[tier] or 25)
 
 	-- Apply damage
 	hum:TakeDamage(dmg)
