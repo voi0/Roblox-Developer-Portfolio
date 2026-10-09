@@ -7,6 +7,7 @@
 ]]
 
 local Players = game:GetService("Players")
+local MarketplaceService = game:GetService("MarketplaceService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 
@@ -21,9 +22,11 @@ VaultHUD._bankedLabel = nil :: TextLabel?
 VaultHUD._incomeLabel = nil :: TextLabel?
 VaultHUD._unbankedLabel = nil :: TextLabel?
 VaultHUD._unbankedFrame = nil :: Frame?
+VaultHUD._adrenalineBtn = nil :: TextButton?
 VaultHUD._breachVignette = nil :: Frame?
 VaultHUD._breachMsg = nil :: TextLabel?
 VaultHUD._onUpgradesToggle = nil :: (() -> ())?
+VaultHUD._onFusionToggle = nil :: (() -> ())?
 
 -- ============================================================
 -- NUMBER FORMATTER (K / M / B / T / Qa)
@@ -112,10 +115,10 @@ function VaultHUD.Create()
 	incomeLabel.Parent = topBanner
 	VaultHUD._incomeLabel = incomeLabel
 
-	-- ── 2. TOP RIGHT: UPGRADES BUTTON ──
+	-- ── 2. TOP RIGHT: ACTION BUTTONS (UPGRADES & FUSION) ──
 	local topRight = Instance.new("Frame")
 	topRight.Name = "TopRight"
-	topRight.Size = UDim2.new(0, 240, 0, 48)
+	topRight.Size = UDim2.new(0, 290, 0, 48)
 	topRight.Position = UDim2.new(1, -20, 0, 16)
 	topRight.AnchorPoint = Vector2.new(1, 0)
 	topRight.BackgroundTransparency = 1
@@ -126,6 +129,26 @@ function VaultHUD.Create()
 	trLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
 	trLayout.Padding = UDim.new(0, 10)
 	trLayout.Parent = topRight
+
+	local fusionBtn = Instance.new("TextButton")
+	fusionBtn.Name = "FusionButton"
+	fusionBtn.Size = UDim2.new(0, 120, 0, 42)
+	fusionBtn.BackgroundColor3 = Color3.fromRGB(24, 24, 27)
+	fusionBtn.Text = "🔮 FUSION"
+	fusionBtn.TextColor3 = Color3.fromRGB(168, 85, 247)
+	fusionBtn.TextSize = 13
+	fusionBtn.Font = Enum.Font.GothamBlack
+	fusionBtn.Parent = topRight
+	Instance.new("UICorner", fusionBtn).CornerRadius = UDim.new(0, 12)
+	local fStroke = Instance.new("UIStroke", fusionBtn)
+	fStroke.Color = Color3.fromRGB(168, 85, 247)
+	fStroke.Thickness = 2
+
+	fusionBtn.MouseButton1Click:Connect(function()
+		if VaultHUD._onFusionToggle then
+			VaultHUD._onFusionToggle()
+		end
+	end)
 
 	local upBtn = Instance.new("TextButton")
 	upBtn.Name = "UpgradesButton"
@@ -175,10 +198,63 @@ function VaultHUD.Create()
 	ubLabel.Parent = unbankedFrame
 	VaultHUD._unbankedLabel = ubLabel
 
+	-- ── 3.3. FLOATING 25 R$ ADRENALINE IMPULSE ESCAPE PILL ──
+	local adrenalineBtn = Instance.new("TextButton")
+	adrenalineBtn.Name = "AdrenalineSurgeButton"
+	adrenalineBtn.Size = UDim2.new(0, 380, 0, 44)
+	adrenalineBtn.Position = UDim2.new(0.5, 0, 1, -114)
+	adrenalineBtn.AnchorPoint = Vector2.new(0.5, 1)
+	adrenalineBtn.BackgroundColor3 = Color3.fromRGB(15, 17, 26)
+	adrenalineBtn.BorderSizePixel = 0
+	adrenalineBtn.Text = "⚡ ADRENALINE SURGE (25 R$) — +65% ESCAPE SPEED!"
+	adrenalineBtn.TextColor3 = Color3.fromRGB(250, 204, 21)
+	adrenalineBtn.TextSize = 12
+	adrenalineBtn.Font = Enum.Font.GothamBlack
+	adrenalineBtn.Visible = false
+	adrenalineBtn.Parent = gui
+	Instance.new("UICorner", adrenalineBtn).CornerRadius = UDim.new(0, 12)
+
+	local adStroke = Instance.new("UIStroke", adrenalineBtn)
+	adStroke.Color = Color3.fromRGB(250, 204, 21)
+	adStroke.Thickness = 2.5
+	VaultHUD._adrenalineBtn = adrenalineBtn
+
+	-- Pulsing effect for Adrenaline button
+	task.spawn(function()
+		while true do
+			if adrenalineBtn.Visible then
+				TweenService:Create(adStroke, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
+					Color = Color3.fromRGB(239, 68, 68)
+				}):Play()
+				task.wait(0.5)
+				TweenService:Create(adStroke, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
+					Color = Color3.fromRGB(250, 204, 21)
+				}):Play()
+				task.wait(0.5)
+			else
+				task.wait(1.0)
+			end
+		end
+	end)
+
+	adrenalineBtn.MouseButton1Click:Connect(function()
+		local pId = Config.Monetization.DevProducts.AdrenalineSurge.Id
+		if pId and pId > 0 then
+			MarketplaceService:PromptProductPurchase(player, pId)
+		else
+			adrenalineBtn.Text = "⚡ ADRENALINE BOOST ACTIVE!"
+			task.delay(1.5, function()
+				if adrenalineBtn and adrenalineBtn.Parent then
+					adrenalineBtn.Text = "⚡ ADRENALINE SURGE (25 R$) — +65% ESCAPE SPEED!"
+				end
+			end)
+		end
+	end)
+
 	-- ── 3.5. BOTTOM CONTROLS TIPS BAR ──
 	local tipsBar = Instance.new("Frame")
 	tipsBar.Name = "ControlsTipsBar"
-	tipsBar.Size = UDim2.new(0, 480, 0, 32)
+	tipsBar.Size = UDim2.new(0, 520, 0, 32)
 	tipsBar.Position = UDim2.new(0.5, 0, 1, -72)
 	tipsBar.AnchorPoint = Vector2.new(0.5, 1)
 	tipsBar.BackgroundColor3 = Color3.fromRGB(11, 13, 20)
@@ -192,7 +268,7 @@ function VaultHUD.Create()
 	local tbLabel = Instance.new("TextLabel")
 	tbLabel.Size = UDim2.new(1, 0, 1, 0)
 	tbLabel.BackgroundTransparency = 1
-	tbLabel.Text = "⚡ [U] Upgrades   •   🥊 [F] Tackle Thief   •   📥 [Step Safe] Bank Cash"
+	tbLabel.Text = "⚡ [U] Upgrades  •  🔮 [B] Fusion  •  🥊 [F] Tackle  •  📥 [Step Safe] Bank"
 	tbLabel.TextColor3 = Color3.fromRGB(203, 213, 225)
 	tbLabel.TextSize = 11
 	tbLabel.Font = Enum.Font.GothamMedium
@@ -284,6 +360,21 @@ end
 
 function VaultHUD.SetUpgradesCallback(callback: () -> ())
 	VaultHUD._onUpgradesToggle = callback
+end
+
+function VaultHUD.SetFusionCallback(callback: () -> ())
+	VaultHUD._onFusionToggle = callback
+end
+
+function VaultHUD.SetCarryingState(isCarrying: boolean, payload: any?)
+	if VaultHUD._adrenalineBtn then
+		VaultHUD._adrenalineBtn.Visible = isCarrying
+		if isCarrying and payload and payload.Name then
+			VaultHUD._adrenalineBtn.Text = `⚡ ADRENALINE (25 R$) — ESCAPE WITH {string.upper(tostring(payload.Name))}!`
+		else
+			VaultHUD._adrenalineBtn.Text = "⚡ ADRENALINE SURGE (25 R$) — +65% ESCAPE SPEED!"
+		end
+	end
 end
 
 return VaultHUD

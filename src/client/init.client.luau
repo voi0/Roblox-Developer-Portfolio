@@ -54,6 +54,7 @@ local Types = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Typ
 
 local VaultHUD = safeRequire(uiFolder, "VaultHUD")
 local UpgradesModal = safeRequire(uiFolder, "UpgradesModal")
+local FusionModal = safeRequire(uiFolder, "FusionModal")
 local HeistController = safeRequire(controllersFolder, "HeistController")
 
 local localPlayerData: any = nil
@@ -68,6 +69,13 @@ if VaultHUD then
 		UpgradesModal.Create(VaultHUD._gui)
 		VaultHUD.SetUpgradesCallback(function()
 			UpgradesModal.Toggle()
+		end)
+	end
+
+	if FusionModal and VaultHUD._gui then
+		FusionModal.Create(VaultHUD._gui)
+		VaultHUD.SetFusionCallback(function()
+			FusionModal.Toggle()
 		end)
 	end
 end
@@ -104,6 +112,7 @@ local function onDataReceived(data: any)
 	localPlayerData = data
 	if VaultHUD then VaultHUD.Update(data) end
 	if UpgradesModal then UpgradesModal.Update(data) end
+	if FusionModal then FusionModal.Update(data) end
 end
 
 task.spawn(function()
@@ -115,6 +124,22 @@ task.spawn(function()
 	local dataUpdate = ReplicatedStorage:WaitForChild("DataUpdate", 15) :: RemoteEvent?
 	if dataUpdate then
 		dataUpdate.OnClientEvent:Connect(onDataReceived)
+	end
+
+	local openFusion = ReplicatedStorage:WaitForChild("OpenFusionModal", 15) :: RemoteEvent?
+	if openFusion then
+		openFusion.OnClientEvent:Connect(function()
+			if FusionModal then FusionModal.Open() end
+		end
+	end
+
+	local carryEvt = ReplicatedStorage:WaitForChild("CarryingStateChanged", 15) :: RemoteEvent?
+	if carryEvt then
+		carryEvt.OnClientEvent:Connect(function(isCarrying: boolean, payload: any?)
+			if VaultHUD then
+				VaultHUD.SetCarryingState(isCarrying, payload)
+			end
+		end)
 	end
 
 	local getData = ReplicatedStorage:WaitForChild("GetData", 15) :: RemoteFunction?
@@ -133,13 +158,16 @@ task.spawn(function()
 end)
 
 -- ============================================================
--- 4. KEYBOARD HOTKEYS: [U] UPGRADES, [ESC] CLOSE
+-- 4. KEYBOARD HOTKEYS: [U] UPGRADES, [B] FUSION, [F] TACKLE, [ESC] CLOSE
 -- ============================================================
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
 	if gameProcessed then return end
 
-	if input.KeyCode == Enum.KeyCode.U or input.KeyCode == Enum.KeyCode.E then
+	if input.KeyCode == Enum.KeyCode.U then
 		if UpgradesModal then UpgradesModal.Toggle() end
+
+	elseif input.KeyCode == Enum.KeyCode.B then
+		if FusionModal then FusionModal.Toggle() end
 
 	-- ⚡ [F] SECURITY TACKLE / ZAP INTRUDER
 	elseif input.KeyCode == Enum.KeyCode.F then
@@ -153,6 +181,9 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
 	elseif input.KeyCode == Enum.KeyCode.Escape then
 		if UpgradesModal and UpgradesModal._isOpen then
 			UpgradesModal.Close()
+		end
+		if FusionModal and FusionModal._isOpen then
+			FusionModal.Close()
 		end
 	end
 end)

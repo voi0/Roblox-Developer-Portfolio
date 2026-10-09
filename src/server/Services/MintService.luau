@@ -132,6 +132,7 @@ function MintService.SpawnConveyorItem(plot: any, value: number, relicDef: Types
 	item:SetAttribute("PlotIndex", plot.Index)
 	item:SetAttribute("ItemName", itemName)
 	item:SetAttribute("Tier", isRelic and relicDef.Tier or "Common")
+	item:SetAttribute("RelicId", isRelic and relicDef.Id or "")
 
 	-- Billboard display
 	local bGui = Instance.new("BillboardGui")
@@ -177,6 +178,12 @@ function MintService.SpawnConveyorItem(plot: any, value: number, relicDef: Types
 			-- Owner collected from conveyor -> auto-deposit to unbanked stash or bank directly
 			-- Item disappears from belt
 			if touchConn then touchConn:Disconnect() end
+			if relicDef then
+				local dataSvc = getDataService()
+				if dataSvc then
+					dataSvc.AddRelic(player, relicDef.Id, 1)
+				end
+			end
 			item:Destroy()
 		else
 			-- Intruder touches unbanked item -> HEIST SNATCH!
@@ -188,7 +195,21 @@ function MintService.SpawnConveyorItem(plot: any, value: number, relicDef: Types
 		end
 	end)
 
-	-- Auto-despawn after 45 seconds if uncollected
+	-- Auto-deposit at end of conveyor if uncollected by intruder
+	task.delay(travelTime + 0.5, function()
+		if item and item.Parent and not item:GetAttribute("IsHeisted") then
+			if touchConn then touchConn:Disconnect() end
+			if relicDef and plot.Owner then
+				local dataSvc = getDataService()
+				if dataSvc then
+					dataSvc.AddRelic(plot.Owner, relicDef.Id, 1)
+				end
+			end
+			item:Destroy()
+		end
+	end)
+
+	-- Safety cleanup
 	Debris:AddItem(item, 45)
 end
 

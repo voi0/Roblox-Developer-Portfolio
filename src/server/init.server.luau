@@ -23,6 +23,7 @@ local serviceNames = {
 	"LaserService",
 	"MintService",
 	"HeistService",
+	"FusionService",
 	"EconomyService",
 	"LeaderboardService",
 	"CodeService",

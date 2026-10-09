@@ -137,6 +137,101 @@ function PlotService.Init()
 	spawnPad.Duration = 0
 	spawnPad.Parent = rootFolder
 
+	-- ── 2.5. CENTRAL PLAZA RELIC FUSION ALTAR ──
+	local openFusionEvt = ReplicatedStorage:FindFirstChild("OpenFusionModal") :: RemoteEvent?
+	if not openFusionEvt then
+		openFusionEvt = Instance.new("RemoteEvent")
+		openFusionEvt.Name = "OpenFusionModal"
+		openFusionEvt.Parent = ReplicatedStorage
+	end
+
+	local altarBase = createPart(
+		"FusionAltarBase",
+		Vector3.new(14, 1.2, 14),
+		CFrame.new(0, 0.6, -26),
+		Color3.fromRGB(24, 24, 32),
+		Enum.Material.Slate,
+		rootFolder
+	)
+	createPart(
+		"FusionAltarRing",
+		Vector3.new(10, 0.3, 10),
+		CFrame.new(0, 1.35, -26),
+		Color3.fromRGB(168, 85, 247),
+		Enum.Material.Neon,
+		rootFolder,
+		false
+	)
+	local altarCore = createPart(
+		"FusionAltarCore",
+		Vector3.new(3.2, 3.2, 3.2),
+		CFrame.new(0, 4.2, -26),
+		Color3.fromRGB(192, 132, 252),
+		Enum.Material.Glass,
+		rootFolder,
+		false
+	)
+
+	-- 4 Corner Resonator Pylons
+	local pylonOffsets = {
+		Vector3.new(5.5, 3.5, 5.5),
+		Vector3.new(-5.5, 3.5, 5.5),
+		Vector3.new(5.5, 3.5, -5.5),
+		Vector3.new(-5.5, 3.5, -5.5),
+	}
+	for idx, offset in pylonOffsets do
+		createPart(
+			`AltarPylon_{idx}`,
+			Vector3.new(1.4, 6.0, 1.4),
+			CFrame.new(Vector3.new(0, 0, -26) + offset),
+			Color3.fromRGB(51, 65, 85),
+			Enum.Material.Metal,
+			rootFolder
+		)
+		createPart(
+			`AltarPylonCap_{idx}`,
+			Vector3.new(1.6, 0.6, 1.6),
+			CFrame.new(Vector3.new(0, 6.6, -26) + offset),
+			Color3.fromRGB(168, 85, 247),
+			Enum.Material.Neon,
+			rootFolder,
+			false
+		)
+	end
+
+	-- Altar Overhead Billboard
+	local aGui = Instance.new("BillboardGui")
+	aGui.Name = "AltarBillboard"
+	aGui.Size = UDim2.new(0, 260, 0, 54)
+	aGui.StudsOffset = Vector3.new(0, 3.2, 0)
+	aGui.AlwaysOnTop = true
+	aGui.Parent = altarCore
+
+	local aLabel = Instance.new("TextLabel")
+	aLabel.Size = UDim2.new(1, 0, 1, 0)
+	aLabel.BackgroundTransparency = 1
+	aLabel.Text = "🔮 RELIC FUSION ALTAR\n[E] COMBINE 3x FOR HIGHER TIERS"
+	aLabel.TextColor3 = Color3.fromRGB(216, 180, 254)
+	aLabel.TextSize = 13
+	aLabel.Font = Enum.Font.GothamBlack
+	aLabel.Parent = aGui
+
+	-- Proximity Prompt for interaction
+	local prompt = Instance.new("ProximityPrompt")
+	prompt.ObjectText = "Relic Fusion Altar"
+	prompt.ActionText = "Open Fusion Matrix"
+	prompt.KeyboardKeyCode = Enum.KeyCode.E
+	prompt.HoldDuration = 0
+	prompt.MaxActivationDistance = 14
+	prompt.RequiresLineOfSight = false
+	prompt.Parent = altarCore
+
+	prompt.Triggered:Connect(function(player: Player)
+		if openFusionEvt then
+			openFusionEvt:FireClient(player)
+		end
+	end)
+
 	-- ── 3. BUILD 6 MODULAR PLOTS CIRCULARLY ──
 	local plotsFolder = Instance.new("Folder")
 	plotsFolder.Name = "Plots"

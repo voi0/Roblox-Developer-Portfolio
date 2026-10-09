@@ -46,6 +46,9 @@ export type PlayerData = {
 	HasDoubleCapacity: boolean,
 	HasTitaniumLasers: boolean,
 
+	-- Relic Stash & Synthesis
+	RelicInventory: { [string]: number },
+
 	-- Lifetime Stats
 	TotalHeistsWon: number,
 	TotalHeistsLost: number,

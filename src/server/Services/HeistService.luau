@@ -42,6 +42,13 @@ function HeistService.Init()
 		return HeistService.TackleThief(defender, targetPlayer)
 	end
 
+	local carryEvt = ReplicatedStorage:FindFirstChild("CarryingStateChanged") :: RemoteEvent?
+	if not carryEvt then
+		carryEvt = Instance.new("RemoteEvent")
+		carryEvt.Name = "CarryingStateChanged"
+		carryEvt.Parent = ReplicatedStorage
+	end
+
 	-- Player death / disconnect handling
 	Players.PlayerRemoving:Connect(function(player: Player)
 		HeistService.DropLoot(player)
@@ -64,6 +71,7 @@ function HeistService.StartHeist(thief: Player, itemPart: Part, sourcePlot: any)
 	local value = itemPart:GetAttribute("Value") :: number or 100
 	local itemName = itemPart:GetAttribute("ItemName") :: string or "Cash Stack"
 	local tier = itemPart:GetAttribute("Tier") :: Types.RelicTier or "Common"
+	local relicId = itemPart:GetAttribute("RelicId") :: string or ""
 
 	-- Remove original part from conveyor
 	itemPart:Destroy()
@@ -113,7 +121,7 @@ function HeistService.StartHeist(thief: Player, itemPart: Part, sourcePlot: any)
 	end)
 
 	local payload: Types.StolenItemPayload = {
-		Id = itemName,
+		Id = (relicId ~= "") and relicId or itemName,
 		Name = itemName,
 		Tier = tier,
 		Value = value,
@@ -126,6 +134,12 @@ function HeistService.StartHeist(thief: Player, itemPart: Part, sourcePlot: any)
 		Model = carryPart,
 		Weld = weld,
 	}
+
+	-- Notify thief client of carry state (triggers 25 R$ Adrenaline UI)
+	local carryEvt = ReplicatedStorage:FindFirstChild("CarryingStateChanged") :: RemoteEvent?
+	if carryEvt then
+		carryEvt:FireClient(thief, true, payload)
+	end
 
 	-- Trigger base breach alarm
 	HeistService.TriggerBreachAlarm(sourcePlot, thief)
@@ -194,6 +208,12 @@ function HeistService.DepositStolenLoot(thief: Player): boolean
 	end
 	HeistService._carrying[thief] = nil
 
+	-- Notify thief client that carrying has ended
+	local carryEvt = ReplicatedStorage:FindFirstChild("CarryingStateChanged") :: RemoteEvent?
+	if carryEvt then
+		carryEvt:FireClient(thief, false, nil)
+	end
+
 	-- Deduct from victim's unbanked stash
 	local plotSvc = getPlotService()
 	local dataSvc = getDataService()
@@ -205,6 +225,11 @@ function HeistService.DepositStolenLoot(thief: Player): boolean
 
 		-- Record loot directly into thief's bank
 		dataSvc.RecordSuccessfulHeist(thief, payload.Value)
+
+		-- If stolen item is a relic, deposit into thief's RelicInventory
+		if payload.Id and payload.Id ~= "" and payload.Id ~= "Cash Stack" then
+			dataSvc.AddRelic(thief, payload.Id, 1)
+		end
 	end
 
 	-- Server-wide chat celebration
@@ -235,6 +260,11 @@ function HeistService.DropLoot(thief: Player)
 		carryInfo.Model:Destroy()
 	end
 	HeistService._carrying[thief] = nil
+
+	local carryEvt = ReplicatedStorage:FindFirstChild("CarryingStateChanged") :: RemoteEvent?
+	if carryEvt then
+		carryEvt:FireClient(thief, false, nil)
+	end
 end
 
 function HeistService.TackleThief(defender: Player, targetPlayer: Player?): (boolean, string?)

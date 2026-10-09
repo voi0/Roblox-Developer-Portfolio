@@ -46,6 +46,7 @@ local DATA_TEMPLATE: Types.PlayerData = {
 	PlayTimeSeconds = 0,
 	LastInterestTimestamp = os.time(),
 	RedeemedCodes = {},
+	RelicInventory = {},
 }
 
 local BaseProfileStore = ProfileService.GetProfileStore(
@@ -113,6 +114,23 @@ function DataService.OnPlayerAdded(player: Player)
 		DataService._profiles[player] = nil
 		player:Kick("Your Vault Wars profile was loaded in another server. Please rejoin.")
 	end)
+
+	-- Calculate Offline Compound Interest
+	local now = os.time()
+	local lastTime = profile.Data.LastInterestTimestamp or now
+	local timeElapsed = math.max(0, now - lastTime)
+	profile.Data.LastInterestTimestamp = now
+
+	if timeElapsed > 60 and profile.Data.BankedCash > 0 then
+		local tier = profile.Data.VaultInterestTier or 1
+		local ratePerHour = tier * 0.02 -- 2% to 20% per hour
+		local hours = math.min(24, timeElapsed / 3600)
+		local interestEarned = math.floor(profile.Data.BankedCash * (ratePerHour * hours))
+		if interestEarned > 0 then
+			profile.Data.BankedCash += interestEarned
+			print(`  [DataService] {player.Name} earned +${interestEarned} in offline compound interest!`)
+		end
+	end
 
 	DataService._profiles[player] = profile
 
@@ -221,6 +239,36 @@ function DataService.RecordSuccessfulHeist(thief: Player, amount: number)
 		data.HighestSingleHeist = math.floor(amount)
 	end
 	DataService.SyncClient(thief)
+end
+
+-- ============================================================
+-- RELIC INVENTORY STASH
+-- ============================================================
+function DataService.AddRelic(player: Player, relicId: string, count: number?): number
+	local data = DataService.GetData(player)
+	if not data then return 0 end
+
+	if not data.RelicInventory then
+		data.RelicInventory = {}
+	end
+
+	local addCount = count or 1
+	data.RelicInventory[relicId] = (data.RelicInventory[relicId] or 0) + addCount
+	DataService.SyncClient(player)
+	return data.RelicInventory[relicId]
+end
+
+function DataService.RemoveRelic(player: Player, relicId: string, count: number?): boolean
+	local data = DataService.GetData(player)
+	if not data or not data.RelicInventory then return false end
+
+	local toRemove = count or 1
+	local current = data.RelicInventory[relicId] or 0
+	if current < toRemove then return false end
+
+	data.RelicInventory[relicId] = current - toRemove
+	DataService.SyncClient(player)
+	return true
 end
 
 -- ============================================================
@@ -350,6 +398,30 @@ function DataService.Init()
 			return DataService.LiquidateVault(p)
 		end
 	end
+
+	-- Real-time 60-second compound interest ticker for active & AFK tycoons
+	task.spawn(function()
+		while true do
+			task.wait(60)
+			local now = os.time()
+			for player, profile in DataService._profiles do
+				if player:IsDescendantOf(Players) and profile.Data then
+					profile.Data.LastInterestTimestamp = now
+					local banked = profile.Data.BankedCash or 0
+					if banked > 0 then
+						local tier = profile.Data.VaultInterestTier or 1
+						-- Tier 1 = 2%/hr -> (tier * 0.02) / 60 per minute
+						local ratePerMinute = (tier * 0.02) / 60
+						local interestEarned = math.floor(banked * ratePerMinute)
+						if interestEarned > 0 then
+							profile.Data.BankedCash += interestEarned
+							DataService.SyncClient(player)
+						end
+					end
+				end
+			end
+		end
+	end)
 
 	for _, p in Players:GetPlayers() do
 		task.spawn(DataService.OnPlayerAdded, p)
