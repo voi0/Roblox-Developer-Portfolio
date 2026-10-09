@@ -141,6 +141,15 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
 	if input.KeyCode == Enum.KeyCode.U or input.KeyCode == Enum.KeyCode.E then
 		if UpgradesModal then UpgradesModal.Toggle() end
 
+	-- ⚡ [F] SECURITY TACKLE / ZAP INTRUDER
+	elseif input.KeyCode == Enum.KeyCode.F then
+		local tackleRF = ReplicatedStorage:FindFirstChild("SecurityTackle") :: RemoteFunction?
+		if tackleRF then
+			pcall(function()
+				tackleRF:InvokeServer()
+			end)
+		end
+
 	elseif input.KeyCode == Enum.KeyCode.Escape then
 		if UpgradesModal and UpgradesModal._isOpen then
 			UpgradesModal.Close()

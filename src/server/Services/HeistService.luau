@@ -32,6 +32,16 @@ end
 function HeistService.Init()
 	print("  [HeistService] Initializing Physical Heist & Escape Engine...")
 
+	local tackleRF = ReplicatedStorage:FindFirstChild("SecurityTackle") :: RemoteFunction?
+	if not tackleRF then
+		tackleRF = Instance.new("RemoteFunction")
+		tackleRF.Name = "SecurityTackle"
+		tackleRF.Parent = ReplicatedStorage
+	end
+	tackleRF.OnServerInvoke = function(defender: Player, targetPlayer: Player?)
+		return HeistService.TackleThief(defender, targetPlayer)
+	end
+
 	-- Player death / disconnect handling
 	Players.PlayerRemoving:Connect(function(player: Player)
 		HeistService.DropLoot(player)
@@ -225,6 +235,80 @@ function HeistService.DropLoot(thief: Player)
 		carryInfo.Model:Destroy()
 	end
 	HeistService._carrying[thief] = nil
+end
+
+function HeistService.TackleThief(defender: Player, targetPlayer: Player?): (boolean, string?)
+	local char = defender.Character
+	local root = char and char:FindFirstChild("HumanoidRootPart") :: BasePart?
+	if not char or not root then return false, "No character" end
+
+	-- Find target if not provided
+	local target: Player? = targetPlayer
+	if not target then
+		local closestDist = 9.0
+		for _, p in Players:GetPlayers() do
+			if p ~= defender and HeistService.IsCarryingLoot(p) then
+				local pChar = p.Character
+				local pRoot = pChar and pChar:FindFirstChild("HumanoidRootPart") :: BasePart?
+				if pRoot then
+					local dist = (root.Position - pRoot.Position).Magnitude
+					if dist <= closestDist then
+						closestDist = dist
+						target = p
+					end
+				end
+			end
+		end
+	end
+
+	if not target then return false, "No thief in range" end
+	local carryInfo = HeistService._carrying[target]
+	if not carryInfo then return false, "Target not carrying loot" end
+
+	local tChar = target.Character
+	local tRoot = tChar and tChar:FindFirstChild("HumanoidRootPart") :: BasePart?
+	local tHum = tChar and tChar:FindFirstChildOfClass("Humanoid")
+	if not tRoot or not tHum then return false, "Invalid target" end
+
+	if (root.Position - tRoot.Position).Magnitude > 9.5 then
+		return false, "Thief too far"
+	end
+
+	local payload = carryInfo.Payload
+	HeistService.DropLoot(target)
+
+	task.spawn(function()
+		local origSpeed = tHum.WalkSpeed
+		tHum.WalkSpeed = 0
+		tHum.PlatformStand = true
+
+		local away = (tRoot.Position - root.Position).Unit
+		tRoot.AssemblyLinearVelocity = away * 40 + Vector3.new(0, 15, 0)
+
+		task.wait(2.0)
+		if tHum and tHum.Parent then
+			tHum.PlatformStand = false
+			tHum.WalkSpeed = Config.Heist.NormalWalkSpeed
+		end
+	end)
+
+	local plotSvc = getPlotService()
+	local dataSvc = getDataService()
+	local defenderPlot = plotSvc and plotSvc.GetPlotForPlayer(defender)
+	if defenderPlot and defenderPlot.Index == payload.SourcePlotIndex and dataSvc then
+		dataSvc.AddUnbanked(defender, payload.Value)
+	end
+
+	if dataSvc then
+		dataSvc.AddBanked(defender, 500)
+	end
+
+	local bcast = ReplicatedStorage:FindFirstChild("HeistBroadcast") :: RemoteEvent?
+	if bcast then
+		bcast:FireAllClients(defender.DisplayName, target.DisplayName, "TACKLE_STOPPED", payload.Value)
+	end
+
+	return true, `Intercepted {target.DisplayName}!`
 end
 
 function HeistService.IsCarryingLoot(player: Player): boolean

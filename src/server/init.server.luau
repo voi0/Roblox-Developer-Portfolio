@@ -24,6 +24,7 @@ local serviceNames = {
 	"MintService",
 	"HeistService",
 	"EconomyService",
+	"LeaderboardService",
 	"CodeService",
 	"PlaytimeService",
 }

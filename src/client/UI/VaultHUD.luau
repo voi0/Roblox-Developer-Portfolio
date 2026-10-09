@@ -175,6 +175,29 @@ function VaultHUD.Create()
 	ubLabel.Parent = unbankedFrame
 	VaultHUD._unbankedLabel = ubLabel
 
+	-- ── 3.5. BOTTOM CONTROLS TIPS BAR ──
+	local tipsBar = Instance.new("Frame")
+	tipsBar.Name = "ControlsTipsBar"
+	tipsBar.Size = UDim2.new(0, 480, 0, 32)
+	tipsBar.Position = UDim2.new(0.5, 0, 1, -72)
+	tipsBar.AnchorPoint = Vector2.new(0.5, 1)
+	tipsBar.BackgroundColor3 = Color3.fromRGB(11, 13, 20)
+	tipsBar.BackgroundTransparency = 0.35
+	tipsBar.BorderSizePixel = 0
+	tipsBar.Parent = gui
+	Instance.new("UICorner", tipsBar).CornerRadius = UDim.new(0, 10)
+	local tbStroke = Instance.new("UIStroke", tipsBar)
+	tbStroke.Color = Color3.fromRGB(39, 39, 42)
+
+	local tbLabel = Instance.new("TextLabel")
+	tbLabel.Size = UDim2.new(1, 0, 1, 0)
+	tbLabel.BackgroundTransparency = 1
+	tbLabel.Text = "⚡ [U] Upgrades   •   🥊 [F] Tackle Thief   •   📥 [Step Safe] Bank Cash"
+	tbLabel.TextColor3 = Color3.fromRGB(203, 213, 225)
+	tbLabel.TextSize = 11
+	tbLabel.Font = Enum.Font.GothamMedium
+	tbLabel.Parent = tipsBar
+
 	-- ── 4. FULLSCREEN SECURITY BREACH VIGNETTE ──
 	local breachVignette = Instance.new("Frame")
 	breachVignette.Name = "BreachVignette"
