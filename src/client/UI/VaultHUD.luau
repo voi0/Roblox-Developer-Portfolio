@@ -60,7 +60,14 @@ end
 -- HOVER / SPRING HELPER
 -- ============================================================
 local function applyBentoHover(btn: TextButton, stroke: UIStroke, accentColor: Color3)
+	local scale = btn:FindFirstChildOfClass("UIScale")
+	if not scale then
+		scale = Instance.new("UIScale")
+		scale.Parent = btn
+	end
+
 	btn.MouseEnter:Connect(function()
+		TweenService:Create(scale, TweenInfo.new(0.18, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1.05 }):Play()
 		TweenService:Create(btn, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
 			BackgroundColor3 = Color3.fromRGB(30, 36, 54),
 			BackgroundTransparency = 0.1,
@@ -71,6 +78,7 @@ local function applyBentoHover(btn: TextButton, stroke: UIStroke, accentColor: C
 		}):Play()
 	end)
 	btn.MouseLeave:Connect(function()
+		TweenService:Create(scale, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Scale = 1.0 }):Play()
 		TweenService:Create(btn, TweenInfo.new(0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
 			BackgroundColor3 = Color3.fromRGB(15, 17, 26),
 			BackgroundTransparency = 0.25,
@@ -79,6 +87,12 @@ local function applyBentoHover(btn: TextButton, stroke: UIStroke, accentColor: C
 			Thickness = 1.2,
 			Color = Color3.fromRGB(39, 45, 66),
 		}):Play()
+	end)
+	btn.MouseButton1Down:Connect(function()
+		TweenService:Create(scale, TweenInfo.new(0.1, Enum.EasingStyle.Quad), { Scale = 0.94 }):Play()
+	end)
+	btn.MouseButton1Up:Connect(function()
+		TweenService:Create(scale, TweenInfo.new(0.15, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1.05 }):Play()
 	end)
 end
 
@@ -105,14 +119,14 @@ function VaultHUD.Create()
 	VaultHUD._gui = gui
 	print("  [VaultHUD] Mounted Tactical Bento HUD into PlayerGui successfully!")
 
-	-- ── 1. TOP CENTER: BENTO STATUS CAPSULE ──
+	-- ── 1. TOP CENTER: BENTO STATUS CAPSULE (2026 LIQUID GLASS) ──
 	local topCapsule = Instance.new("Frame")
 	topCapsule.Name = "TopStatusCapsule"
 	topCapsule.Size = UDim2.new(0, 520, 0, 58)
 	topCapsule.Position = UDim2.new(0.5, 0, 0, 18)
 	topCapsule.AnchorPoint = Vector2.new(0.5, 0)
 	topCapsule.BackgroundColor3 = Color3.fromRGB(15, 17, 26)
-	topCapsule.BackgroundTransparency = 0.15
+	topCapsule.BackgroundTransparency = 0.16
 	topCapsule.BorderSizePixel = 0
 	topCapsule.Parent = gui
 
@@ -120,10 +134,35 @@ function VaultHUD.Create()
 	tcCorner.CornerRadius = UDim.new(0, 18)
 	tcCorner.Parent = topCapsule
 
+	-- 45° Specular Rim Light
 	local tcStroke = Instance.new("UIStroke")
 	tcStroke.Color = Color3.fromRGB(30, 41, 59)
-	tcStroke.Thickness = 1.5
+	tcStroke.Thickness = 1.4
+	tcStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 	tcStroke.Parent = topCapsule
+
+	local tcStrokeGrad = Instance.new("UIGradient")
+	tcStrokeGrad.Rotation = 45
+	tcStrokeGrad.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0.0, Color3.fromRGB(255, 255, 255)),
+		ColorSequenceKeypoint.new(0.4, Color3.fromRGB(148, 163, 184)),
+		ColorSequenceKeypoint.new(1.0, Color3.fromRGB(30, 41, 59)),
+	})
+	tcStrokeGrad.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0.0, 0.12),
+		NumberSequenceKeypoint.new(0.6, 0.65),
+		NumberSequenceKeypoint.new(1.0, 0.85),
+	})
+	tcStrokeGrad.Parent = tcStroke
+
+	-- Diffuse Glass Gradient
+	local tcBgGrad = Instance.new("UIGradient")
+	tcBgGrad.Rotation = 90
+	tcBgGrad.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0.0, Color3.fromRGB(30, 36, 54)),
+		ColorSequenceKeypoint.new(1.0, Color3.fromRGB(15, 17, 26)),
+	})
+	tcBgGrad.Parent = topCapsule
 
 	-- Left Sub-Pill: Syndicate Rank Badge
 	local rankPill = Instance.new("Frame")

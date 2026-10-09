@@ -63,51 +63,65 @@ local function setupAtmosphericLighting()
 		Lighting.Technology = Enum.Technology.Future
 	end)
 
-	Lighting.ClockTime = 14.5 -- High-visibility daylight providing sharp architectural definition
-	Lighting.Brightness = 2.4
-	Lighting.Ambient = Color3.fromRGB(120, 135, 160) -- Crisp ambient bounce light so all structures are visible
-	Lighting.OutdoorAmbient = Color3.fromRGB(105, 120, 145)
+	Lighting.ClockTime = 14.0
+	Lighting.Brightness = 2.2
+	Lighting.Ambient = Color3.fromRGB(72, 85, 108)
+	Lighting.OutdoorAmbient = Color3.fromRGB(58, 70, 90)
 	Lighting.GeographicLatitude = 25
 	Lighting.GlobalShadows = true
-	Lighting.FogStart = 800
-	Lighting.FogEnd = 3000
-	Lighting.FogColor = Color3.fromRGB(140, 160, 190)
+	Lighting.EnvironmentDiffuseScale = 1.0
+	Lighting.EnvironmentSpecularScale = 1.0
+	Lighting.FogStart = 450
+	Lighting.FogEnd = 2400
+	Lighting.FogColor = Color3.fromRGB(24, 32, 46)
 
-	-- Atmosphere Object
+	-- Subterranean Deep Industrial Atmosphere
 	local atmosphere = Lighting:FindFirstChildOfClass("Atmosphere")
 	if not atmosphere then
 		atmosphere = Instance.new("Atmosphere")
 		atmosphere.Parent = Lighting
 	end
-	atmosphere.Density = 0.18
-	atmosphere.Offset = 0.25
-	atmosphere.Color = Color3.fromRGB(140, 165, 195)
-	atmosphere.Decay = Color3.fromRGB(85, 100, 125)
-	atmosphere.Glare = 0.2
-	atmosphere.Haze = 0.5
+	atmosphere.Density = 0.28
+	atmosphere.Offset = 0.22
+	atmosphere.Color = Color3.fromRGB(120, 145, 175)
+	atmosphere.Decay = Color3.fromRGB(36, 46, 64)
+	atmosphere.Glare = 0.16
+	atmosphere.Haze = 0.60
 
-	-- Bloom
+	-- High-Threshold Bloom (Neon glows brightly, normal materials never blow out)
 	local bloom = Lighting:FindFirstChild("VaultWarsBloom") :: BloomEffect?
 	if not bloom then
 		bloom = Instance.new("BloomEffect")
 		bloom.Name = "VaultWarsBloom"
 		bloom.Parent = Lighting
 	end
-	bloom.Intensity = 0.65
-	bloom.Size = 22
-	bloom.Threshold = 1.85
+	bloom.Intensity = 0.55
+	bloom.Size = 24
+	bloom.Threshold = 2.05
 
-	-- ColorCorrection
+	-- Filmic ColorCorrection (Rich contrast & depth)
 	local cc = Lighting:FindFirstChild("VaultWarsCC") :: ColorCorrectionEffect?
 	if not cc then
 		cc = Instance.new("ColorCorrectionEffect")
 		cc.Name = "VaultWarsCC"
 		cc.Parent = Lighting
 	end
-	cc.TintColor = Color3.fromRGB(242, 248, 255)
-	cc.Brightness = 0.02
+	cc.TintColor = Color3.fromRGB(245, 250, 255)
+	cc.Brightness = 0.01
 	cc.Contrast = 0.16
-	cc.Saturation = 0.20
+	cc.Saturation = 0.16
+
+	-- Depth of Field (Cinematic camera bokeh on distant cavern geometry)
+	local dof = Lighting:FindFirstChild("VaultWarsDOF") :: DepthOfFieldEffect?
+	if not dof then
+		dof = Instance.new("DepthOfFieldEffect")
+		dof.Name = "VaultWarsDOF"
+		dof.Parent = Lighting
+	end
+	dof.FarIntensity = 0.16
+	dof.FocusDistance = 45
+	dof.InFocusRadius = 65
+	dof.NearIntensity = 0.0
 end
 
 -- ============================================================
@@ -315,12 +329,23 @@ local function buildOverheadCraneGantries(parent: Folder)
 			girder,
 			false
 		)
-		-- 4.15 High-Bay Industrial Sodium Floodlights on Girder Underside
+		-- 4.15 High-Bay Industrial Sodium Floodlights with Volumetric Cones
 		for _, xPos in { -80, -25, 25, 80 } do
+			-- Cast-Iron Fixture Shroud
+			createPart(
+				`HighBayShroud_{idx}_{xPos}`,
+				Vector3.new(4.2, 1.2, 4.2),
+				CFrame.new(xPos, beamHeight - 2.4, zOff),
+				Color3.fromRGB(15, 20, 28),
+				Enum.Material.Metal,
+				girder,
+				false
+			)
+
 			local bayLightPart = createPart(
 				`HighBayLight_{idx}_{xPos}`,
-				Vector3.new(3.5, 0.6, 3.5),
-				CFrame.new(xPos, beamHeight - 2.8, zOff),
+				Vector3.new(3.5, 0.4, 3.5),
+				CFrame.new(xPos, beamHeight - 3.1, zOff),
 				Color3.fromRGB(254, 240, 138),
 				Enum.Material.Neon,
 				girder,
@@ -333,6 +358,23 @@ local function buildOverheadCraneGantries(parent: Folder)
 			point.Brightness = 2.2
 			point.Shadows = true
 			point.Parent = bayLightPart
+
+			-- Semi-Transparent Volumetric Beam Cone
+			local beamCone = Instance.new("Part")
+			beamCone.Name = `VolumetricBeam_{idx}_{xPos}`
+			beamCone.Size = Vector3.new(32, 46, 32)
+			beamCone.CFrame = CFrame.new(xPos, beamHeight - 26, zOff)
+			beamCone.Color = Color3.fromRGB(254, 240, 138)
+			beamCone.Material = Enum.Material.Neon
+			beamCone.Transparency = 0.94
+			beamCone.CanCollide = false
+			beamCone.CastShadow = false
+			beamCone.Anchored = true
+			beamCone.Parent = girder
+
+			local coneMesh = Instance.new("SpecialMesh")
+			coneMesh.MeshType = Enum.MeshType.Cylinder
+			coneMesh.Parent = beamCone
 		end
 
 		-- 4.2. Motorized Crane Hoist Trolley
@@ -561,6 +603,91 @@ local function buildBackgroundServerMonoliths(parent: Folder)
 end
 
 -- ============================================================
+-- 7. CAVERN CEILING CANOPY & STRUCTURAL TRUSS DOME
+-- ============================================================
+local function buildCavernCeilingCanopy(parent: Folder)
+	local ceilingFolder = Instance.new("Folder")
+	ceilingFolder.Name = "CavernCeilingCanopy"
+	ceilingFolder.Parent = parent
+
+	local numSegs = 16
+	local radius = 180
+	local baseCeilingY = 92
+	local apexCeilingY = 114
+	local halfAngle = math.pi / numSegs
+	local segWidth = 2 * radius * math.sin(halfAngle) + 6
+
+	-- 7.1. Central Compression Hub Ring
+	local centerHub = createPart(
+		"CeilingCenterHub",
+		Vector3.new(52, 6, 52),
+		CFrame.new(0, apexCeilingY, 0),
+		Color3.fromRGB(30, 41, 59),
+		Enum.Material.DiamondPlate,
+		ceilingFolder,
+		true
+	)
+
+	-- Glowing Cyan Central Ventilation Turbine
+	local turbineCore = createCylinder(
+		"CeilingTurbineCore",
+		Vector3.new(5, 42, 42),
+		CFrame.new(0, apexCeilingY + 0.5, 0) * CFrame.Angles(0, 0, math.rad(90)),
+		Color3.fromRGB(56, 189, 248),
+		Enum.Material.Neon,
+		centerHub,
+		false
+	)
+	turbineCore.Transparency = 0.35
+
+	-- 7.2. 16 Arched Bedrock & Armor Canopy Slabs (Zero open sky visible)
+	for i = 1, numSegs do
+		local angle = (i - 0.5) * (math.pi * 2 / numSegs)
+		local outerPos = Vector3.new(math.cos(angle) * radius, baseCeilingY, math.sin(angle) * radius)
+		local innerPos = Vector3.new(math.cos(angle) * 26, apexCeilingY, math.sin(angle) * 26)
+		local midPos = (outerPos + innerPos) / 2
+		local spanLen = (outerPos - innerPos).Magnitude + 8
+
+		local slabCF = CFrame.lookAt(midPos, Vector3.new(0, midPos.Y, 0)) * CFrame.Angles(math.atan2(apexCeilingY - baseCeilingY, radius - 26), 0, 0)
+
+		-- Main Bedrock / Slate Canopy Slab (Encloses entire sky)
+		createPart(
+			`CeilingSlab_{i}`,
+			Vector3.new(segWidth, 4.0, spanLen),
+			slabCF,
+			(i % 2 == 0) and Color3.fromRGB(34, 40, 54) or Color3.fromRGB(28, 34, 46),
+			Enum.Material.Slate,
+			ceilingFolder,
+			true
+		)
+
+		-- Internal Reinforced I-Beam Rafter
+		createPart(
+			`CeilingRafter_{i}`,
+			Vector3.new(3.5, 3.5, spanLen),
+			slabCF * CFrame.new(0, -2.5, 0),
+			Color3.fromRGB(20, 24, 34),
+			Enum.Material.Metal,
+			ceilingFolder,
+			false
+		)
+	end
+
+	-- 7.3. Massive Steel Cross-Trusses (Spanning across cavern ceiling)
+	for _, rotDeg in { 0, 45, 90, 135 } do
+		createPart(
+			`CeilingCrossTruss_{rotDeg}`,
+			Vector3.new(350, 4.5, 5.0),
+			CFrame.new(0, baseCeilingY + 2, 0) * CFrame.Angles(0, math.rad(rotDeg), 0),
+			Color3.fromRGB(24, 28, 40),
+			Enum.Material.DiamondPlate,
+			ceilingFolder,
+			false
+		)
+	end
+end
+
+-- ============================================================
 -- MAIN INITIALIZATION
 -- ============================================================
 function EnvironmentService.Init()
@@ -583,11 +710,12 @@ function EnvironmentService.Init()
 
 	-- 4. Cavern Architecture
 	buildCavernEnclosure(cavernFolder)
+	buildCavernCeilingCanopy(cavernFolder)
 	buildOverheadCraneGantries(cavernFolder)
 	buildCoolantDrainageTrenches(cavernFolder)
 	buildBackgroundServerMonoliths(cavernFolder)
 
-	print("  [EnvironmentService] Cavern walls, overhead gantries, and volumetric lighting initialized ✓")
+	print("  [EnvironmentService] Cavern walls, ceiling dome, overhead gantries, and volumetric lighting initialized ✓")
 end
 
 return EnvironmentService

@@ -166,6 +166,80 @@ function UILib.ApplyTextStroke(parent: TextLabel | TextButton, color: Color3?, t
 	return stroke
 end
 
+function UILib.CreateGlassCard(parent: GuiObject, size: UDim2, pos: UDim2, anchor: Vector2?): Frame
+	local card = Instance.new("Frame")
+	card.Size = size
+	card.Position = pos
+	card.AnchorPoint = anchor or Vector2.zero
+	card.BackgroundColor3 = Color3.fromRGB(15, 17, 26)
+	card.BackgroundTransparency = 0.18
+	card.BorderSizePixel = 0
+	card.Parent = parent
+
+	-- 16px Bento Corner
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 16)
+	corner.Parent = card
+
+	-- Specular 45° Rim Light
+	local stroke = Instance.new("UIStroke")
+	stroke.Thickness = 1.2
+	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	stroke.Parent = card
+
+	local strokeGrad = Instance.new("UIGradient")
+	strokeGrad.Rotation = 45
+	strokeGrad.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0.0, Color3.fromRGB(255, 255, 255)),
+		ColorSequenceKeypoint.new(0.4, Color3.fromRGB(148, 163, 184)),
+		ColorSequenceKeypoint.new(1.0, Color3.fromRGB(30, 41, 59)),
+	})
+	strokeGrad.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0.0, 0.15),
+		NumberSequenceKeypoint.new(0.6, 0.65),
+		NumberSequenceKeypoint.new(1.0, 0.85),
+	})
+	strokeGrad.Parent = stroke
+
+	-- Diffuse Glass Gradient
+	local bgGrad = Instance.new("UIGradient")
+	bgGrad.Rotation = 90
+	bgGrad.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0.0, Color3.fromRGB(30, 36, 54)),
+		ColorSequenceKeypoint.new(1.0, Color3.fromRGB(15, 17, 26)),
+	})
+	bgGrad.Parent = card
+
+	return card
+end
+
+function UILib.ApplySpringHover(btn: GuiButton, stroke: UIStroke?, accentColor: Color3?)
+	local scale = btn:FindFirstChildOfClass("UIScale")
+	if not scale then
+		scale = Instance.new("UIScale")
+		scale.Parent = btn
+	end
+
+	btn.MouseEnter:Connect(function()
+		TweenService:Create(scale, TweenInfo.new(0.18, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1.05 }):Play()
+		if stroke and accentColor then
+			TweenService:Create(stroke, TweenInfo.new(0.18, Enum.EasingStyle.Quad), { Color = accentColor, Thickness = 2.0 }):Play()
+		end
+	end)
+	btn.MouseLeave:Connect(function()
+		TweenService:Create(scale, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Scale = 1.0 }):Play()
+		if stroke then
+			TweenService:Create(stroke, TweenInfo.new(0.2, Enum.EasingStyle.Quad), { Color = Color3.fromRGB(39, 45, 66), Thickness = 1.2 }):Play()
+		end
+	end)
+	btn.MouseButton1Down:Connect(function()
+		TweenService:Create(scale, TweenInfo.new(0.1, Enum.EasingStyle.Quad), { Scale = 0.94 }):Play()
+	end)
+	btn.MouseButton1Up:Connect(function()
+		TweenService:Create(scale, TweenInfo.new(0.15, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1.05 }):Play()
+	end)
+end
+
 function UILib.CreateChunkyButton(
 	parent: GuiObject,
 	name: string,

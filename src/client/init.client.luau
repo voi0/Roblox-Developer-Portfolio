@@ -15,12 +15,12 @@ local player = Players.LocalPlayer
 
 -- Disable default backpack so custom HUD is clean
 task.spawn(function()
-	for _ = 1, 15 do
+	for _ = 1, 30 do
 		local ok = pcall(function()
 			StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, false)
 		end)
 		if ok then break end
-		task.wait(0.2)
+		task.wait(0.3)
 	end
 end)
 

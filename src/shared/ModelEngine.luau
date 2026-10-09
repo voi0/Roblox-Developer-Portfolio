@@ -942,6 +942,144 @@ function ModelEngine.CreateBunkerShell(
 	lbl.Font = Enum.Font.GothamBlack
 	lbl.Parent = sGui
 
+	-- 12.6. FRONT AIRLOCK SECURITY PORTAL (FRAMED ENTRANCE)
+	-- Left & Right Entrance Gate Concrete Pillars
+	for _, xSide in { -plotWidth / 2 + 1.8, plotWidth / 2 - 1.8 } do
+		createPart(
+			"AirlockGatePillar",
+			Vector3.new(3.6, wallHeight, 3.6),
+			baseCF * CFrame.new(xSide, wallHeight / 2, -plotLength / 2 + 1.8),
+			Color3.fromRGB(42, 48, 64),
+			Enum.Material.Concrete,
+			model,
+			true
+		)
+		-- Vertical Status Neon on Pillar
+		createPart(
+			"AirlockPillarNeon",
+			Vector3.new(0.3, wallHeight - 3, 0.4),
+			baseCF * CFrame.new(xSide, wallHeight / 2, -plotLength / 2 - 0.1),
+			Color3.fromRGB(56, 189, 248),
+			Enum.Material.Neon,
+			model,
+			false
+		)
+	end
+
+	-- Airlock Floor Threshold Warning Strip (+0.08 stud offset to eliminate Z-fighting)
+	createPart(
+		"AirlockThresholdPlate",
+		Vector3.new(plotWidth - 8, 0.3, 3.8),
+		baseCF * CFrame.new(0, 0.15, -plotLength / 2 + 1.8),
+		Color3.fromRGB(245, 158, 11),
+		Enum.Material.DiamondPlate,
+		model,
+		true
+	)
+
+	-- 12.7. 45° CHAMFERED BLAST CORNER BUTTRESSES (ELIMINATES NAKED 90° CORNERS)
+	for _, xSign in { -1, 1 } do
+		local cornerCF = baseCF * CFrame.new(xSign * (plotWidth / 2 - 2.5), wallHeight / 2, plotLength / 2 - 2.5) * CFrame.Angles(0, math.rad(xSign * 45), 0)
+		createPart(
+			"RearCornerButtress",
+			Vector3.new(4.2, wallHeight, 2.2),
+			cornerCF,
+			Color3.fromRGB(42, 48, 64),
+			Enum.Material.Concrete,
+			model,
+			true
+		)
+	end
+
+	-- 12.8. INTERIOR ARCHITECTURAL FRAMING & DADO PLATES (+0.12 stud proud offset)
+	-- Interior DiamondPlate Kickplate (Left and Right)
+	createPart(
+		"InteriorKickplateLeft",
+		Vector3.new(0.4, 3.2, plotLength - 8),
+		baseCF * CFrame.new(-plotWidth / 2 + 1.4, 1.6, 0),
+		Color3.fromRGB(40, 48, 62),
+		Enum.Material.DiamondPlate,
+		model,
+		true
+	)
+	createPart(
+		"InteriorKickplateRight",
+		Vector3.new(0.4, 3.2, plotLength - 8),
+		baseCF * CFrame.new(plotWidth / 2 - 1.4, 1.6, 0),
+		Color3.fromRGB(40, 48, 62),
+		Enum.Material.DiamondPlate,
+		model,
+		true
+	)
+
+	-- Interior Structural Pilaster Columns (Every 14 studs inside)
+	for _, zRel in { -plotLength * 0.22, plotLength * 0.15 } do
+		for _, xSign in { -1, 1 } do
+			createPart(
+				"InteriorColumn",
+				Vector3.new(1.2, wallHeight, 2.8),
+				baseCF * CFrame.new(xSign * (plotWidth / 2 - 1.6), wallHeight / 2, zRel),
+				Color3.fromRGB(30, 36, 48),
+				Enum.Material.Metal,
+				model,
+				true
+			)
+			-- Micro Status LED on interior column
+			createPart(
+				"InteriorColLED",
+				Vector3.new(0.3, 2.2, 0.4),
+				baseCF * CFrame.new(xSign * (plotWidth / 2 - 2.25), wallHeight * 0.65, zRel),
+				Color3.fromRGB(16, 185, 129),
+				Enum.Material.Neon,
+				model,
+				false
+			)
+		end
+	end
+
+	-- 12.9. INTERIOR RECESSED SERVER BLADE ALCOVE (LEFT WALL)
+	local serverAlcoveCF = baseCF * CFrame.new(-plotWidth / 2 + 1.6, 6.5, -4)
+	createPart(
+		"InteriorServerRack",
+		Vector3.new(0.8, 8.5, 6.2),
+		serverAlcoveCF,
+		Color3.fromRGB(15, 17, 26),
+		Enum.Material.Metal,
+		model,
+		true
+	)
+	for sIdx = -3, 3, 1.5 do
+		createPart(
+			`ServerBladeLED_{sIdx}`,
+			Vector3.new(0.2, 0.3, 4.8),
+			serverAlcoveCF * CFrame.new(0.42, sIdx, 0),
+			(sIdx % 3 == 0) and Color3.fromRGB(245, 158, 11) or Color3.fromRGB(56, 189, 248),
+			Enum.Material.Neon,
+			model,
+			false
+		)
+	end
+
+	-- 12.10. INTERIOR HIGH-BAY HOODED FLOODLIGHTS
+	for _, zLight in { -plotLength * 0.15, plotLength * 0.22 } do
+		local interiorLightPart = createPart(
+			"InteriorBunkerLamp",
+			Vector3.new(2.4, 0.6, 2.4),
+			baseCF * CFrame.new(0, wallHeight - 0.4, zLight),
+			Color3.fromRGB(254, 240, 138),
+			Enum.Material.Neon,
+			model,
+			false
+		)
+		local intPoint = Instance.new("PointLight")
+		intPoint.Name = "BunkerInteriorIllumination"
+		intPoint.Color = Color3.fromRGB(255, 245, 225)
+		intPoint.Range = 36
+		intPoint.Brightness = 2.0
+		intPoint.Shadows = true
+		intPoint.Parent = interiorLightPart
+	end
+
 	return model
 end
 

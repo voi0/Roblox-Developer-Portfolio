@@ -119,32 +119,103 @@ function PlotService.Init()
 		false
 	)
 
-	-- ── 2. CENTRAL MONOLITH & LEADERBOARD ──
-	local monolith = createPart(
-		"CenterMonolith",
-		Vector3.new(12, 28, 12),
-		CFrame.new(0, FLOOR_Y + 14, 0),
-		Color3.fromRGB(15, 23, 42),
-		Enum.Material.Metal,
-		rootFolder
+	-- ── 2. CENTRAL CYBER-INDUSTRIAL TERMINAL & LEADERBOARD ──
+	-- 2.1 Stepped Plinth Base (Eliminates flat monolith look)
+	createPart(
+		"MonolithPlinthLower",
+		Vector3.new(22, 1.8, 22),
+		CFrame.new(0, FLOOR_Y + 0.9, 0),
+		Color3.fromRGB(30, 41, 59),
+		Enum.Material.DiamondPlate,
+		rootFolder,
+		true
+	)
+	createPart(
+		"MonolithPlinthUpper",
+		Vector3.new(17, 1.8, 17),
+		CFrame.new(0, FLOOR_Y + 2.7, 0),
+		Color3.fromRGB(47, 55, 70),
+		Enum.Material.Concrete,
+		rootFolder,
+		true
 	)
 
-	-- Glowing Cyan Trims on Monolith
+	-- 2.2 Main Terminal Core Body
+	local monolith = createPart(
+		"CenterMonolith",
+		Vector3.new(12, 24, 12),
+		CFrame.new(0, FLOOR_Y + 15.6, 0),
+		Color3.fromRGB(38, 46, 60),
+		Enum.Material.Metal,
+		rootFolder,
+		true
+	)
+
+	-- 4 Structural Steel Corner Flanges
+	for _, xSide in { -6, 6 } do
+		for _, zSide in { -6, 6 } do
+			createPart(
+				`MonolithCorner_{xSide}_{zSide}`,
+				Vector3.new(1.8, 26, 1.8),
+				CFrame.new(xSide, FLOOR_Y + 15.6, zSide),
+				Color3.fromRGB(24, 28, 40),
+				Enum.Material.DiamondPlate,
+				monolith,
+				false
+			)
+		end
+	end
+
+	-- Architectural Crown Cap & Holographic Projection Ring
 	createPart(
-		"MonolithTrim1",
-		Vector3.new(12.5, 1.0, 12.5),
-		CFrame.new(0, FLOOR_Y + 25, 0),
+		"MonolithCrownCap",
+		Vector3.new(14.5, 2.4, 14.5),
+		CFrame.new(0, FLOOR_Y + 28.5, 0),
+		Color3.fromRGB(15, 23, 42),
+		Enum.Material.Metal,
+		monolith,
+		true
+	)
+	createPart(
+		"MonolithHoloRing",
+		Vector3.new(16, 0.4, 16),
+		CFrame.new(0, FLOOR_Y + 29.9, 0),
 		Color3.fromRGB(56, 189, 248),
 		Enum.Material.Neon,
 		monolith,
 		false
 	)
+	-- Communications Spire & Warning Beacon
+	createPart(
+		"MonolithSpire",
+		Vector3.new(0.8, 8, 0.8),
+		CFrame.new(0, FLOOR_Y + 34, 0),
+		Color3.fromRGB(203, 213, 225),
+		Enum.Material.Metal,
+		monolith,
+		false
+	)
+	local topBeacon = createPart(
+		"MonolithBeacon",
+		Vector3.new(1.2, 1.2, 1.2),
+		CFrame.new(0, FLOOR_Y + 38.5, 0),
+		Color3.fromRGB(245, 158, 11),
+		Enum.Material.Neon,
+		monolith,
+		false
+	)
+	local mBeaconLight = Instance.new("PointLight")
+	mBeaconLight.Color = Color3.fromRGB(245, 158, 11)
+	mBeaconLight.Range = 35
+	mBeaconLight.Brightness = 2.4
+	mBeaconLight.Parent = topBeacon
 
-	-- Leaderboard Surface GUI
+	-- Leaderboard Surface GUI (Front Face Recessed Screen)
 	local sGui = Instance.new("SurfaceGui")
 	sGui.Name = "LeaderboardGui"
 	sGui.Face = Enum.NormalId.Front
 	sGui.CanvasSize = Vector2.new(400, 600)
+	sGui.LightInfluence = 0.4
 	sGui.Parent = monolith
 
 	local lbTitle = Instance.new("TextLabel")
@@ -163,14 +234,23 @@ function PlotService.Init()
 	lbFrame.BackgroundColor3 = Color3.fromRGB(24, 24, 27)
 	lbFrame.Parent = sGui
 
-	-- Spawn Location in Plaza (Firmly on deck)
+	-- Spawn Location in Plaza (Framed Pad with DiamondPlate Border)
+	local spawnBorder = createPart(
+		"SpawnBorder",
+		Vector3.new(14, 0.6, 14),
+		CFrame.new(0, FLOOR_Y + 0.3, 26),
+		Color3.fromRGB(30, 41, 59),
+		Enum.Material.DiamondPlate,
+		rootFolder,
+		true
+	)
 	local spawnPad = Instance.new("SpawnLocation")
 	spawnPad.Name = "PlazaSpawn"
-	spawnPad.Size = Vector3.new(12, 1, 12)
-	spawnPad.CFrame = CFrame.new(0, FLOOR_Y + 0.5, 26)
+	spawnPad.Size = Vector3.new(12, 0.4, 12)
+	spawnPad.CFrame = CFrame.new(0, FLOOR_Y + 0.6, 26)
 	spawnPad.Anchored = true
 	spawnPad.CanCollide = true
-	spawnPad.Material = Enum.Material.Neon
+	spawnPad.Material = Enum.Material.SmoothPlastic
 	spawnPad.Color = Color3.fromRGB(56, 189, 248)
 	spawnPad.Duration = 0
 	spawnPad.Parent = rootFolder
