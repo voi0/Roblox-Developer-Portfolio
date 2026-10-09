@@ -15,6 +15,7 @@ local Workspace = game:GetService("Workspace")
 local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
 local Types = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Types"))
 local RelicData = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("RelicData"))
+local ModelEngine = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("ModelEngine"))
 
 local PlotService = {}
 PlotService._folder = nil :: Folder?
@@ -290,45 +291,15 @@ function PlotService.Init()
 			pFolder
 		)
 
-		-- ── 4. CHUNKY CIRCULAR VAULT DOOR AT BACK ──
-		local vaultFrame = createPart(
-			"VaultDoorFrame",
-			Vector3.new(10, 12, 2),
-			faceCenterCF * CFrame.new(0, 6, pLen / 2 - 1.5),
-			Color3.fromRGB(15, 23, 42),
-			Enum.Material.Metal,
-			pFolder
-		)
-		local vaultWheel = createPart(
-			"VaultCogWheel",
-			Vector3.new(6, 6, 1),
-			faceCenterCF * CFrame.new(0, 6, pLen / 2 - 2.8),
-			Color3.fromRGB(234, 179, 8),
-			Enum.Material.Metal,
-			pFolder,
-			false
-		)
-		Instance.new("CylinderMesh", vaultWheel)
+		-- ── 4. CHUNKY MULTI-TIER VAULT DOOR AT BACK ──
+		local vaultDoorModel = ModelEngine.CreateVaultDoor(pFolder, faceCenterCF * CFrame.new(0, 0, pLen / 2 - 1.5))
+		local vaultWheel = vaultDoorModel:FindFirstChild("CogWheelCenter") :: Part?
 
-		-- ── 5. MINT CONVEYOR TABLE ──
-		local conveyor = createPart(
-			"MintConveyor",
-			Vector3.new(6, 3, Config.Mint.ConveyorLength),
-			faceCenterCF * CFrame.new(8, 1.5, 0),
-			Color3.fromRGB(30, 41, 59),
-			Enum.Material.Metal,
-			pFolder
-		)
-		-- Rubber belt top
-		local belt = createPart(
-			"ConveyorBelt",
-			Vector3.new(5.2, 0.2, Config.Mint.ConveyorLength - 0.4),
-			faceCenterCF * CFrame.new(8, 3.1, 0),
-			Color3.fromRGB(15, 17, 26),
-			Enum.Material.Slate,
-			conveyor,
-			false
-		)
+		-- ── 5. INDUSTRIAL MINT MACHINE & CONVEYOR ──
+		local mintMachine = ModelEngine.CreateMintMachine(pFolder, faceCenterCF * CFrame.new(8, 0, 0))
+		local conveyor = (mintMachine:FindFirstChild("BaseChassis") or mintMachine.PrimaryPart) :: Part
+		local belt = (mintMachine:FindFirstChild("ConveyorBelt") or conveyor) :: Part
+		local stampingHead = mintMachine:FindFirstChild("StampingHead") :: Part?
 
 		-- ── 6. DEPOSIT SAFE PAD ──
 		local safePad = createPart(
@@ -474,6 +445,11 @@ function PlotService.Init()
 			ShowcaseRing = pedRing,
 			ShowcaseLabel = sLabel,
 			ShowcaseBaseCF = pedCF * CFrame.new(0, 3.2, 0),
+			VaultDoorModel = vaultDoorModel,
+			MintMachine = mintMachine,
+			StampingHead = stampingHead,
+			CurrentShowcaseModel = nil :: Model?,
+			_isDoorOpening = false,
 		}
 
 		-- Connect Touch on SafePad to automatically bank for owner or deposit stolen loot
@@ -481,6 +457,7 @@ function PlotService.Init()
 			local char = hit.Parent
 			local p = char and Players:GetPlayerFromCharacter(char)
 			if p and PlotService._plots[i].Owner == p then
+				PlotService.AnimateVaultDoorOpen(i)
 				local heistMod = script.Parent:FindFirstChild("HeistService") :: ModuleScript?
 				local heistSvc = heistMod and require(heistMod)
 				if heistSvc and heistSvc.IsCarryingLoot(p) then
@@ -502,11 +479,14 @@ function PlotService.Init()
 	Players.PlayerAdded:Connect(PlotService.AssignPlot)
 	Players.PlayerRemoving:Connect(PlotService.ReleasePlot)
 
-	-- Floating rotation animation for pedestal showcase gems
+	-- Floating rotation animation for pedestal showcase 3D models & gems
 	RunService.Heartbeat:Connect(function()
 		local t = os.clock()
 		for _, plot in PlotService._plots do
-			if plot.ShowcaseGem and plot.ShowcaseBaseCF then
+			if plot.CurrentShowcaseModel and plot.ShowcaseBaseCF then
+				local bob = math.sin(t * 3) * 0.35
+				plot.CurrentShowcaseModel:PivotTo(plot.ShowcaseBaseCF * CFrame.new(0, bob, 0) * CFrame.Angles(0, t * 1.5, 0))
+			elseif plot.ShowcaseGem and plot.ShowcaseBaseCF then
 				local bob = math.sin(t * 3) * 0.35
 				plot.ShowcaseGem.CFrame = plot.ShowcaseBaseCF * CFrame.new(0, bob, 0) * CFrame.Angles(0, t * 1.5, 0)
 			end
@@ -582,9 +562,68 @@ function PlotService.GetPlotByIndex(index: number): any?
 	return PlotService._plots[index]
 end
 
+function PlotService.AnimateVaultDoorOpen(plotIndex: number)
+	local plot = PlotService._plots[plotIndex]
+	if not plot or not plot.VaultDoorModel then return end
+	if plot._isDoorOpening then return end
+	plot._isDoorOpening = true
+
+	local doorModel = plot.VaultDoorModel
+	local wheel = doorModel:FindFirstChild("CogWheelCenter") :: Part?
+	local doorSlab = doorModel:FindFirstChild("DoorSlab") :: Part?
+	local pinL = doorModel:FindFirstChild("LockingPinLeft") :: Part?
+	local pinR = doorModel:FindFirstChild("LockingPinRight") :: Part?
+
+	-- Spin cog wheel 360 degrees
+	if wheel then
+		local startCF = wheel.CFrame
+		TweenService:Create(wheel, TweenInfo.new(0.45, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+			CFrame = startCF * CFrame.Angles(0, 0, math.rad(360))
+		}):Play()
+	end
+
+	-- Retract locking pins
+	if pinL and pinR then
+		local origL = pinL.CFrame
+		local origR = pinR.CFrame
+		TweenService:Create(pinL, TweenInfo.new(0.35, Enum.EasingStyle.Quad), { CFrame = origL * CFrame.new(1.2, 0, 0) }):Play()
+		TweenService:Create(pinR, TweenInfo.new(0.35, Enum.EasingStyle.Quad), { CFrame = origR * CFrame.new(-1.2, 0, 0) }):Play()
+
+		task.delay(2.2, function()
+			TweenService:Create(pinL, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { CFrame = origL }):Play()
+			TweenService:Create(pinR, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { CFrame = origR }):Play()
+		end)
+	end
+
+	-- Swing open heavy door
+	if doorSlab then
+		local origDoorCF = doorSlab.CFrame
+		task.delay(0.2, function()
+			TweenService:Create(doorSlab, TweenInfo.new(0.7, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+				CFrame = origDoorCF * CFrame.Angles(0, math.rad(-75), 0)
+			}):Play()
+		end)
+
+		task.delay(2.5, function()
+			TweenService:Create(doorSlab, TweenInfo.new(0.8, Enum.EasingStyle.Bounce, Enum.EasingDirection.Out), {
+				CFrame = origDoorCF
+			}):Play()
+			task.wait(0.85)
+			plot._isDoorOpening = false
+		end)
+	else
+		plot._isDoorOpening = false
+	end
+end
+
 function PlotService.UpdateShowcase(plotIndex: number)
 	local plot = PlotService._plots[plotIndex]
 	if not plot or not plot.ShowcaseGem or not plot.ShowcaseLabel then return end
+
+	if plot.CurrentShowcaseModel then
+		plot.CurrentShowcaseModel:Destroy()
+		plot.CurrentShowcaseModel = nil
+	end
 
 	local owner = plot.Owner
 	if not owner then
@@ -621,9 +660,11 @@ function PlotService.UpdateShowcase(plotIndex: number)
 
 	if bestId and RelicData.Catalog[bestId] then
 		local def = RelicData.Catalog[bestId]
-		plot.ShowcaseGem.Transparency = 0
-		plot.ShowcaseGem.Color = def.Color
-		plot.ShowcaseGem.Material = def.Material
+		local relicModel = ModelEngine.CreateRelicModel(bestId, plot.ShowcaseBaseCF)
+		relicModel.Parent = plot.Folder
+		plot.CurrentShowcaseModel = relicModel
+
+		plot.ShowcaseGem.Transparency = 1
 		plot.ShowcaseLabel.Text = `👑 PRIZED RELIC\n{def.Name}`
 		plot.ShowcaseLabel.TextColor3 = def.Color
 		if plot.ShowcaseRing then plot.ShowcaseRing.Color = def.Color end

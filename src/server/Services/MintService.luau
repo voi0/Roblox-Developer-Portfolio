@@ -14,6 +14,7 @@ local Debris = game:GetService("Debris")
 local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
 local RelicData = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("RelicData"))
 local Types = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Types"))
+local ModelEngine = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("ModelEngine"))
 
 local MintService = {}
 MintService._activeItems = {} :: { [number]: { Instance } }
@@ -122,17 +123,28 @@ function MintService.SpawnConveyorItem(plot: any, value: number, relicDef: Types
 	local conveyor = plot.Conveyor :: Part?
 	if not conveyor then return end
 
+	-- Animate hydraulic stamping press if present
+	if plot.StampingHead then
+		local origHeadCF = plot.StampingHead.CFrame
+		TweenService:Create(plot.StampingHead, TweenInfo.new(0.09, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+			CFrame = origHeadCF * CFrame.new(0, -3.2, 0)
+		}):Play()
+		task.delay(0.12, function()
+			TweenService:Create(plot.StampingHead, TweenInfo.new(0.28, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+				CFrame = origHeadCF
+			}):Play()
+		end)
+	end
+
 	local isRelic = relicDef ~= nil
-	local itemSize = isRelic and Vector3.new(2.4, 1.8, 1.2) or Vector3.new(2.2, 0.8, 1.4)
 	local itemColor = isRelic and relicDef.Color or Color3.fromRGB(250, 204, 21)
-	local itemMat = isRelic and relicDef.Material or Enum.Material.SmoothPlastic
 	local itemName = isRelic and relicDef.Name or "Cash Stack"
 
+	-- Root hitbox part (transparent container for physics/touch)
 	local item = Instance.new("Part")
 	item.Name = isRelic and ("Relic_" .. relicDef.Id) or "CashStack"
-	item.Size = itemSize
-	item.Color = itemColor
-	item.Material = itemMat
+	item.Size = Vector3.new(2.4, 2.0, 2.4)
+	item.Transparency = 1
 	item.Anchored = true
 	item.CanCollide = false
 	item.TopSurface = Enum.SurfaceType.Smooth
@@ -145,11 +157,32 @@ function MintService.SpawnConveyorItem(plot: any, value: number, relicDef: Types
 	item:SetAttribute("Tier", isRelic and relicDef.Tier or "Common")
 	item:SetAttribute("RelicId", isRelic and relicDef.Id or "")
 
+	-- Start at head of conveyor
+	local startCF = plot.CF * CFrame.new(8, 2.4, -Config.Mint.ConveyorLength / 2 + 2)
+	local endCF = plot.CF * CFrame.new(8, 2.4, Config.Mint.ConveyorLength / 2 - 2)
+	item.CFrame = startCF
+	item.Parent = plot.Folder
+
+	-- Build sculpted 3D visual model and weld to item root
+	local relicId = isRelic and relicDef.Id or "GoldStack"
+	local visualModel = ModelEngine.CreateRelicModel(relicId, startCF)
+	visualModel.Parent = item
+	for _, p in visualModel:GetDescendants() do
+		if p:IsA("BasePart") then
+			p.Anchored = false
+			p.CanCollide = false
+			local weld = Instance.new("WeldConstraint")
+			weld.Part0 = item
+			weld.Part1 = p
+			weld.Parent = p
+		end
+	end
+
 	-- Billboard display
 	local bGui = Instance.new("BillboardGui")
 	bGui.Name = "ValueTag"
-	bGui.Size = UDim2.new(0, 120, 0, 36)
-	bGui.StudsOffset = Vector3.new(0, 1.8, 0)
+	bGui.Size = UDim2.new(0, 130, 0, 36)
+	bGui.StudsOffset = Vector3.new(0, 2.4, 0)
 	bGui.AlwaysOnTop = true
 	bGui.Parent = item
 
@@ -161,12 +194,6 @@ function MintService.SpawnConveyorItem(plot: any, value: number, relicDef: Types
 	tagLabel.TextSize = 11
 	tagLabel.Font = Enum.Font.GothamBlack
 	tagLabel.Parent = bGui
-
-	-- Start at head of conveyor (local Z = -conveyorLength/2 + 2)
-	local startCF = plot.CF * CFrame.new(8, 3.8, -Config.Mint.ConveyorLength / 2 + 2)
-	local endCF = plot.CF * CFrame.new(8, 3.8, Config.Mint.ConveyorLength / 2 - 2)
-	item.CFrame = startCF
-	item.Parent = plot.Folder
 
 	table.insert(MintService._activeItems[plot.Index], item)
 

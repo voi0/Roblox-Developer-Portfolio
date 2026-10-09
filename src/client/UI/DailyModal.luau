@@ -11,6 +11,7 @@ local TweenService = game:GetService("TweenService")
 
 local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
 local Types = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Types"))
+local ModelEngine = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("ModelEngine"))
 
 local player = Players.LocalPlayer
 local DailyModal = {}
@@ -125,16 +126,47 @@ function DailyModal.Create(parentGui: ScreenGui)
 		dLabel.BackgroundTransparency = 1
 		dLabel.Parent = card
 
-		-- Reward Label
+		-- Live 3D ViewportFrame
+		local relicId = reward and (reward.RelicId or "GoldStack") or "GoldStack"
+		local vp = Instance.new("ViewportFrame")
+		vp.Name = "RelicVP"
+		vp.Size = UDim2.new(0, 50, 0, 50)
+		vp.Position = UDim2.new(0.5, 0, 0, 30)
+		vp.AnchorPoint = Vector2.new(0.5, 0)
+		vp.BackgroundColor3 = Color3.fromRGB(15, 17, 26)
+		vp.BorderSizePixel = 0
+		vp.Parent = card
+		Instance.new("UICorner", vp).CornerRadius = UDim.new(0, 8)
+
+		local relic3D = ModelEngine.CreateRelicModel(relicId, CFrame.new(0, 0, 0))
+		relic3D.Parent = vp
+
+		local vpCam = Instance.new("Camera")
+		vpCam.CFrame = CFrame.lookAt(Vector3.new(0, 1.4, 3.8), Vector3.new(0, 1.4, 0))
+		vpCam.Parent = vp
+		vp.CurrentCamera = vpCam
+
+		task.spawn(function()
+			local rot = math.random() * math.pi
+			while vp and vp.Parent do
+				rot += 0.025
+				if relic3D and relic3D.PrimaryPart then
+					relic3D:PivotTo(CFrame.new(0, 0, 0) * CFrame.Angles(0, rot, 0))
+				end
+				task.wait(0.03)
+			end
+		end)
+
+		-- Reward Label positioned below Viewport
 		local rLabel = Instance.new("TextLabel")
 		rLabel.Name = "RewardText"
 		rLabel.Text = reward and reward.Label or "Bonus"
 		rLabel.TextColor3 = Color3.fromRGB(241, 245, 249)
-		rLabel.TextSize = 11
+		rLabel.TextSize = 10
 		rLabel.Font = Enum.Font.GothamBold
 		rLabel.TextWrapped = true
-		rLabel.Size = UDim2.new(1, -14, 0, 64)
-		rLabel.Position = UDim2.new(0, 7, 0, 32)
+		rLabel.Size = UDim2.new(1, -12, 0, 32)
+		rLabel.Position = UDim2.new(0, 6, 0, 84)
 		rLabel.BackgroundTransparency = 1
 		rLabel.Parent = card
 
@@ -145,8 +177,8 @@ function DailyModal.Create(parentGui: ScreenGui)
 		statusPill.TextColor3 = Color3.fromRGB(148, 163, 184)
 		statusPill.TextSize = 10
 		statusPill.Font = Enum.Font.GothamBlack
-		statusPill.Size = UDim2.new(1, -16, 0, 26)
-		statusPill.Position = UDim2.new(0, 8, 1, -34)
+		statusPill.Size = UDim2.new(1, -16, 0, 24)
+		statusPill.Position = UDim2.new(0, 8, 1, -30)
 		statusPill.BackgroundColor3 = Color3.fromRGB(15, 17, 26)
 		statusPill.Parent = card
 		Instance.new("UICorner", statusPill).CornerRadius = UDim.new(0, 8)
@@ -177,8 +209,8 @@ function DailyModal.Create(parentGui: ScreenGui)
 
 	local claimBtn = Instance.new("TextButton")
 	claimBtn.Name = "ClaimButton"
-	claimBtn.Size = UDim2.new(0, 200, 0, 44)
-	claimBtn.Position = UDim2.new(1, -200, 0, 4)
+	claimBtn.Size = UDim2.new(0, 210, 0, 44)
+	claimBtn.Position = UDim2.new(1, -210, 0, 4)
 	claimBtn.BackgroundColor3 = Color3.fromRGB(16, 185, 129)
 	claimBtn.Text = "🎁 CLAIM TODAY'S REWARD"
 	claimBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -186,6 +218,24 @@ function DailyModal.Create(parentGui: ScreenGui)
 	claimBtn.Font = Enum.Font.GothamBlack
 	claimBtn.Parent = bottomBar
 	Instance.new("UICorner", claimBtn).CornerRadius = UDim.new(0, 10)
+
+	local cStroke = Instance.new("UIStroke", claimBtn)
+	cStroke.Color = Color3.fromRGB(5, 150, 105)
+	cStroke.Thickness = 2.5
+
+	claimBtn.MouseEnter:Connect(function()
+		if claimBtn.AutoButtonColor then
+			TweenService:Create(claimBtn, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+				Size = UDim2.new(0, 216, 0, 46)
+			}):Play()
+		end
+	end)
+	claimBtn.MouseLeave:Connect(function()
+		TweenService:Create(claimBtn, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			Size = UDim2.new(0, 210, 0, 44)
+		}):Play()
+	end)
+
 	DailyModal._claimBtn = claimBtn
 
 	claimBtn.MouseButton1Click:Connect(function()

@@ -60,6 +60,7 @@ local NotificationUI = safeRequire(uiFolder, "NotificationUI")
 local HeistController = safeRequire(controllersFolder, "HeistController")
 local SoundController = safeRequire(controllersFolder, "SoundController")
 local VFXController = safeRequire(controllersFolder, "VFXController")
+local AnimationEngine = safeRequire(controllersFolder, "AnimationEngine")
 
 local localPlayerData: any = nil
 
@@ -76,6 +77,10 @@ end
 
 if VFXController then
 	pcall(function() VFXController.Init() end)
+end
+
+if AnimationEngine then
+	pcall(function() AnimationEngine.Init() end)
 end
 
 if VaultHUD then

@@ -62,6 +62,26 @@ local SOUND_CONFIG = {
 		Volume = 0.95,
 		PitchRange = { 1.0, 1.05 },
 	},
+	HydraulicPiston = {
+		Id = "rbxassetid://9114223170",
+		Volume = 0.75,
+		PitchRange = { 0.85, 0.95 },
+	},
+	VaultDoorOpen = {
+		Id = "rbxassetid://9069609200",
+		Volume = 0.85,
+		PitchRange = { 0.8, 0.9 },
+	},
+	VaultDoorLock = {
+		Id = "rbxassetid://6895079853",
+		Volume = 0.8,
+		PitchRange = { 0.7, 0.8 },
+	},
+	EMPPulse = {
+		Id = "rbxassetid://4590662766",
+		Volume = 0.9,
+		PitchRange = { 1.1, 1.25 },
+	},
 }
 
 -- Cyberpunk industrial ambient background track

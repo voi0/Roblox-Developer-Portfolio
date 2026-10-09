@@ -189,4 +189,58 @@ function VFXController.PlayRadiantAscent(worldPos: Vector3, relicName: string)
 	Debris:AddItem(pillar, 2.0)
 end
 
+-- ============================================================
+-- HYDRAULIC PNEUMATIC STEAM BURST
+-- ============================================================
+function VFXController.PlaySteamBurst(worldPos: Vector3)
+	local emitterPart = Instance.new("Part")
+	emitterPart.Size = Vector3.new(0.5, 0.5, 0.5)
+	emitterPart.CFrame = CFrame.new(worldPos)
+	emitterPart.Anchored = true
+	emitterPart.CanCollide = false
+	emitterPart.Transparency = 1
+	emitterPart.Parent = Workspace
+
+	local emitter = Instance.new("ParticleEmitter")
+	emitter.Color = ColorSequence.new(Color3.fromRGB(241, 245, 249))
+	emitter.Size = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.6),
+		NumberSequenceKeypoint.new(1, 2.8),
+	})
+	emitter.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.3),
+		NumberSequenceKeypoint.new(1, 1.0),
+	})
+	emitter.Lifetime = NumberRange.new(0.4, 0.8)
+	emitter.Speed = NumberRange.new(8, 16)
+	emitter.SpreadAngle = Vector2.new(45, 45)
+	emitter.Rate = 0
+	emitter.Parent = emitterPart
+
+	emitter:Emit(25)
+	Debris:AddItem(emitterPart, 1.2)
+end
+
+-- ============================================================
+-- HIGH-VOLTAGE TESLA ELECTRIC ARC
+-- ============================================================
+function VFXController.PlayElectricArc(fromPos: Vector3, toPos: Vector3)
+	local dist = (toPos - fromPos).Magnitude
+	local beamPart = Instance.new("Part")
+	beamPart.Size = Vector3.new(0.2, 0.2, dist)
+	beamPart.CFrame = CFrame.lookAt((fromPos + toPos) / 2, toPos)
+	beamPart.Color = Color3.fromRGB(56, 189, 248)
+	beamPart.Material = Enum.Material.Neon
+	beamPart.Anchored = true
+	beamPart.CanCollide = false
+	beamPart.Parent = Workspace
+
+	local tween = TweenService:Create(beamPart, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+		Transparency = 1,
+		Size = Vector3.new(0.05, 0.05, dist),
+	})
+	tween:Play()
+	Debris:AddItem(beamPart, 0.25)
+end
+
 return VFXController

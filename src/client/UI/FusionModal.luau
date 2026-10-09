@@ -8,11 +8,13 @@
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 
 local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
 local RelicData = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("RelicData"))
 local Types = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Types"))
+local ModelEngine = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("ModelEngine"))
 
 local player = Players.LocalPlayer
 local FusionModal = {}
@@ -119,7 +121,7 @@ function FusionModal.Create(parentGui: ScreenGui)
 
 		local card = Instance.new("Frame")
 		card.Name = "Card_" .. fEntry.Id
-		card.Size = UDim2.new(1, -6, 0, 66)
+		card.Size = UDim2.new(1, -6, 0, 74)
 		card.BackgroundColor3 = Color3.fromRGB(24, 24, 27)
 		card.BorderSizePixel = 0
 		card.Parent = scroll
@@ -128,19 +130,43 @@ function FusionModal.Create(parentGui: ScreenGui)
 		local cStroke = Instance.new("UIStroke", card)
 		cStroke.Color = Color3.fromRGB(39, 39, 42)
 
-		-- Color Dot Indicator
-		local dot = Instance.new("Frame")
-		dot.Size = UDim2.new(0, 10, 0, 10)
-		dot.Position = UDim2.new(0, 14, 0, 16)
-		dot.BackgroundColor3 = relicDef.Color
-		dot.BorderSizePixel = 0
-		dot.Parent = card
-		Instance.new("UICorner", dot).CornerRadius = UDim.new(1, 0)
+		-- Live 3D Rotating Relic Viewport
+		local vp = Instance.new("ViewportFrame")
+		vp.Name = "RelicViewport"
+		vp.Size = UDim2.new(0, 56, 0, 56)
+		vp.Position = UDim2.new(0, 10, 0.5, 0)
+		vp.AnchorPoint = Vector2.new(0, 0.5)
+		vp.BackgroundColor3 = Color3.fromRGB(15, 17, 26)
+		vp.BorderSizePixel = 0
+		vp.Parent = card
+		Instance.new("UICorner", vp).CornerRadius = UDim.new(0, 8)
+		local vpStroke = Instance.new("UIStroke", vp)
+		vpStroke.Color = relicDef.Color
+		vpStroke.Thickness = 1.5
+
+		local relic3D = ModelEngine.CreateRelicModel(fEntry.Id, CFrame.new(0, 0, 0))
+		relic3D.Parent = vp
+
+		local vpCam = Instance.new("Camera")
+		vpCam.CFrame = CFrame.lookAt(Vector3.new(0, 1.5, 4.2), Vector3.new(0, 1.5, 0))
+		vpCam.Parent = vp
+		vp.CurrentCamera = vpCam
+
+		task.spawn(function()
+			local rot = math.random() * math.pi
+			while vp and vp.Parent do
+				rot += 0.025
+				if relic3D and relic3D.PrimaryPart then
+					relic3D:PivotTo(CFrame.new(0, 0, 0) * CFrame.Angles(0, rot, 0))
+				end
+				task.wait(0.03)
+			end
+		end)
 
 		-- Relic Name
 		local nameLabel = Instance.new("TextLabel")
-		nameLabel.Size = UDim2.new(0, 240, 0, 20)
-		nameLabel.Position = UDim2.new(0, 32, 0, 10)
+		nameLabel.Size = UDim2.new(0, 220, 0, 20)
+		nameLabel.Position = UDim2.new(0, 74, 0, 14)
 		nameLabel.BackgroundTransparency = 1
 		nameLabel.Text = `{relicDef.Name} ({relicDef.Tier})`
 		nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -151,8 +177,8 @@ function FusionModal.Create(parentGui: ScreenGui)
 
 		-- Synthesis Target
 		local targetLabel = Instance.new("TextLabel")
-		targetLabel.Size = UDim2.new(0, 260, 0, 18)
-		targetLabel.Position = UDim2.new(0, 32, 0, 34)
+		targetLabel.Size = UDim2.new(0, 240, 0, 18)
+		targetLabel.Position = UDim2.new(0, 74, 0, 38)
 		targetLabel.BackgroundTransparency = 1
 		targetLabel.Text = `→ Yields: {fEntry.NextName}`
 		targetLabel.TextColor3 = Color3.fromRGB(161, 161, 170)
@@ -175,10 +201,10 @@ function FusionModal.Create(parentGui: ScreenGui)
 		countPill.Parent = card
 		Instance.new("UICorner", countPill).CornerRadius = UDim.new(0, 6)
 
-		-- Fuse Button
+		-- Tactile 3D Extruded Fuse Button
 		local fuseBtn = Instance.new("TextButton")
 		fuseBtn.Name = "FuseButton"
-		fuseBtn.Size = UDim2.new(0, 120, 0, 38)
+		fuseBtn.Size = UDim2.new(0, 120, 0, 40)
 		fuseBtn.Position = UDim2.new(1, -130, 0.5, 0)
 		fuseBtn.AnchorPoint = Vector2.new(0, 0.5)
 		fuseBtn.BackgroundColor3 = Color3.fromRGB(63, 63, 70)
@@ -189,6 +215,23 @@ function FusionModal.Create(parentGui: ScreenGui)
 		fuseBtn.AutoButtonColor = false
 		fuseBtn.Parent = card
 		Instance.new("UICorner", fuseBtn).CornerRadius = UDim.new(0, 8)
+
+		local fBtnStroke = Instance.new("UIStroke", fuseBtn)
+		fBtnStroke.Color = Color3.fromRGB(39, 39, 42)
+		fBtnStroke.Thickness = 2
+
+		fuseBtn.MouseEnter:Connect(function()
+			if fuseBtn.BackgroundColor3 ~= Color3.fromRGB(63, 63, 70) then
+				TweenService:Create(fuseBtn, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+					Size = UDim2.new(0, 124, 0, 42)
+				}):Play()
+			end
+		end)
+		fuseBtn.MouseLeave:Connect(function()
+			TweenService:Create(fuseBtn, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+				Size = UDim2.new(0, 120, 0, 40)
+			}):Play()
+		end)
 
 		fuseBtn.MouseButton1Click:Connect(function()
 			FusionModal.OnFuseClick(fEntry.Id)

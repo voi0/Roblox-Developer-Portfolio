@@ -13,6 +13,7 @@ local Workspace = game:GetService("Workspace")
 
 local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
 local Types = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Types"))
+local ModelEngine = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("ModelEngine"))
 
 local ToolService = {}
 ToolService._batonCooldowns = {} :: { [Player]: number }
@@ -36,74 +37,15 @@ local function getHeistService(): any?
 	return nil
 end
 
-local function createWeld(p0: BasePart, p1: BasePart, c0: CFrame): Weld
-	local weld = Instance.new("Weld")
-	weld.Part0 = p0
-	weld.Part1 = p1
-	weld.C0 = c0
-	weld.Parent = p0
-	return weld
-end
-
 -- ============================================================
 -- TOOL PROCEDURAL BUILDERS
 -- ============================================================
 function ToolService.CreateStunBatonTool(): Tool
-	local tool = Instance.new("Tool")
-	tool.Name = "⚡ Stun Baton"
-	tool.CanBeDropped = false
-	tool.RequiresHandle = true
-	tool.ToolTip = "Defend your vault! Slaps thieves and forces them to drop loot."
-
-	local handle = Instance.new("Part")
-	handle.Name = "Handle"
-	handle.Size = Vector3.new(0.5, 3.2, 0.5)
-	handle.Color = Color3.fromRGB(30, 41, 59)
-	handle.Material = Enum.Material.Metal
-	handle.TopSurface = Enum.SurfaceType.Smooth
-	handle.BottomSurface = Enum.SurfaceType.Smooth
-	handle.CanCollide = false
-	handle.Parent = tool
-
-	local tip = Instance.new("Part")
-	tip.Name = "BatonTip"
-	tip.Size = Vector3.new(0.65, 0.9, 0.65)
-	tip.Color = Color3.fromRGB(56, 189, 248) -- Electric Cyan
-	tip.Material = Enum.Material.Neon
-	tip.CanCollide = false
-	tip.Parent = tool
-	createWeld(handle, tip, CFrame.new(0, 1.4, 0))
-
-	return tool
+	return ModelEngine.CreateBatonModel()
 end
 
 function ToolService.CreateEMPJammerTool(): Tool
-	local tool = Instance.new("Tool")
-	tool.Name = "📡 EMP Jammer"
-	tool.CanBeDropped = false
-	tool.RequiresHandle = true
-	tool.ToolTip = "Infiltrate enemy vaults! Jams target laser grid for 6s."
-
-	local handle = Instance.new("Part")
-	handle.Name = "Handle"
-	handle.Size = Vector3.new(0.8, 1.8, 0.6)
-	handle.Color = Color3.fromRGB(24, 24, 27)
-	handle.Material = Enum.Material.Metal
-	handle.TopSurface = Enum.SurfaceType.Smooth
-	handle.BottomSurface = Enum.SurfaceType.Smooth
-	handle.CanCollide = false
-	handle.Parent = tool
-
-	local antenna = Instance.new("Part")
-	antenna.Name = "ScannerHead"
-	antenna.Size = Vector3.new(1.4, 0.4, 1.4)
-	antenna.Color = Color3.fromRGB(245, 158, 11) -- Warning Amber
-	antenna.Material = Enum.Material.Neon
-	antenna.CanCollide = false
-	antenna.Parent = tool
-	createWeld(handle, antenna, CFrame.new(0, 1.1, 0))
-
-	return tool
+	return ModelEngine.CreateJammerModel()
 end
 
 -- ============================================================
