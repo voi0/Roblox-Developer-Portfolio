@@ -190,7 +190,7 @@ local function buildCavernEnclosure(parent: Folder)
 			Vector3.new(segmentWidth, 18, wallThickness - 1),
 			lookCenterCF * CFrame.new(0, 9, 0.5),
 			Color3.fromRGB(64, 74, 94),
-			Enum.Material.Corrugated,
+			Enum.Material.CorrugatedMetal,
 			wallsFolder,
 			true
 		)
@@ -460,7 +460,7 @@ local function buildOverheadCraneGantries(parent: Folder)
 			Vector3.new(18, 9, 8.5),
 			containerCF,
 			(idx == 2) and Color3.fromRGB(15, 23, 42) or Color3.fromRGB(30, 41, 59),
-			Enum.Material.Corrugated,
+			Enum.Material.CorrugatedMetal,
 			gantryFolder,
 			true
 		)

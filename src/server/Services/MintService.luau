@@ -79,8 +79,16 @@ function MintService._mintLoop()
 			local data = dataSvc.GetData(owner)
 			if not data then continue end
 
-			-- Check OverchargedPress perk for faster stamping cycle (3.25s vs 5.0s)
+			-- Tycoon progression: player must step on [ FREE ] Mint Press to begin minting!
+			if not (data.PurchasedUpgrades and data.PurchasedUpgrades["MintPress"]) then
+				continue
+			end
+
+			-- Check OverchargedPress perk / ConveyorOverclock for faster stamping cycle
 			local dropInterval = Config.Mint.DropIntervalSeconds
+			if data.PurchasedUpgrades and data.PurchasedUpgrades["ConveyorOverclock"] then
+				dropInterval *= 0.5 -- 2x faster minting speed!
+			end
 			if dataSvc.HasPerk(owner, "OverchargedPress") then
 				dropInterval *= 0.65
 			end
@@ -121,6 +129,9 @@ function MintService._mintLoop()
 
 			-- Calculate Base Income
 			local baseIncome = Config.Economy.GetConveyorIncome(data.ConveyorLevel, data.PrestigeTokens)
+			if data.PurchasedUpgrades and data.PurchasedUpgrades["ConveyorOverclock"] then
+				baseIncome *= 2 -- Overclock doubles bullion payout!
+			end
 
 			-- Midas Touch perk: +20% chance to drop pure gold bullion with 1.5x value
 			if dataSvc.HasPerk(owner, "MidasTouch") and math.random() <= 0.20 then

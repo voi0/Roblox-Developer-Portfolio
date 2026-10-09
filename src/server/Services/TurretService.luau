@@ -83,8 +83,32 @@ function TurretService.Init()
 			end
 		end
 
-		print(`  [TurretService] Initialized {table.freeze(TurretService._turrets) and #TurretService._turrets or 6} automated defense turrets ✓`)
+		print(`  [TurretService] Initialized automated defense turrets scanner ✓`)
 	end)
+
+function TurretService.RegisterTurret(plotIndex: number, turretModel: Model)
+	local head = turretModel:FindFirstChild("TurretHead") :: Model?
+	local pod = head and (head:FindFirstChild("WeaponPod") :: Part?)
+	if pod then
+		local restCF = head:GetAttribute("RestCF") :: CFrame? or pod.CFrame
+		TurretService._turrets[plotIndex] = {
+			PlotIndex = plotIndex,
+			Model = turretModel,
+			Head = head,
+			Pod = pod,
+			RestCF = restCF,
+			CurrentTarget = nil :: Player?,
+			LockOnStartTime = 0,
+			LastFireTime = 0,
+			DisabledUntil = 0,
+		}
+		print(`  [TurretService] Registered dynamic turret for Plot #{plotIndex} ✓`)
+	end
+end
+
+function TurretService.UnregisterTurret(plotIndex: number)
+	TurretService._turrets[plotIndex] = nil
+end
 
 	-- Heartbeat Target Acquisition & Suppression Fire Loop
 	RunService.Heartbeat:Connect(function(dt: number)

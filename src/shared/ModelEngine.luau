@@ -486,47 +486,320 @@ function ModelEngine.CreateSecurityTurret(parent: Instance, baseCF: CFrame): Mod
 end
 
 -- ============================================================
--- 9. SYNDICATE PLAZA KIOSK (BLACK MARKET BROKER)
+-- 9. SYNDICATE BLACK MARKET CONTAINER OUTPOST
 -- ============================================================
 function ModelEngine.CreateSyndicateKiosk(parent: Instance, baseCF: CFrame): Model
 	local model = Instance.new("Model")
-	model.Name = "SyndicatePlazaKiosk"
+	model.Name = "SyndicateContainerOutpost"
 	model.Parent = parent
 
-	-- Heavy Floor Slab
-	local floor = createPart("KioskFloor", Vector3.new(12, 0.6, 10), baseCF * CFrame.new(0, 0.3, 0), Color3.fromRGB(15, 17, 26), Enum.Material.DiamondPlate, model, true)
+	-- 1. Heavy Shipping Container Foundation Deck
+	local floor = createPart("OutpostFloor", Vector3.new(20, 1.0, 14), baseCF * CFrame.new(0, 0.5, 0), Color3.fromRGB(24, 28, 38), Enum.Material.DiamondPlate, model, true)
 	model.PrimaryPart = floor
 
-	-- Industrial Counter Desk
-	createPart("FrontCounter", Vector3.new(9, 3.4, 1.6), baseCF * CFrame.new(0, 2.0, 3.2), Color3.fromRGB(24, 24, 32), Enum.Material.Metal, model, true)
-	createPart("CounterTrim", Vector3.new(9.2, 0.25, 1.8), baseCF * CFrame.new(0, 3.75, 3.2), Color3.fromRGB(245, 158, 11), Enum.Material.Neon, model, false)
+	-- 2. Converted Military Shipping Container Shell
+	-- Back Wall (Corrugated steel)
+	createPart("ContainerBackWall", Vector3.new(19.6, 9.5, 1.2), baseCF * CFrame.new(0, 5.25, -6.4), Color3.fromRGB(30, 36, 50), Enum.Material.CorrugatedMetal, model, true)
+	-- Left Wall
+	createPart("ContainerLeftWall", Vector3.new(1.2, 9.5, 13.6), baseCF * CFrame.new(-9.4, 5.25, 0), Color3.fromRGB(30, 36, 50), Enum.Material.CorrugatedMetal, model, true)
+	-- Right Wall
+	createPart("ContainerRightWall", Vector3.new(1.2, 9.5, 13.6), baseCF * CFrame.new(9.4, 5.25, 0), Color3.fromRGB(30, 36, 50), Enum.Material.CorrugatedMetal, model, true)
+	-- Roof Deck
+	createPart("ContainerRoof", Vector3.new(20.4, 1.2, 14.4), baseCF * CFrame.new(0, 10.5, 0), Color3.fromRGB(20, 24, 34), Enum.Material.Metal, model, true)
 
-	-- 4 Steel Canopy Pillars
-	for _, xOff in { -5.2, 5.2 } do
-		for _, zOff in { -4.2, 4.2 } do
-			createPart(`CanopyPillar_{xOff}_{zOff}`, Vector3.new(0.6, 9.0, 0.6), baseCF * CFrame.new(xOff, 4.8, zOff), Color3.fromRGB(30, 41, 59), Enum.Material.Metal, model, true)
+	-- 4 Reinforced Corner Casting Pillars with Hazard Yellow Chevrons
+	for _, xSide in { -9.5, 9.5 } do
+		for _, zSide in { -6.5, 6.5 } do
+			createPart(`CornerPillar_{xSide}_{zSide}`, Vector3.new(1.6, 10.2, 1.6), baseCF * CFrame.new(xSide, 5.5, zSide), Color3.fromRGB(245, 158, 11), Enum.Material.Metal, model, true)
 		end
 	end
 
-	-- Angled Cyber Roof Canopy
-	createPart("RoofSlab", Vector3.new(13.4, 0.5, 11.4), baseCF * CFrame.new(0, 9.4, 0) * CFrame.Angles(math.rad(-6), 0, 0), Color3.fromRGB(15, 23, 42), Enum.Material.Metal, model, true)
+	-- 3. Front Service Opening & Armored Roll-Up Shutter
+	createPart("FrontLeftWall", Vector3.new(3.8, 9.5, 1.2), baseCF * CFrame.new(-7.8, 5.25, 6.4), Color3.fromRGB(30, 36, 50), Enum.Material.Metal, model, true)
+	createPart("FrontRightWall", Vector3.new(3.8, 9.5, 1.2), baseCF * CFrame.new(7.8, 5.25, 6.4), Color3.fromRGB(30, 36, 50), Enum.Material.Metal, model, true)
+	createPart("RollUpShutter", Vector3.new(12.4, 3.2, 0.8), baseCF * CFrame.new(0, 8.4, 6.4), Color3.fromRGB(42, 50, 68), Enum.Material.DiamondPlate, model, true)
 
-	-- Neon Syndicate Overhead Sign
-	local sign = createPart("SyndicateSign", Vector3.new(7.5, 1.4, 0.3), baseCF * CFrame.new(0, 8.6, 5.4), Color3.fromRGB(11, 13, 20), Enum.Material.Metal, model, true)
+	-- 4. Armored Service Counter Desk
+	createPart("ServiceCounter", Vector3.new(12.2, 3.6, 2.4), baseCF * CFrame.new(0, 2.3, 5.4), Color3.fromRGB(15, 20, 28), Enum.Material.Metal, model, true)
+	createPart("CounterGlowTrim", Vector3.new(12.4, 0.3, 2.6), baseCF * CFrame.new(0, 4.15, 5.4), Color3.fromRGB(245, 158, 11), Enum.Material.Neon, model, false)
+
+	-- 5. Interior Contraband Details (Weapon racks & ammo crates)
+	createPart("WeaponPegboard", Vector3.new(12, 6.5, 0.4), baseCF * CFrame.new(0, 6.0, -5.7), Color3.fromRGB(15, 17, 24), Enum.Material.DiamondPlate, model, false)
+	for wIdx = -4, 4, 2.6 do
+		createPart(`DisplayRifle_{wIdx}`, Vector3.new(2.4, 0.5, 0.5), baseCF * CFrame.new(wIdx, 6.8, -5.3), Color3.fromRGB(71, 85, 105), Enum.Material.Metal, model, false)
+		createPart(`RifleGlow_{wIdx}`, Vector3.new(2.0, 0.15, 0.15), baseCF * CFrame.new(wIdx, 6.8, -5.0), Color3.fromRGB(56, 189, 248), Enum.Material.Neon, model, false)
+	end
+	createPart("SupplyCrate1", Vector3.new(3.2, 3.0, 3.2), baseCF * CFrame.new(-6.2, 2.5, -3.8), Color3.fromRGB(38, 48, 64), Enum.Material.Metal, model, true)
+	createPart("SupplyCrate2", Vector3.new(2.8, 2.6, 2.8), baseCF * CFrame.new(-6.0, 5.3, -3.8) * CFrame.Angles(0, math.rad(15), 0), Color3.fromRGB(245, 158, 11), Enum.Material.Metal, model, true)
+	createPart("SupplyCrate3", Vector3.new(3.0, 2.8, 3.0), baseCF * CFrame.new(6.4, 2.4, -3.8), Color3.fromRGB(42, 50, 68), Enum.Material.Metal, model, true)
+
+	-- 6. Glowing Holographic Neon Signage
+	local signBoard = createPart("OutpostMainSign", Vector3.new(15.0, 2.2, 0.4), baseCF * CFrame.new(0, 11.6, 6.6), Color3.fromRGB(11, 13, 20), Enum.Material.Metal, model, true)
 	local sGui = Instance.new("SurfaceGui")
 	sGui.Face = Enum.NormalId.Front
 	sGui.PixelsPerStud = 50
-	sGui.Parent = sign
+	sGui.Parent = signBoard
+	local sFrame = Instance.new("Frame")
+	sFrame.Size = UDim2.fromScale(1, 1)
+	sFrame.BackgroundColor3 = Color3.fromRGB(15, 17, 26)
+	sFrame.BorderSizePixel = 0
+	sFrame.Parent = sGui
+	local sStroke = Instance.new("UIStroke")
+	sStroke.Color = Color3.fromRGB(245, 158, 11)
+	sStroke.Thickness = 2
+	sStroke.Parent = sFrame
+	local sLabel = Instance.new("TextLabel")
+	sLabel.Size = UDim2.fromScale(1, 1)
+	sLabel.BackgroundTransparency = 1
+	sLabel.Text = "⚡ SYNDICATE BLACK MARKET ⚡"
+	sLabel.TextColor3 = Color3.fromRGB(254, 240, 138)
+	sLabel.TextSize = 24
+	sLabel.Font = Enum.Font.GothamBlack
+	sLabel.Parent = sFrame
+
+	local downLight = Instance.new("SpotLight")
+	downLight.Face = Enum.NormalId.Bottom
+	downLight.Angle = 90
+	downLight.Range = 25
+	downLight.Brightness = 3.5
+	downLight.Color = Color3.fromRGB(255, 240, 210)
+	downLight.Parent = signBoard
+
+	return model
+end
+
+-- ============================================================
+-- 9.5. HIGH-TECH RELIC FUSION CHAMBER (ALMOST SCI-FI ALTAR)
+-- ============================================================
+function ModelEngine.CreateRelicFusionChamber(parent: Instance, baseCF: CFrame): (Model, Part, ProximityPrompt)
+	local model = Instance.new("Model")
+	model.Name = "RelicFusionChamber"
+	model.Parent = parent
+
+	-- 1. Stepped Octagonal Dais Foundation
+	local dais = createPart("FusionDaisLower", Vector3.new(18, 1.4, 18), baseCF * CFrame.new(0, 0.7, 0), Color3.fromRGB(24, 28, 40), Enum.Material.Slate, model, true)
+	model.PrimaryPart = dais
+	createPart("FusionDaisUpper", Vector3.new(14, 0.8, 14), baseCF * CFrame.new(0, 1.8, 0), Color3.fromRGB(38, 46, 64), Enum.Material.DiamondPlate, model, true)
+
+	-- Glowing Purple Inlay Circuit Rings
+	createPart("CircuitRingOuter", Vector3.new(15.5, 0.2, 15.5), baseCF * CFrame.new(0, 1.45, 0), Color3.fromRGB(168, 85, 247), Enum.Material.Neon, model, false)
+	createPart("CircuitRingInner", Vector3.new(11.5, 0.2, 11.5), baseCF * CFrame.new(0, 2.25, 0), Color3.fromRGB(192, 132, 252), Enum.Material.Neon, model, false)
+
+	-- 2. 4 Magnetic Containment Pylon Towers
+	for _, offset in { Vector3.new(6.8, 0, 6.8), Vector3.new(-6.8, 0, 6.8), Vector3.new(6.8, 0, -6.8), Vector3.new(-6.8, 0, -6.8) } do
+		createPart("PylonBase", Vector3.new(2.4, 1.2, 2.4), baseCF * CFrame.new(offset + Vector3.new(0, 2.2, 0)), Color3.fromRGB(30, 41, 59), Enum.Material.Metal, model, true)
+		createPart("PylonShaft", Vector3.new(1.6, 9.5, 1.6), baseCF * CFrame.new(offset + Vector3.new(0, 7.0, 0)), Color3.fromRGB(15, 23, 42), Enum.Material.Metal, model, true)
+		for cY = 4, 10, 2.2 do
+			createPart("CopperCoil", Vector3.new(2.2, 0.6, 2.2), baseCF * CFrame.new(offset + Vector3.new(0, cY, 0)), Color3.fromRGB(249, 115, 22), Enum.Material.Metal, model, false)
+		end
+		local emitterCap = createPart("PlasmaCap", Vector3.new(2.0, 1.6, 2.0), baseCF * CFrame.new(offset + Vector3.new(0, 12.2, 0)), Color3.fromRGB(168, 85, 247), Enum.Material.Neon, model, false)
+		local pLight = Instance.new("PointLight")
+		pLight.Color = Color3.fromRGB(168, 85, 247)
+		pLight.Range = 25
+		pLight.Brightness = 2.8
+		pLight.Parent = emitterCap
+	end
+
+	-- 3. Central Holographic Fusion Pedestal
+	local pedestal = createPart("FusionPedestal", Vector3.new(4.2, 3.2, 4.2), baseCF * CFrame.new(0, 3.8, 0), Color3.fromRGB(24, 24, 32), Enum.Material.Metal, model, true)
+	createPart("PedestalTrim", Vector3.new(4.5, 0.4, 4.5), baseCF * CFrame.new(0, 5.5, 0), Color3.fromRGB(192, 132, 252), Enum.Material.Neon, model, false)
+
+	-- Levitating Shimmering Containment Core
+	local coreOrb = createPart("FusionCoreOrb", Vector3.new(2.4, 2.4, 2.4), baseCF * CFrame.new(0, 7.8, 0), Color3.fromRGB(216, 180, 254), Enum.Material.Neon, model, false)
+	local coreLight = Instance.new("PointLight")
+	coreLight.Color = Color3.fromRGB(192, 132, 252)
+	coreLight.Range = 35
+	coreLight.Brightness = 4.0
+	coreLight.Parent = coreOrb
+
+	local beamSpot = Instance.new("SpotLight")
+	beamSpot.Face = Enum.NormalId.Bottom
+	beamSpot.Angle = 60
+	beamSpot.Range = 40
+	beamSpot.Brightness = 5.0
+	beamSpot.Color = Color3.fromRGB(216, 180, 254)
+	beamSpot.Parent = coreOrb
+
+	-- Overhead Holographic 3D Billboard
+	local bGui = Instance.new("BillboardGui")
+	bGui.Name = "FusionBillboard"
+	bGui.Size = UDim2.new(0, 280, 0, 58)
+	bGui.StudsOffset = Vector3.new(0, 4.2, 0)
+	bGui.AlwaysOnTop = true
+	bGui.Parent = coreOrb
+
+	local bFrame = Instance.new("Frame")
+	bFrame.Size = UDim2.fromScale(1, 1)
+	bFrame.BackgroundColor3 = Color3.fromRGB(15, 17, 26)
+	bFrame.BackgroundTransparency = 0.2
+	bFrame.Parent = bGui
+	Instance.new("UICorner", bFrame).CornerRadius = UDim.new(0, 12)
+	local bStroke = Instance.new("UIStroke", bFrame)
+	bStroke.Color = Color3.fromRGB(168, 85, 247)
+	bStroke.Thickness = 1.6
+
+	local bLabel = Instance.new("TextLabel")
+	bLabel.Size = UDim2.fromScale(1, 1)
+	bLabel.BackgroundTransparency = 1
+	bLabel.Text = "🔮 RELIC FUSION CHAMBER\n[E] SYNTHESIZE 3x IDENTICAL RELICS"
+	bLabel.TextColor3 = Color3.fromRGB(233, 213, 255)
+	bLabel.TextSize = 13
+	bLabel.Font = Enum.Font.GothamBlack
+	bLabel.Parent = bFrame
+
+	local prompt = Instance.new("ProximityPrompt")
+	prompt.ObjectText = "Relic Fusion Chamber"
+	prompt.ActionText = "Open Synthesis Matrix"
+	prompt.KeyboardKeyCode = Enum.KeyCode.E
+	prompt.HoldDuration = 0
+	prompt.MaxActivationDistance = 16
+	prompt.RequiresLineOfSight = false
+	prompt.Parent = pedestal
+
+	return model, coreOrb, prompt
+end
+
+-- ============================================================
+-- 9.6. PHYSICAL TYCOON STEP-ON PURCHASE BUTTON
+-- ============================================================
+function ModelEngine.CreateTycoonButton(
+	parent: Instance,
+	cf: CFrame,
+	upgradeId: string,
+	title: string,
+	cost: number,
+	accentColor: Color3
+): (Model, Part, BillboardGui, TextLabel)
+	local model = Instance.new("Model")
+	model.Name = `TycoonButton_{upgradeId}`
+	model.Parent = parent
+
+	-- Outer Beveled Base Flange
+	local flange = createPart("ButtonBaseFlange", Vector3.new(7.0, 0.4, 7.0), cf * CFrame.new(0, 0.2, 0), Color3.fromRGB(24, 28, 40), Enum.Material.DiamondPlate, model, true)
+	model.PrimaryPart = flange
+
+	-- Elevated Glowing Interactive Pad
+	local pad = createPart("StepPad", Vector3.new(5.6, 0.5, 5.6), cf * CFrame.new(0, 0.55, 0), accentColor, Enum.Material.Neon, model, false)
+
+	-- Floating 3D Billboard
+	local bGui = Instance.new("BillboardGui")
+	bGui.Name = "ButtonBillboard"
+	bGui.Size = UDim2.new(0, 240, 0, 60)
+	bGui.StudsOffset = Vector3.new(0, 3.8, 0)
+	bGui.AlwaysOnTop = true
+	bGui.Parent = pad
+
+	local card = Instance.new("Frame")
+	card.Size = UDim2.fromScale(1, 1)
+	card.BackgroundColor3 = Color3.fromRGB(15, 17, 26)
+	card.BackgroundTransparency = 0.15
+	card.Parent = bGui
+	Instance.new("UICorner", card).CornerRadius = UDim.new(0, 10)
+
+	local stroke = Instance.new("UIStroke", card)
+	stroke.Color = accentColor
+	stroke.Thickness = 1.8
+
+	local titleLbl = Instance.new("TextLabel")
+	titleLbl.Size = UDim2.new(1, 0, 0.52, 0)
+	titleLbl.Position = UDim2.new(0, 0, 0.05, 0)
+	titleLbl.BackgroundTransparency = 1
+	titleLbl.Text = title
+	titleLbl.TextColor3 = Color3.fromRGB(248, 250, 252)
+	titleLbl.TextSize = 13
+	titleLbl.Font = Enum.Font.GothamBlack
+	titleLbl.Parent = card
+
+	local costLbl = Instance.new("TextLabel")
+	costLbl.Name = "CostLabel"
+	costLbl.Size = UDim2.new(1, 0, 0.42, 0)
+	costLbl.Position = UDim2.new(0, 0, 0.53, 0)
+	costLbl.BackgroundTransparency = 1
+	costLbl.Text = if cost == 0 then "🟢 FREE" else `💰 ${cost}`
+	costLbl.TextColor3 = if cost == 0 then Color3.fromRGB(16, 185, 129) else Color3.fromRGB(250, 204, 21)
+	costLbl.TextSize = 14
+	costLbl.Font = Enum.Font.GothamBlack
+	costLbl.Parent = card
+
+	return model, pad, bGui, costLbl
+end
+
+-- ============================================================
+-- 9.7. BASE CLAIM PAD
+-- ============================================================
+function ModelEngine.CreateVaultClaimPad(parent: Instance, cf: CFrame, plotIndex: number): (Model, Part)
+	local model = Instance.new("Model")
+	model.Name = `ClaimPad_{plotIndex}`
+	model.Parent = parent
+
+	local base = createPart("ClaimFlange", Vector3.new(9.0, 0.4, 9.0), cf * CFrame.new(0, 0.2, 0), Color3.fromRGB(30, 41, 59), Enum.Material.DiamondPlate, model, true)
+	model.PrimaryPart = base
+
+	local pad = createPart("ClaimStepPad", Vector3.new(7.6, 0.5, 7.6), cf * CFrame.new(0, 0.55, 0), Color3.fromRGB(16, 185, 129), Enum.Material.Neon, model, false)
+
+	local bGui = Instance.new("BillboardGui")
+	bGui.Name = "ClaimBillboard"
+	bGui.Size = UDim2.new(0, 260, 0, 56)
+	bGui.StudsOffset = Vector3.new(0, 3.8, 0)
+	bGui.AlwaysOnTop = true
+	bGui.Parent = pad
+
+	local card = Instance.new("Frame")
+	card.Size = UDim2.fromScale(1, 1)
+	card.BackgroundColor3 = Color3.fromRGB(15, 17, 26)
+	card.BackgroundTransparency = 0.15
+	card.Parent = bGui
+	Instance.new("UICorner", card).CornerRadius = UDim.new(0, 10)
+
+	local stroke = Instance.new("UIStroke", card)
+	stroke.Color = Color3.fromRGB(16, 185, 129)
+	stroke.Thickness = 2.0
+
 	local lbl = Instance.new("TextLabel")
-	lbl.Size = UDim2.new(1, 0, 1, 0)
+	lbl.Size = UDim2.fromScale(1, 1)
 	lbl.BackgroundTransparency = 1
-	lbl.Text = "⚡ SYNDICATE BLACK MARKET ⚡"
-	lbl.TextColor3 = Color3.fromRGB(250, 204, 21)
-	lbl.TextSize = 22
+	lbl.Text = `[ 🟢 STEP TO CLAIM VAULT #{plotIndex} ]`
+	lbl.TextColor3 = Color3.fromRGB(110, 231, 183)
+	lbl.TextSize = 13
+	lbl.Font = Enum.Font.GothamBlack
+	lbl.Parent = card
+
+	return model, pad
+end
+
+-- ============================================================
+-- 9.8. PHYSICAL CASH BRICK (DROPS ONTO CONVEYOR)
+-- ============================================================
+function ModelEngine.CreateCashBrick(parent: Instance, cf: CFrame): Part
+	local brick = Instance.new("Part")
+	brick.Name = "CashBrick"
+	brick.Size = Vector3.new(2.4, 0.9, 1.4)
+	brick.CFrame = cf
+	brick.Material = Enum.Material.Metal
+	brick.Color = Color3.fromRGB(245, 158, 11)
+	brick.Anchored = false
+	brick.CanCollide = true
+	brick.TopSurface = Enum.SurfaceType.Smooth
+	brick.BottomSurface = Enum.SurfaceType.Smooth
+
+	local mesh = Instance.new("SpecialMesh")
+	mesh.MeshType = Enum.MeshType.Brick
+	mesh.Parent = brick
+
+	local sGui = Instance.new("SurfaceGui")
+	sGui.Face = Enum.NormalId.Top
+	sGui.Parent = brick
+	local lbl = Instance.new("TextLabel")
+	lbl.Size = UDim2.fromScale(1, 1)
+	lbl.BackgroundTransparency = 1
+	lbl.Text = "999.9 GOLD"
+	lbl.TextColor3 = Color3.fromRGB(254, 240, 138)
+	lbl.TextSize = 11
 	lbl.Font = Enum.Font.GothamBlack
 	lbl.Parent = sGui
 
-	return model
+	brick.Parent = parent
+	return brick
 end
 
 -- ============================================================
@@ -878,7 +1151,7 @@ function ModelEngine.CreateBunkerShell(
 		Vector3.new(8.0, 3.2, 10.0),
 		baseCF * CFrame.new(-6.0, wallHeight + 3.6, 0),
 		Color3.fromRGB(15, 20, 30),
-		Enum.Material.Corrugated,
+		Enum.Material.CorrugatedMetal,
 		model,
 		true
 	)

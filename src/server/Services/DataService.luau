@@ -35,6 +35,7 @@ local DATA_TEMPLATE: Types.PlayerData = {
 	UnlockedPerks = {},
 	TotalXPAccumulated = 0,
 
+	PurchasedUpgrades = {},
 	ConveyorLevel = 1,
 	LaserTier = 1,
 	TurretTier = 1,
@@ -271,6 +272,46 @@ function DataService.SpendBanked(player: Player, amount: number): boolean
 	data.BankedCash -= math.floor(amount)
 	DataService.SyncClient(player)
 	return true
+end
+
+function DataService.HasUpgrade(player: Player, upgradeId: string): boolean
+	local data = DataService.GetData(player)
+	if not data or not data.PurchasedUpgrades then return false end
+	return data.PurchasedUpgrades[upgradeId] == true
+end
+
+function DataService.AddUpgrade(player: Player, upgradeId: string): boolean
+	local data = DataService.GetData(player)
+	if not data then return false end
+	if not data.PurchasedUpgrades then
+		data.PurchasedUpgrades = {}
+	end
+	data.PurchasedUpgrades[upgradeId] = true
+	DataService.SyncClient(player)
+	return true
+end
+
+function DataService.SpendForUpgrade(player: Player, cost: number): boolean
+	if cost <= 0 then return true end
+	local data = DataService.GetData(player)
+	if not data then return false end
+
+	local banked = data.BankedCash or 0
+	local unbanked = data.UnbankedCash or 0
+
+	if banked >= cost then
+		data.BankedCash = banked - cost
+		DataService.SyncClient(player)
+		return true
+	elseif (banked + unbanked) >= cost then
+		local remaining = cost - banked
+		data.BankedCash = 0
+		data.UnbankedCash = unbanked - remaining
+		DataService.SyncClient(player)
+		return true
+	end
+
+	return false
 end
 
 function DataService.RecordSuccessfulHeist(thief: Player, amount: number)

@@ -1,8 +1,12 @@
 --!strict
 --[[
-	PlotService.luau — Procedural Plot & Base Generator for VAULT WARS: STEAL & DEFEND TYCOON
-	Constructs 6 circular base plots around a cyber-industrial central plaza,
-	featuring the Central Leaderboard Monolith, Vault Doors, Conveyors, and Deposit Safes.
+	PlotService.luau — Procedural Plot & In-World Tycoon Engine for VAULT WARS: STEAL & DEFEND TYCOON
+	Constructs 6 circular base plots around a cyber-industrial central plaza, featuring:
+	- Elevated Central Command Arrival Platform with panoramic view & wide stairs
+	- Towering Leaderboard Monolith, Syndicate Container Outpost & Relic Fusion Chamber
+	- Physical [ STEP TO CLAIM BASE ] pads at each vault entrance
+	- 9 Sequential Physical Step-On Tycoon Buttons with tactile depression, audio & particle bursts
+	- Real-time persistent building restoration from DataService
 	Located in: ServerScriptService.Server.Services.PlotService
 ]]
 
@@ -34,6 +38,12 @@ local function getLaserService(): any?
 	return nil
 end
 
+local function getTurretService(): any?
+	local svc = script.Parent:FindFirstChild("TurretService")
+	if svc then return require(svc :: ModuleScript) end
+	return nil
+end
+
 local function createPart(name: string, size: Vector3, cf: CFrame, color: Color3, mat: Enum.Material, parent: Instance, canCollide: boolean?): Part
 	local p = Instance.new("Part")
 	p.Name = name
@@ -48,6 +58,279 @@ local function createPart(name: string, size: Vector3, cf: CFrame, color: Color3
 	p.Parent = parent
 	return p
 end
+
+-- ============================================================
+-- ORDERED TYCOON UPGRADE SPECIFICATIONS
+-- ============================================================
+local ORDERED_UPGRADES = {
+	"MintPress",
+	"BankSafe",
+	"BlastWalls",
+	"LaserGrid",
+	"VaultDoor",
+	"ConveyorOverclock",
+	"DefenseTurret",
+	"RelicPedestal",
+	"SecurityAlarm",
+}
+
+local UPGRADE_DEFS: { [string]: any } = {
+	MintPress = {
+		Order = 1,
+		Title = "Hydraulic Mint Press",
+		Cost = 0,
+		AccentColor = Color3.fromRGB(16, 185, 129),
+		ButtonOffset = Vector3.new(6, 0.2, -14),
+		Build = function(plot: any)
+			if plot.BuiltObjects["MintPress"] then return end
+			local mintMachine = ModelEngine.CreateMintMachine(plot.Folder, plot.CF * CFrame.new(8, 2, 0))
+			plot.MintMachine = mintMachine
+			plot.Conveyor = mintMachine:FindFirstChild("BaseChassis") or mintMachine.PrimaryPart
+			plot.Belt = mintMachine:FindFirstChild("ConveyorBelt") or plot.Conveyor
+			plot.StampingHead = mintMachine:FindFirstChild("StampingHead")
+			plot.BuiltObjects["MintPress"] = mintMachine
+		end,
+	},
+	BankSafe = {
+		Order = 2,
+		Title = "Bank Safe & Deposit Pad",
+		Cost = 50,
+		AccentColor = Color3.fromRGB(245, 158, 11),
+		ButtonOffset = Vector3.new(6, 0.2, -6),
+		Build = function(plot: any)
+			if plot.BuiltObjects["BankSafe"] then return end
+
+			-- Collector safe at conveyor terminus
+			local safeModel = Instance.new("Model")
+			safeModel.Name = "BankSafeCollector"
+			safeModel.Parent = plot.Folder
+
+			local hopper = createPart("SafeHopper", Vector3.new(5.0, 5.0, 5.0), plot.CF * CFrame.new(8, 4.5, 10), Color3.fromRGB(30, 41, 59), Enum.Material.Metal, safeModel, true)
+			safeModel.PrimaryPart = hopper
+			createPart("HopperTrim", Vector3.new(5.4, 0.4, 5.4), plot.CF * CFrame.new(8, 7.2, 10), Color3.fromRGB(16, 185, 129), Enum.Material.Neon, safeModel, false)
+
+			-- Deposit plunger floor pad
+			local pLen = Config.Arena.PlotLength
+			local safeBtnModel, safePad = ModelEngine.CreateHydraulicFloorButton(
+				plot.Folder,
+				plot.CF * CFrame.new(0, 2, pLen / 2 - 9),
+				Color3.fromRGB(16, 185, 129),
+				"📥 STEP TO BANK $"
+			)
+			plot.SafePad = safePad
+			plot.BuiltObjects["BankSafe"] = safeModel
+			plot.BuiltObjects["SafeButtonModel"] = safeBtnModel
+
+			-- Connect touch to bank unbanked cash into permanent net worth
+			safePad.Touched:Connect(function(hit)
+				local char = hit.Parent
+				local p = char and Players:GetPlayerFromCharacter(char)
+				if p and plot.Owner == p then
+					local restY = safePad:GetAttribute("RestY") :: number?
+					if restY then
+						TweenService:Create(safePad, TweenInfo.new(0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+							CFrame = safePad.CFrame * CFrame.new(0, -0.35, 0)
+						}):Play()
+						task.delay(0.35, function()
+							if safePad and safePad.Parent then
+								TweenService:Create(safePad, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+									CFrame = CFrame.new(safePad.Position.X, restY, safePad.Position.Z) * safePad.CFrame.Rotation
+								}):Play()
+							end
+						end)
+					end
+
+					PlotService.AnimateVaultDoorOpen(plot.Index)
+					local heistMod = script.Parent:FindFirstChild("HeistService") :: ModuleScript?
+					local heistSvc = heistMod and require(heistMod)
+					if heistSvc and heistSvc.IsCarryingLoot(p) then
+						heistSvc.DepositStolenLoot(p)
+					else
+						local dataSvc = getDataService()
+						if dataSvc then
+							dataSvc.BankAll(p)
+						end
+					end
+				end
+			end)
+		end,
+	},
+	BlastWalls = {
+		Order = 3,
+		Title = "Bunker Blast Walls",
+		Cost = 150,
+		AccentColor = Color3.fromRGB(56, 189, 248),
+		ButtonOffset = Vector3.new(-6, 0.2, -14),
+		Build = function(plot: any)
+			if plot.BuiltObjects["BlastWalls"] then return end
+			local shell = ModelEngine.CreateBunkerShell(plot.Folder, plot.CF * CFrame.new(0, 2, 0), Config.Arena.PlotWidth, Config.Arena.PlotLength, Config.Arena.WallHeight)
+			plot.BuiltObjects["BlastWalls"] = shell
+		end,
+	},
+	LaserGrid = {
+		Order = 4,
+		Title = "Security Laser Grid",
+		Cost = 300,
+		AccentColor = Color3.fromRGB(239, 68, 68),
+		ButtonOffset = Vector3.new(-6, 0.2, -18),
+		Build = function(plot: any)
+			if plot.BuiltObjects["LaserGrid"] then return end
+			local pWidth = Config.Arena.PlotWidth
+			local pLen = Config.Arena.PlotLength
+			local faceCenterCF = plot.CF
+
+			local leftLaserPost = createPart(
+				"LaserPostLeft",
+				Vector3.new(2.0, 10, 2.0),
+				faceCenterCF * CFrame.new(-pWidth / 2 + 2.5, 7, -pLen / 2 + 1),
+				Color3.fromRGB(51, 65, 85),
+				Enum.Material.Metal,
+				plot.Folder
+			)
+			local rightLaserPost = createPart(
+				"LaserPostRight",
+				Vector3.new(2.0, 10, 2.0),
+				faceCenterCF * CFrame.new(pWidth / 2 - 2.5, 7, -pLen / 2 + 1),
+				Color3.fromRGB(51, 65, 85),
+				Enum.Material.Metal,
+				plot.Folder
+			)
+
+			for _, yRing in { 4, 7, 10 } do
+				createPart(`LaserRingL_{yRing}`, Vector3.new(2.4, 0.4, 2.4), leftLaserPost.CFrame * CFrame.new(0, yRing - 7, 0), Color3.fromRGB(245, 158, 11), Enum.Material.Neon, leftLaserPost, false)
+				createPart(`LaserRingR_{yRing}`, Vector3.new(2.4, 0.4, 2.4), rightLaserPost.CFrame * CFrame.new(0, yRing - 7, 0), Color3.fromRGB(245, 158, 11), Enum.Material.Neon, rightLaserPost, false)
+			end
+
+			plot.LeftPost = leftLaserPost
+			plot.RightPost = rightLaserPost
+
+			local laserSvc = getLaserService()
+			if laserSvc then
+				laserSvc.BuildLaserBeam(plot)
+			end
+
+			plot.BuiltObjects["LaserGrid"] = leftLaserPost
+			plot.BuiltObjects["LaserRightPost"] = rightLaserPost
+		end,
+	},
+	VaultDoor = {
+		Order = 5,
+		Title = "Cogwheel Vault Door",
+		Cost = 600,
+		AccentColor = Color3.fromRGB(168, 85, 247),
+		ButtonOffset = Vector3.new(0, 0.2, 4),
+		Build = function(plot: any)
+			if plot.BuiltObjects["VaultDoor"] then return end
+			local pLen = Config.Arena.PlotLength
+			local door = ModelEngine.CreateVaultDoor(plot.Folder, plot.CF * CFrame.new(0, 2, pLen / 2 - 1.5))
+			plot.VaultDoorModel = door
+			plot.BuiltObjects["VaultDoor"] = door
+		end,
+	},
+	ConveyorOverclock = {
+		Order = 6,
+		Title = "Overclock Coils (2x Speed)",
+		Cost = 1200,
+		AccentColor = Color3.fromRGB(234, 179, 8),
+		ButtonOffset = Vector3.new(6, 0.2, 2),
+		Build = function(plot: any)
+			if plot.BuiltObjects["ConveyorOverclock"] then return end
+			local coils = Instance.new("Model")
+			coils.Name = "OverclockCoils"
+			coils.Parent = plot.Folder
+			for cZ = -4, 4, 2.5 do
+				createPart("InductionRing", Vector3.new(6.8, 0.6, 1.2), plot.CF * CFrame.new(8, 5.5, cZ), Color3.fromRGB(250, 204, 21), Enum.Material.Neon, coils, false)
+			end
+			plot.BuiltObjects["ConveyorOverclock"] = coils
+		end,
+	},
+	DefenseTurret = {
+		Order = 7,
+		Title = "Automated Sentry Turret",
+		Cost = 2500,
+		AccentColor = Color3.fromRGB(239, 68, 68),
+		ButtonOffset = Vector3.new(-8, 0.2, -8),
+		Build = function(plot: any)
+			if plot.BuiltObjects["DefenseTurret"] then return end
+			local pLen = Config.Arena.PlotLength
+			local turret = ModelEngine.CreateSecurityTurret(plot.Folder, plot.CF * CFrame.new(0, Config.Arena.WallHeight + 2.2, -pLen / 2 + 2.6))
+			local turretSvc = getTurretService()
+			if turretSvc and turretSvc.RegisterTurret then
+				turretSvc.RegisterTurret(plot.Index, turret)
+			end
+			plot.BuiltObjects["DefenseTurret"] = turret
+		end,
+	},
+	RelicPedestal = {
+		Order = 8,
+		Title = "Prized Relic Showcase",
+		Cost = 5000,
+		AccentColor = Color3.fromRGB(216, 180, 254),
+		ButtonOffset = Vector3.new(-8, 0.2, 8),
+		Build = function(plot: any)
+			if plot.BuiltObjects["RelicPedestal"] then return end
+			local pLen = Config.Arena.PlotLength
+			local pedCF = plot.CF * CFrame.new(-9, 3.4, -pLen / 2 + 5.5)
+
+			local pedBase = createPart("ShowcasePedestal", Vector3.new(3.5, 2.8, 3.5), pedCF, Color3.fromRGB(24, 24, 32), Enum.Material.Metal, plot.Folder)
+			local pedRing = createPart("ShowcasePedestalRing", Vector3.new(3.8, 0.4, 3.8), pedCF * CFrame.new(0, 1.4, 0), Color3.fromRGB(56, 189, 248), Enum.Material.Neon, plot.Folder, false)
+			local showcaseGem = createPart("ShowcaseGem", Vector3.new(1.8, 1.8, 1.8), pedCF * CFrame.new(0, 3.2, 0), Color3.fromRGB(148, 163, 184), Enum.Material.Neon, plot.Folder, false)
+
+			local showGui = Instance.new("BillboardGui")
+			showGui.Name = "ShowcaseBillboard"
+			showGui.Size = UDim2.new(0, 200, 0, 48)
+			showGui.StudsOffset = Vector3.new(0, 2.2, 0)
+			showGui.AlwaysOnTop = true
+			showGui.Parent = showcaseGem
+
+			local sLabel = Instance.new("TextLabel")
+			sLabel.Size = UDim2.new(1, 0, 1, 0)
+			sLabel.BackgroundTransparency = 1
+			sLabel.Text = "👑 PRIZED RELIC\n[EMPTY]"
+			sLabel.TextColor3 = Color3.fromRGB(148, 163, 184)
+			sLabel.TextSize = 11
+			sLabel.Font = Enum.Font.GothamBlack
+			sLabel.Parent = showGui
+
+			plot.ShowcaseGem = showcaseGem
+			plot.ShowcaseRing = pedRing
+			plot.ShowcaseLabel = sLabel
+			plot.ShowcaseBaseCF = pedCF * CFrame.new(0, 3.2, 0)
+
+			plot.BuiltObjects["RelicPedestal"] = pedBase
+			plot.BuiltObjects["PedRing"] = pedRing
+			plot.BuiltObjects["ShowcaseGem"] = showcaseGem
+
+			PlotService.UpdateShowcase(plot.Index)
+		end,
+	},
+	SecurityAlarm = {
+		Order = 9,
+		Title = "Emergency Alarm & Siren",
+		Cost = 10000,
+		AccentColor = Color3.fromRGB(239, 68, 68),
+		ButtonOffset = Vector3.new(8, 0.2, 8),
+		Build = function(plot: any)
+			if plot.BuiltObjects["SecurityAlarm"] then return end
+			local pLen = Config.Arena.PlotLength
+			local pWidth = Config.Arena.PlotWidth
+
+			local siren = createPart(
+				"SirenBeacon",
+				Vector3.new(1.8, 2.4, 1.8),
+				plot.CF * CFrame.new(0, Config.Arena.WallHeight + 3.4, -pLen / 2 + 1.2),
+				Color3.fromRGB(239, 68, 68),
+				Enum.Material.Neon,
+				plot.Folder
+			)
+			plot.Siren = siren
+
+			local terminal = ModelEngine.CreateBiometricTerminal(plot.Folder, plot.CF * CFrame.new(-pWidth / 2 + 4.5, 2, -pLen / 2 + 4.5))
+			plot.BuiltObjects["SecurityAlarm"] = siren
+			plot.BuiltObjects["Terminal"] = terminal
+		end,
+	},
+}
 
 -- ============================================================
 -- INITIALIZE ARENA & 6 MODULAR PLOTS
@@ -77,7 +360,7 @@ function PlotService.Init()
 	local FLOOR_Y = 4.0 -- Walkable deck surface
 
 	-- ── 1. CENTRAL LOBBY PLAZA FLOOR (Elevated multi-tier foundation) ──
-	local plaza = createPart(
+	createPart(
 		"CentralPlazaFloor",
 		Vector3.new(160, 4, 160),
 		CFrame.new(0, ARENA_Y, 0),
@@ -86,7 +369,6 @@ function PlotService.Init()
 		rootFolder
 	)
 
-	-- Plaza Perimeter Diamond-Plate Trim Skirt
 	createPart(
 		"PlazaPerimeterSkirt",
 		Vector3.new(164, 4.2, 164),
@@ -97,8 +379,7 @@ function PlotService.Init()
 		false
 	)
 
-	-- Center Octagonal Trim Ring
-	local ring = createPart(
+	createPart(
 		"PlazaCenterRing",
 		Vector3.new(34, 0.2, 34),
 		CFrame.new(0, FLOOR_Y + 0.05, 0),
@@ -108,7 +389,6 @@ function PlotService.Init()
 		false
 	)
 
-	-- Glowing Cyan Inlay Ring
 	createPart(
 		"PlazaCenterNeonTrim",
 		Vector3.new(28, 0.1, 28),
@@ -120,107 +400,30 @@ function PlotService.Init()
 	)
 
 	-- ── 2. CENTRAL CYBER-INDUSTRIAL TERMINAL & LEADERBOARD ──
-	-- 2.1 Stepped Plinth Base (Eliminates flat monolith look)
-	createPart(
-		"MonolithPlinthLower",
-		Vector3.new(22, 1.8, 22),
-		CFrame.new(0, FLOOR_Y + 0.9, 0),
-		Color3.fromRGB(30, 41, 59),
-		Enum.Material.DiamondPlate,
-		rootFolder,
-		true
-	)
-	createPart(
-		"MonolithPlinthUpper",
-		Vector3.new(17, 1.8, 17),
-		CFrame.new(0, FLOOR_Y + 2.7, 0),
-		Color3.fromRGB(47, 55, 70),
-		Enum.Material.Concrete,
-		rootFolder,
-		true
-	)
+	createPart("MonolithPlinthLower", Vector3.new(22, 1.8, 22), CFrame.new(0, FLOOR_Y + 0.9, 0), Color3.fromRGB(30, 41, 59), Enum.Material.DiamondPlate, rootFolder, true)
+	createPart("MonolithPlinthUpper", Vector3.new(17, 1.8, 17), CFrame.new(0, FLOOR_Y + 2.7, 0), Color3.fromRGB(47, 55, 70), Enum.Material.Concrete, rootFolder, true)
 
-	-- 2.2 Main Terminal Core Body
-	local monolith = createPart(
-		"CenterMonolith",
-		Vector3.new(12, 24, 12),
-		CFrame.new(0, FLOOR_Y + 15.6, 0),
-		Color3.fromRGB(38, 46, 60),
-		Enum.Material.Metal,
-		rootFolder,
-		true
-	)
+	local monolith = createPart("CenterMonolith", Vector3.new(12, 24, 12), CFrame.new(0, FLOOR_Y + 15.6, 0), Color3.fromRGB(38, 46, 60), Enum.Material.Metal, rootFolder, true)
 
-	-- 4 Structural Steel Corner Flanges
 	for _, xSide in { -6, 6 } do
 		for _, zSide in { -6, 6 } do
-			createPart(
-				`MonolithCorner_{xSide}_{zSide}`,
-				Vector3.new(1.8, 26, 1.8),
-				CFrame.new(xSide, FLOOR_Y + 15.6, zSide),
-				Color3.fromRGB(24, 28, 40),
-				Enum.Material.DiamondPlate,
-				monolith,
-				false
-			)
+			createPart(`MonolithCorner_{xSide}_{zSide}`, Vector3.new(1.8, 26, 1.8), CFrame.new(xSide, FLOOR_Y + 15.6, zSide), Color3.fromRGB(24, 28, 40), Enum.Material.DiamondPlate, monolith, false)
 		end
 	end
 
-	-- Architectural Crown Cap & Holographic Projection Ring
-	createPart(
-		"MonolithCrownCap",
-		Vector3.new(14.5, 2.4, 14.5),
-		CFrame.new(0, FLOOR_Y + 28.5, 0),
-		Color3.fromRGB(15, 23, 42),
-		Enum.Material.Metal,
-		monolith,
-		true
-	)
-	createPart(
-		"MonolithHoloRing",
-		Vector3.new(16, 0.4, 16),
-		CFrame.new(0, FLOOR_Y + 29.9, 0),
-		Color3.fromRGB(56, 189, 248),
-		Enum.Material.Neon,
-		monolith,
-		false
-	)
-	-- Communications Spire & Warning Beacon
-	createPart(
-		"MonolithSpire",
-		Vector3.new(0.8, 8, 0.8),
-		CFrame.new(0, FLOOR_Y + 34, 0),
-		Color3.fromRGB(203, 213, 225),
-		Enum.Material.Metal,
-		monolith,
-		false
-	)
-	local topBeacon = createPart(
-		"MonolithBeacon",
-		Vector3.new(1.2, 1.2, 1.2),
-		CFrame.new(0, FLOOR_Y + 38.5, 0),
-		Color3.fromRGB(245, 158, 11),
-		Enum.Material.Neon,
-		monolith,
-		false
-	)
+	createPart("MonolithCrownCap", Vector3.new(14.5, 2.4, 14.5), CFrame.new(0, FLOOR_Y + 28.5, 0), Color3.fromRGB(15, 23, 42), Enum.Material.Metal, monolith, true)
+	createPart("MonolithHoloRing", Vector3.new(16, 0.4, 16), CFrame.new(0, FLOOR_Y + 29.9, 0), Color3.fromRGB(56, 189, 248), Enum.Material.Neon, monolith, false)
+	createPart("MonolithSpire", Vector3.new(0.8, 8, 0.8), CFrame.new(0, FLOOR_Y + 34, 0), Color3.fromRGB(203, 213, 225), Enum.Material.Metal, monolith, false)
+
+	local topBeacon = createPart("MonolithBeacon", Vector3.new(1.2, 1.2, 1.2), CFrame.new(0, FLOOR_Y + 38.5, 0), Color3.fromRGB(245, 158, 11), Enum.Material.Neon, monolith, false)
 	local mBeaconLight = Instance.new("PointLight")
 	mBeaconLight.Color = Color3.fromRGB(245, 158, 11)
 	mBeaconLight.Range = 35
 	mBeaconLight.Brightness = 2.4
 	mBeaconLight.Parent = topBeacon
 
-	-- 4 Perimeter Monolith High-Bay Downlights (Illuminates central plaza, spawn, altar, and broker)
 	for _, dir in { Vector3.new(1, 0, 0), Vector3.new(-1, 0, 0), Vector3.new(0, 0, 1), Vector3.new(0, 0, -1) } do
-		local mDownFixture = createPart(
-			"MonolithFloodFixture",
-			Vector3.new(2.4, 0.8, 2.4),
-			CFrame.new(dir * 7.5 + Vector3.new(0, FLOOR_Y + 27.5, 0)),
-			Color3.fromRGB(254, 240, 138),
-			Enum.Material.Neon,
-			monolith,
-			false
-		)
+		local mDownFixture = createPart("MonolithFloodFixture", Vector3.new(2.4, 0.8, 2.4), CFrame.new(dir * 7.5 + Vector3.new(0, FLOOR_Y + 27.5, 0)), Color3.fromRGB(254, 240, 138), Enum.Material.Neon, monolith, false)
 		local mDownSpot = Instance.new("SpotLight")
 		mDownSpot.Name = "MonolithPlazaSpot"
 		mDownSpot.Face = Enum.NormalId.Bottom
@@ -232,7 +435,7 @@ function PlotService.Init()
 		mDownSpot.Parent = mDownFixture
 	end
 
-	-- Leaderboard Surface GUI (Front Face Recessed Screen)
+	-- Leaderboard Surface GUI
 	local sGui = Instance.new("SurfaceGui")
 	sGui.Name = "LeaderboardGui"
 	sGui.Face = Enum.NormalId.Front
@@ -256,20 +459,64 @@ function PlotService.Init()
 	lbFrame.BackgroundColor3 = Color3.fromRGB(24, 24, 27)
 	lbFrame.Parent = sGui
 
-	-- Spawn Location in Plaza (Framed Pad with DiamondPlate Border)
-	local spawnBorder = createPart(
-		"SpawnBorder",
-		Vector3.new(14, 0.6, 14),
-		CFrame.new(0, FLOOR_Y + 0.3, 26),
-		Color3.fromRGB(30, 41, 59),
+	-- ── 2.4. ELEVATED CENTRAL COMMAND ARRIVAL PLATFORM ──
+	local deckH = FLOOR_Y + 4.5
+	local arrivalDeck = createPart(
+		"ArrivalDeck",
+		Vector3.new(28, 2.0, 22),
+		CFrame.new(0, deckH, 38),
+		Color3.fromRGB(24, 28, 40),
 		Enum.Material.DiamondPlate,
 		rootFolder,
 		true
 	)
+	createPart("ArrivalDeckTrim", Vector3.new(28.8, 0.4, 22.8), CFrame.new(0, deckH + 1.0, 38), Color3.fromRGB(56, 189, 248), Enum.Material.Neon, rootFolder, false)
+
+	for _, xR in { -13.6, 13.6 } do
+		createPart(`DeckRailX_{xR}`, Vector3.new(0.6, 3.6, 22), CFrame.new(xR, deckH + 2.5, 38), Color3.fromRGB(51, 65, 85), Enum.Material.Metal, rootFolder, true)
+	end
+	createPart("DeckRailSouth", Vector3.new(28, 3.6, 0.6), CFrame.new(0, deckH + 2.5, 48.6), Color3.fromRGB(51, 65, 85), Enum.Material.Metal, rootFolder, true)
+
+	-- Dual Wide Concrete Staircases Leading North Down to Plaza (FLOOR_Y)
+	for _, xStair in { -7, 7 } do
+		for step = 1, 6 do
+			local sY = deckH - (step * (4.5 / 6))
+			local sZ = 27 - (step * 2.2)
+			createPart(`ArrivalStep_{xStair}_{step}`, Vector3.new(10, 0.8, 2.5), CFrame.new(xStair, sY, sZ), Color3.fromRGB(38, 46, 60), Enum.Material.Concrete, rootFolder, true)
+		end
+	end
+
+	-- Overhead Holographic Directional Sign
+	local signArch = createPart("ArrivalSignArch", Vector3.new(22, 1.2, 1.2), CFrame.new(0, deckH + 10, 48), Color3.fromRGB(15, 23, 42), Enum.Material.Metal, rootFolder, true)
+	local signGui = Instance.new("BillboardGui")
+	signGui.Name = "ArrivalSignGui"
+	signGui.Size = UDim2.new(0, 340, 0, 56)
+	signGui.StudsOffset = Vector3.new(0, 1.8, 0)
+	signGui.AlwaysOnTop = true
+	signGui.Parent = signArch
+	local sFrame = Instance.new("Frame")
+	sFrame.Size = UDim2.fromScale(1, 1)
+	sFrame.BackgroundColor3 = Color3.fromRGB(15, 17, 26)
+	sFrame.BackgroundTransparency = 0.2
+	sFrame.Parent = signGui
+	Instance.new("UICorner", sFrame).CornerRadius = UDim.new(0, 10)
+	local sStroke = Instance.new("UIStroke", sFrame)
+	sStroke.Color = Color3.fromRGB(56, 189, 248)
+	sStroke.Thickness = 1.6
+	local sLbl = Instance.new("TextLabel")
+	sLbl.Size = UDim2.fromScale(1, 1)
+	sLbl.BackgroundTransparency = 1
+	sLbl.Text = "⚡ SECTOR-7 COMMAND ARRIVAL ⚡\n[ CHOOSE YOUR FORTIFIED VAULT BASE ]"
+	sLbl.TextColor3 = Color3.fromRGB(224, 242, 254)
+	sLbl.TextSize = 13
+	sLbl.Font = Enum.Font.GothamBlack
+	sLbl.Parent = sFrame
+
+	-- SpawnLocation centered on Arrival Deck facing North towards the Leaderboard Monolith
 	local spawnPad = Instance.new("SpawnLocation")
 	spawnPad.Name = "PlazaSpawn"
-	spawnPad.Size = Vector3.new(12, 0.4, 12)
-	spawnPad.CFrame = CFrame.new(0, FLOOR_Y + 0.6, 26)
+	spawnPad.Size = Vector3.new(16, 0.4, 14)
+	spawnPad.CFrame = CFrame.new(0, deckH + 1.2, 38) * CFrame.Angles(0, math.rad(180), 0)
 	spawnPad.Anchored = true
 	spawnPad.CanCollide = true
 	spawnPad.Material = Enum.Material.SmoothPlastic
@@ -277,7 +524,7 @@ function PlotService.Init()
 	spawnPad.Duration = 0
 	spawnPad.Parent = rootFolder
 
-	-- ── 2.5. CENTRAL PLAZA RELIC FUSION ALTAR ──
+	-- ── 2.5. CENTRAL PLAZA RELIC FUSION CHAMBER ──
 	local openFusionEvt = ReplicatedStorage:FindFirstChild("OpenFusionModal") :: RemoteEvent?
 	if not openFusionEvt then
 		openFusionEvt = Instance.new("RemoteEvent")
@@ -285,96 +532,16 @@ function PlotService.Init()
 		openFusionEvt.Parent = ReplicatedStorage
 	end
 
-	local altarBase = createPart(
-		"FusionAltarBase",
-		Vector3.new(14, 1.2, 14),
-		CFrame.new(0, FLOOR_Y + 0.6, -26),
-		Color3.fromRGB(24, 24, 32),
-		Enum.Material.Slate,
-		rootFolder
-	)
-	createPart(
-		"FusionAltarRing",
-		Vector3.new(10, 0.3, 10),
-		CFrame.new(0, FLOOR_Y + 1.35, -26),
-		Color3.fromRGB(168, 85, 247),
-		Enum.Material.Neon,
-		rootFolder,
-		false
-	)
-	local altarCore = createPart(
-		"FusionAltarCore",
-		Vector3.new(3.2, 3.2, 3.2),
-		CFrame.new(0, FLOOR_Y + 4.2, -26),
-		Color3.fromRGB(192, 132, 252),
-		Enum.Material.Glass,
-		rootFolder,
-		false
-	)
-
-	-- 4 Corner Resonator Pylons
-	local pylonOffsets = {
-		Vector3.new(5.5, 3.5, 5.5),
-		Vector3.new(-5.5, 3.5, 5.5),
-		Vector3.new(5.5, 3.5, -5.5),
-		Vector3.new(-5.5, 3.5, -5.5),
-	}
-	for idx, offset in pylonOffsets do
-		createPart(
-			`AltarPylon_{idx}`,
-			Vector3.new(1.4, 6.0, 1.4),
-			CFrame.new(Vector3.new(0, FLOOR_Y, -26) + offset),
-			Color3.fromRGB(51, 65, 85),
-			Enum.Material.Metal,
-			rootFolder
-		)
-		createPart(
-			`AltarPylonCap_{idx}`,
-			Vector3.new(1.6, 0.6, 1.6),
-			CFrame.new(Vector3.new(0, FLOOR_Y + 3.1, -26) + offset),
-			Color3.fromRGB(168, 85, 247),
-			Enum.Material.Neon,
-			rootFolder,
-			false
-		)
-	end
-
-	-- Altar Overhead Billboard
-	local aGui = Instance.new("BillboardGui")
-	aGui.Name = "AltarBillboard"
-	aGui.Size = UDim2.new(0, 260, 0, 54)
-	aGui.StudsOffset = Vector3.new(0, 3.2, 0)
-	aGui.AlwaysOnTop = true
-	aGui.Parent = altarCore
-
-	local aLabel = Instance.new("TextLabel")
-	aLabel.Size = UDim2.new(1, 0, 1, 0)
-	aLabel.BackgroundTransparency = 1
-	aLabel.Text = "🔮 RELIC FUSION ALTAR\n[E] COMBINE 3x FOR HIGHER TIERS"
-	aLabel.TextColor3 = Color3.fromRGB(216, 180, 254)
-	aLabel.TextSize = 13
-	aLabel.Font = Enum.Font.GothamBlack
-	aLabel.Parent = aGui
-
-	-- Proximity Prompt for interaction
-	local prompt = Instance.new("ProximityPrompt")
-	prompt.ObjectText = "Relic Fusion Altar"
-	prompt.ActionText = "Open Fusion Matrix"
-	prompt.KeyboardKeyCode = Enum.KeyCode.E
-	prompt.HoldDuration = 0
-	prompt.MaxActivationDistance = 14
-	prompt.RequiresLineOfSight = false
-	prompt.Parent = altarCore
-
-	prompt.Triggered:Connect(function(player: Player)
+	local _, _, fusionPrompt = ModelEngine.CreateRelicFusionChamber(rootFolder, CFrame.new(0, FLOOR_Y, -28))
+	fusionPrompt.Triggered:Connect(function(player: Player)
 		if openFusionEvt then
 			openFusionEvt:FireClient(player)
 		end
 	end)
 
-	-- ── 2.6. CENTRAL PLAZA SYNDICATE BLACK MARKET KIOSK ──
-	ModelEngine.CreateSyndicateKiosk(rootFolder, CFrame.new(0, FLOOR_Y, -50))
-	local brokerNpc = ModelEngine.CreateSyndicateBrokerNPC(rootFolder, CFrame.new(0, FLOOR_Y, -50) * CFrame.new(0, 0, 1.2))
+	-- ── 2.6. CENTRAL PLAZA SYNDICATE BLACK MARKET OUTPOST ──
+	ModelEngine.CreateSyndicateKiosk(rootFolder, CFrame.new(0, FLOOR_Y, -54))
+	local brokerNpc = ModelEngine.CreateSyndicateBrokerNPC(rootFolder, CFrame.new(0, FLOOR_Y, -54) * CFrame.new(0, 0, 4.2))
 	local brokerPrompt = brokerNpc:FindFirstChildWhichIsA("ProximityPrompt", true)
 	if brokerPrompt then
 		brokerPrompt.Triggered:Connect(function(player: Player)
@@ -405,335 +572,114 @@ function PlotService.Init()
 		pFolder.Name = "Plot_" .. i
 		pFolder.Parent = plotsFolder
 
-		-- ── 3.1. INDUSTRIAL CATWALK BRIDGE (CONNECTS PLAZA TO BUNKER) ──
+		-- 3.1. INDUSTRIAL CATWALK BRIDGE (CONNECTS PLAZA TO BUNKER)
 		local bridgePos = Vector3.new(plotDir.X * (radius - 4), FLOOR_Y - 0.2, plotDir.Z * (radius - 4))
 		local bridgeCF = CFrame.lookAt(bridgePos, Vector3.new(0, FLOOR_Y - 0.2, 0))
-		createPart(
-			`CatwalkBridge_{i}`,
-			Vector3.new(14, 0.4, 18),
-			bridgeCF,
-			Color3.fromRGB(51, 65, 85),
-			Enum.Material.DiamondPlate,
-			pFolder,
-			true
-		)
-		local curbL = createPart(
-			`BridgeCurbL_{i}`,
-			Vector3.new(0.4, 0.6, 18),
-			bridgeCF * CFrame.new(-6.8, 0.3, 0),
-			Color3.fromRGB(56, 189, 248),
-			Enum.Material.Neon,
-			pFolder,
-			false
-		)
+		createPart(`CatwalkBridge_{i}`, Vector3.new(14, 0.4, 18), bridgeCF, Color3.fromRGB(51, 65, 85), Enum.Material.DiamondPlate, pFolder, true)
+
+		local curbL = createPart(`BridgeCurbL_{i}`, Vector3.new(0.4, 0.6, 18), bridgeCF * CFrame.new(-6.8, 0.3, 0), Color3.fromRGB(56, 189, 248), Enum.Material.Neon, pFolder, false)
 		local bLightL = Instance.new("PointLight")
 		bLightL.Color = Color3.fromRGB(56, 189, 248)
 		bLightL.Range = 22
 		bLightL.Brightness = 2.2
 		bLightL.Parent = curbL
 
-		local curbR = createPart(
-			`BridgeCurbR_{i}`,
-			Vector3.new(0.4, 0.6, 18),
-			bridgeCF * CFrame.new(6.8, 0.3, 0),
-			Color3.fromRGB(56, 189, 248),
-			Enum.Material.Neon,
-			pFolder,
-			false
-		)
+		local curbR = createPart(`BridgeCurbR_{i}`, Vector3.new(0.4, 0.6, 18), bridgeCF * CFrame.new(6.8, 0.3, 0), Color3.fromRGB(56, 189, 248), Enum.Material.Neon, pFolder, false)
 		local bLightR = Instance.new("PointLight")
 		bLightR.Color = Color3.fromRGB(56, 189, 248)
 		bLightR.Range = 22
 		bLightR.Brightness = 2.2
 		bLightR.Parent = curbR
 
-		-- ── 3.2. ELEVATED BUNKER FOUNDATION FLOOR ──
-		local floor = createPart(
-			"PlotFloor",
-			Vector3.new(pWidth, 4, pLen),
-			faceCenterCF * CFrame.new(0, 0, 0),
-			Color3.fromRGB(51, 65, 85),
-			Enum.Material.Slate,
-			pFolder
-		)
+		-- 3.2. ELEVATED BUNKER FOUNDATION FLOOR
+		local floor = createPart("PlotFloor", Vector3.new(pWidth, 4, pLen), faceCenterCF, Color3.fromRGB(51, 65, 85), Enum.Material.Slate, pFolder)
 
-		-- ── 3.3. FORTIFIED CYBER-VAULT BUNKER SHELL ──
-		ModelEngine.CreateBunkerShell(pFolder, faceCenterCF * CFrame.new(0, 2, 0), pWidth, pLen, Config.Arena.WallHeight)
+		-- 3.3. PERIMETER SAFETY CURB & CORNER CASTINGS
+		createPart("PlotCurbFront", Vector3.new(pWidth, 0.8, 1.2), faceCenterCF * CFrame.new(0, 2.4, -pLen / 2 + 0.6), Color3.fromRGB(30, 41, 59), Enum.Material.DiamondPlate, pFolder, true)
+		createPart("PlotCurbBack", Vector3.new(pWidth, 0.8, 1.2), faceCenterCF * CFrame.new(0, 2.4, pLen / 2 - 0.6), Color3.fromRGB(30, 41, 59), Enum.Material.DiamondPlate, pFolder, true)
 
-		-- ── 4. CHUNKY MULTI-TIER VAULT DOOR AT BACK ──
-		local vaultDoorModel = ModelEngine.CreateVaultDoor(pFolder, faceCenterCF * CFrame.new(0, 2, pLen / 2 - 1.5))
-		local vaultWheel = vaultDoorModel:FindFirstChild("CogWheelCenter") :: Part?
-
-		-- ── 5. INDUSTRIAL MINT MACHINE & CONVEYOR ──
-		local mintMachine = ModelEngine.CreateMintMachine(pFolder, faceCenterCF * CFrame.new(8, 2, 0))
-		local conveyor = (mintMachine:FindFirstChild("BaseChassis") or mintMachine.PrimaryPart) :: Part
-		local belt = (mintMachine:FindFirstChild("ConveyorBelt") or conveyor) :: Part
-		local stampingHead = mintMachine:FindFirstChild("StampingHead") :: Part?
-
-		-- ── 6. PHYSICAL HYDRAULIC DEPOSIT SWITCH ──
-		local safeBtnModel, safePad = ModelEngine.CreateHydraulicFloorButton(
-			pFolder,
-			faceCenterCF * CFrame.new(0, 2, pLen / 2 - 9),
-			Color3.fromRGB(16, 185, 129),
-			"📥 STEP TO BANK"
-		)
-
-		-- ── 7. FRONT HIGH-VOLTAGE LASER PYLONS (SECURITY ENTRANCE) ──
-		local leftLaserPost = createPart(
-			"LaserPostLeft",
-			Vector3.new(2.0, 10, 2.0),
-			faceCenterCF * CFrame.new(-pWidth / 2 + 2.5, 7, -pLen / 2 + 1),
-			Color3.fromRGB(51, 65, 85),
-			Enum.Material.Metal,
-			pFolder
-		)
-		local rightLaserPost = createPart(
-			"LaserPostRight",
-			Vector3.new(2.0, 10, 2.0),
-			faceCenterCF * CFrame.new(pWidth / 2 - 2.5, 7, -pLen / 2 + 1),
-			Color3.fromRGB(51, 65, 85),
-			Enum.Material.Metal,
-			pFolder
-		)
-
-		-- Glowing Magnetic Induction Rings on Pylons
-		for _, yRing in { 4, 7, 10 } do
-			createPart(
-				`LaserRingL_{yRing}`,
-				Vector3.new(2.4, 0.4, 2.4),
-				leftLaserPost.CFrame * CFrame.new(0, yRing - 7, 0),
-				Color3.fromRGB(245, 158, 11),
-				Enum.Material.Neon,
-				leftLaserPost,
-				false
-			)
-			createPart(
-				`LaserRingR_{yRing}`,
-				Vector3.new(2.4, 0.4, 2.4),
-				rightLaserPost.CFrame * CFrame.new(0, yRing - 7, 0),
-				Color3.fromRGB(245, 158, 11),
-				Enum.Material.Neon,
-				rightLaserPost,
-				false
-			)
-		end
-
-		-- ── 7.5. BIOMETRIC SECURITY TERMINAL & AUTOMATED DEFENSE TURRET ──
-		ModelEngine.CreateBiometricTerminal(pFolder, faceCenterCF * CFrame.new(-pWidth / 2 + 4.5, 2, -pLen / 2 + 4.5))
-		-- Mounted directly onto the front elevated catwalk perch!
-		ModelEngine.CreateSecurityTurret(pFolder, faceCenterCF * CFrame.new(0, Config.Arena.WallHeight + 2.2, -pLen / 2 + 2.6))
-
-		-- ── 7.6. IN-WORLD PHYSICAL TYCOON UPGRADE CONSOLES ──
-		local consoles = {}
-		local cModel1, cBtn1, cGui1 = ModelEngine.CreateUpgradeConsole(
-			pFolder,
-			faceCenterCF * CFrame.new(-pWidth / 2 + 4.5, 2, 7),
-			"Conveyor",
-			"MINT PRESS OVERCLOCK",
-			Color3.fromRGB(56, 189, 248)
-		)
-		local cModel2, cBtn2, cGui2 = ModelEngine.CreateUpgradeConsole(
-			pFolder,
-			faceCenterCF * CFrame.new(-pWidth / 2 + 4.5, 2, -2),
-			"Laser",
-			"LASER SECURITY MATRIX",
-			Color3.fromRGB(245, 158, 11)
-		)
-		local cModel3, cBtn3, cGui3 = ModelEngine.CreateUpgradeConsole(
-			pFolder,
-			faceCenterCF * CFrame.new(pWidth / 2 - 4.5, 2, -2),
-			"Turret",
-			"AUTOMATED BASE TURRET",
-			Color3.fromRGB(239, 68, 68)
-		)
-		consoles["Conveyor"] = { Model = cModel1, Button = cBtn1, Gui = cGui1 }
-		consoles["Laser"] = { Model = cModel2, Button = cBtn2, Gui = cGui2 }
-		consoles["Turret"] = { Model = cModel3, Button = cBtn3, Gui = cGui3 }
-
-		local function handleConsolePress(player: Player, upType: string, btnPart: Part)
-			local plot = PlotService._plots[i]
-			if not plot or plot.Owner ~= player then return end
-
-			-- Animate tactile button depression
-			local downCF = btnPart:GetAttribute("DownCF") :: CFrame?
-			local restCF = btnPart:GetAttribute("RestCF") :: CFrame?
-			if downCF and restCF then
-				TweenService:Create(btnPart, TweenInfo.new(0.08, Enum.EasingStyle.Quad), { CFrame = downCF }):Play()
-				task.delay(0.35, function()
-					if btnPart and btnPart.Parent then
-						TweenService:Create(btnPart, TweenInfo.new(0.25, Enum.EasingStyle.Back), { CFrame = restCF }):Play()
-					end
-				end)
-			end
-
-			local dataSvc = getDataService()
-			if dataSvc then
-				local success, msg = dataSvc.Upgrade(player, upType)
-				if success then
-					PlotService.UpdateConsolesForPlot(i)
-				end
-			end
-		end
-
-		for upType, info in consoles do
-			info.Button.Touched:Connect(function(hit)
-				local char = hit.Parent
-				local p = char and Players:GetPlayerFromCharacter(char)
-				if p then
-					handleConsolePress(p, upType, info.Button)
-				end
-			end)
-			local cd = info.Button:FindFirstChildOfClass("ClickDetector")
-			if cd then
-				cd.MouseClick:Connect(function(player)
-					handleConsolePress(player, upType, info.Button)
-				end)
-			end
-		end
-
-		-- ── 8. SIREN BEACON ON BUNKER GATE LINTEL ──
-		local siren = createPart(
-			"SirenBeacon",
-			Vector3.new(1.8, 2.4, 1.8),
-			faceCenterCF * CFrame.new(0, Config.Arena.WallHeight + 3.4, -pLen / 2 + 1.2),
-			Color3.fromRGB(239, 68, 68),
-			Enum.Material.Neon,
-			pFolder
-		)
-
-		-- Owner Billboard Mounted on Siren
+		-- 3.4. ENTRANCE ARCH SIGN / BEACON
+		local archLintel = createPart(`EntranceArch_{i}`, Vector3.new(16, 1.6, 1.6), faceCenterCF * CFrame.new(0, 11, -pLen / 2 + 1), Color3.fromRGB(24, 28, 40), Enum.Material.Metal, pFolder, true)
 		local ownerGui = Instance.new("BillboardGui")
 		ownerGui.Name = "OwnerBillboard"
-		ownerGui.Size = UDim2.new(0, 240, 0, 50)
-		ownerGui.StudsOffset = Vector3.new(0, 2.4, 0)
+		ownerGui.Size = UDim2.new(0, 260, 0, 52)
+		ownerGui.StudsOffset = Vector3.new(0, 2.6, 0)
 		ownerGui.AlwaysOnTop = true
-		ownerGui.Parent = siren
+		ownerGui.Parent = archLintel
+
+		local obCard = Instance.new("Frame")
+		obCard.Size = UDim2.fromScale(1, 1)
+		obCard.BackgroundColor3 = Color3.fromRGB(15, 17, 26)
+		obCard.BackgroundTransparency = 0.2
+		obCard.Parent = ownerGui
+		Instance.new("UICorner", obCard).CornerRadius = UDim.new(0, 10)
+		local obStroke = Instance.new("UIStroke", obCard)
+		obStroke.Color = Color3.fromRGB(148, 163, 184)
+		obStroke.Thickness = 1.6
 
 		local obText = Instance.new("TextLabel")
 		obText.Name = "OwnerNameLabel"
-		obText.Size = UDim2.new(1, 0, 1, 0)
+		obText.Size = UDim2.fromScale(1, 1)
 		obText.BackgroundTransparency = 1
-		obText.Text = `[VAULT #{i}: VACANT]`
+		obText.Text = `[ ⚡ VAULT #{i}: VACANT ⚡ ]`
 		obText.TextColor3 = Color3.fromRGB(148, 163, 184)
-		obText.TextSize = 16
-		obText.Font = Enum.Font.GothamBold
-		obText.Parent = ownerGui
+		obText.TextSize = 13
+		obText.Font = Enum.Font.GothamBlack
+		obText.Parent = obCard
 
-		-- ── 8.5. BASE RELIC SHOWCASE PEDESTAL (FRONT ENTRANCE) ──
-		local pedCF = faceCenterCF * CFrame.new(-9, 3.4, -pLen / 2 + 5.5)
-		local pedBase = createPart(
-			"ShowcasePedestal",
-			Vector3.new(3.5, 2.8, 3.5),
-			pedCF,
-			Color3.fromRGB(24, 24, 32),
-			Enum.Material.Metal,
-			pFolder
-		)
-		local pedRing = createPart(
-			"ShowcasePedestalRing",
-			Vector3.new(3.8, 0.4, 3.8),
-			pedCF * CFrame.new(0, 1.4, 0),
-			Color3.fromRGB(56, 189, 248),
-			Enum.Material.Neon,
-			pFolder,
-			false
-		)
-		local showcaseGem = createPart(
-			"ShowcaseGem",
-			Vector3.new(1.8, 1.8, 1.8),
-			pedCF * CFrame.new(0, 3.2, 0),
-			Color3.fromRGB(148, 163, 184),
-			Enum.Material.Neon,
-			pFolder,
-			false
-		)
+		-- 3.5. IN-WORLD PHYSICAL BASE CLAIM PAD
+		local claimPadModel, claimStepPad = ModelEngine.CreateVaultClaimPad(pFolder, faceCenterCF * CFrame.new(0, 2, -pLen / 2 + 4.5), i)
 
-		local showGui = Instance.new("BillboardGui")
-		showGui.Name = "ShowcaseBillboard"
-		showGui.Size = UDim2.new(0, 200, 0, 48)
-		showGui.StudsOffset = Vector3.new(0, 2.2, 0)
-		showGui.AlwaysOnTop = true
-		showGui.Parent = showcaseGem
-
-		local sLabel = Instance.new("TextLabel")
-		sLabel.Size = UDim2.new(1, 0, 1, 0)
-		sLabel.BackgroundTransparency = 1
-		sLabel.Text = "👑 PRIZED RELIC\n[EMPTY]"
-		sLabel.TextColor3 = Color3.fromRGB(148, 163, 184)
-		sLabel.TextSize = 11
-		sLabel.Font = Enum.Font.GothamBlack
-		sLabel.Parent = showGui
-
+		-- State container for Plot i
 		PlotService._plots[i] = {
 			Index = i,
 			Folder = pFolder,
 			Floor = floor,
-			SafePad = safePad,
-			Conveyor = conveyor,
-			Belt = belt,
-			Siren = siren,
-			LeftPost = leftLaserPost,
-			RightPost = rightLaserPost,
-			OwnerLabel = obText,
-			Owner = nil :: Player?,
 			CF = faceCenterCF,
-			IsBreached = false,
-			BreachExpiry = 0,
-			ShowcaseGem = showcaseGem,
-			ShowcaseRing = pedRing,
-			ShowcaseLabel = sLabel,
-			ShowcaseBaseCF = pedCF * CFrame.new(0, 3.2, 0),
-			VaultDoorModel = vaultDoorModel,
-			MintMachine = mintMachine,
-			StampingHead = stampingHead,
+			Owner = nil :: Player?,
+			OwnerLabel = obText,
+			OwnerStroke = obStroke,
+			ClaimModel = claimPadModel,
+			ClaimPad = claimStepPad,
+			BuiltObjects = {} :: { [string]: Instance },
+			CurrentButton = nil :: Model?,
+			SafePad = nil :: Part?,
+			Conveyor = nil :: Part?,
+			Belt = nil :: Part?,
+			StampingHead = nil :: Part?,
+			VaultDoorModel = nil :: Model?,
+			LeftPost = nil :: Part?,
+			RightPost = nil :: Part?,
+			Siren = nil :: Part?,
+			ShowcaseGem = nil :: Part?,
+			ShowcaseRing = nil :: Part?,
+			ShowcaseLabel = nil :: TextLabel?,
+			ShowcaseBaseCF = nil :: CFrame?,
 			CurrentShowcaseModel = nil :: Model?,
 			_isDoorOpening = false,
-			Consoles = consoles,
 		}
 
-		-- Connect Touch on SafePad to automatically bank for owner or deposit stolen loot
-		safePad.Touched:Connect(function(hit)
+		-- Connect ClaimPad Touch
+		claimStepPad.Touched:Connect(function(hit)
 			local char = hit.Parent
-			local p = char and Players:GetPlayerFromCharacter(char)
-			if p and PlotService._plots[i].Owner == p then
-				-- Animate physical plunger depression
-				local restY = safePad:GetAttribute("RestY") :: number?
-				if restY then
-					TweenService:Create(safePad, TweenInfo.new(0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-						CFrame = safePad.CFrame * CFrame.new(0, -0.35, 0)
-					}):Play()
-					task.delay(0.35, function()
-						if safePad and safePad.Parent then
-							TweenService:Create(safePad, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-								CFrame = CFrame.new(safePad.Position.X, restY, safePad.Position.Z) * safePad.CFrame.Rotation
-							}):Play()
-						end
-					end)
-				end
+			local player = char and Players:GetPlayerFromCharacter(char)
+			if not player then return end
 
-				PlotService.AnimateVaultDoorOpen(i)
-				local heistMod = script.Parent:FindFirstChild("HeistService") :: ModuleScript?
-				local heistSvc = heistMod and require(heistMod)
-				if heistSvc and heistSvc.IsCarryingLoot(p) then
-					heistSvc.DepositStolenLoot(p)
-				else
-					local dataSvc = getDataService()
-					if dataSvc then
-						dataSvc.BankAll(p)
-					end
-				end
-			end
+			-- Only unassigned players can claim
+			if PlotService._playerPlots[player] then return end
+
+			PlotService.ClaimPlot(player, i)
 		end)
 	end
 
-	-- Connect Player Join/Leave Plot Assignment
+	-- Connect Player Join / Leave
 	for _, p in Players:GetPlayers() do
 		task.spawn(PlotService.AssignPlot, p)
 	end
 	Players.PlayerAdded:Connect(PlotService.AssignPlot)
 	Players.PlayerRemoving:Connect(PlotService.ReleasePlot)
 
-	-- Floating rotation animation for pedestal showcase 3D models & gems
+	-- Heartbeat: showcase relic floating animation
 	RunService.Heartbeat:Connect(function()
 		local t = os.clock()
 		for _, plot in PlotService._plots do
@@ -747,12 +693,53 @@ function PlotService.Init()
 		end
 	end)
 
-	print("  [PlotService] 6 Modular Vault Bases ready ✓")
+	print("  [PlotService] 6 Fortified Tycoon Vault Bases ready ✓")
 end
 
 -- ============================================================
--- PLOT ASSIGNMENT
+-- CLAIM & ASSIGN PLOT
 -- ============================================================
+function PlotService.ClaimPlot(player: Player, plotIndex: number)
+	if PlotService._playerPlots[player] then return end
+	local plot = PlotService._plots[plotIndex]
+	if not plot or plot.Owner ~= nil then return end
+
+	plot.Owner = player
+	PlotService._playerPlots[player] = plotIndex
+
+	-- Update entrance banner
+	plot.OwnerLabel.Text = `👑 {string.upper(player.DisplayName)}'S FORTIFIED VAULT`
+	plot.OwnerLabel.TextColor3 = Color3.fromRGB(56, 189, 248)
+	if plot.OwnerStroke then
+		plot.OwnerStroke.Color = Color3.fromRGB(56, 189, 248)
+	end
+
+	-- Hide/destroy claim pad
+	if plot.ClaimModel and plot.ClaimModel.Parent then
+		plot.ClaimModel:Destroy()
+		plot.ClaimModel = nil
+	end
+
+	-- Celebration particles on player
+	task.spawn(function()
+		local char = player.Character or player.CharacterAdded:Wait()
+		local root = char:WaitForChild("HumanoidRootPart", 10) :: BasePart?
+		if root then
+			local emitter = Instance.new("ParticleEmitter")
+			emitter.Rate = 0
+			emitter.Speed = NumberRange.new(10, 20)
+			emitter.Lifetime = NumberRange.new(0.5, 1.0)
+			emitter.Color = ColorSequence.new(Color3.fromRGB(56, 189, 248))
+			emitter.Parent = root
+			emitter:Emit(40)
+		end
+	end)
+
+	-- Load saved upgrades & spawn next button
+	PlotService.LoadPlotForPlayer(plotIndex, player)
+	print(`  [PlotService] {player.Name} claimed Vault #{plotIndex}!`)
+end
+
 function PlotService.AssignPlot(player: Player)
 	if PlotService._playerPlots[player] then return end
 
@@ -770,25 +757,8 @@ function PlotService.AssignPlot(player: Player)
 		return
 	end
 
-	local plot = PlotService._plots[assignedIndex]
-	plot.Owner = player
-	PlotService._playerPlots[player] = assignedIndex
-
-	plot.OwnerLabel.Text = `👑 {string.upper(player.DisplayName)}'S VAULT`
-	plot.OwnerLabel.TextColor3 = Color3.fromRGB(56, 189, 248)
-
-	-- Teleport player to their base
-	task.spawn(function()
-		local char = player.Character or player.CharacterAdded:Wait()
-		local root = char:WaitForChild("HumanoidRootPart", 10) :: BasePart?
-		if root then
-			root.CFrame = plot.CF * CFrame.new(0, 3, 0)
-		end
-	end)
-
-	PlotService.UpdateShowcase(assignedIndex)
-	PlotService.UpdateConsolesForPlot(assignedIndex)
-	print(`  [PlotService] Assigned Vault #{assignedIndex} to {player.Name}`)
+	-- Auto-claim the plot for smooth singleplayer / studio onboarding
+	PlotService.ClaimPlot(player, assignedIndex)
 end
 
 function PlotService.ReleasePlot(player: Player)
@@ -798,17 +768,200 @@ function PlotService.ReleasePlot(player: Player)
 	local plot = PlotService._plots[plotIndex]
 	if plot then
 		plot.Owner = nil
-		plot.OwnerLabel.Text = `[VAULT #{plotIndex}: VACANT]`
+		plot.OwnerLabel.Text = `[ ⚡ VAULT #{plotIndex}: VACANT ⚡ ]`
 		plot.OwnerLabel.TextColor3 = Color3.fromRGB(148, 163, 184)
-		plot.IsBreached = false
+		if plot.OwnerStroke then
+			plot.OwnerStroke.Color = Color3.fromRGB(148, 163, 184)
+		end
+
+		-- Clean up current button
+		if plot.CurrentButton and plot.CurrentButton.Parent then
+			plot.CurrentButton:Destroy()
+			plot.CurrentButton = nil
+		end
+
+		-- Clean up built objects
+		for _, inst in plot.BuiltObjects do
+			if inst and inst.Parent then
+				inst:Destroy()
+			end
+		end
+		plot.BuiltObjects = {}
+
+		-- Respawn Claim Pad
+		local pLen = Config.Arena.PlotLength
+		local claimModel, claimPad = ModelEngine.CreateVaultClaimPad(plot.Folder, plot.CF * CFrame.new(0, 2, -pLen / 2 + 4.5), plotIndex)
+		plot.ClaimModel = claimModel
+		plot.ClaimPad = claimPad
+
+		claimPad.Touched:Connect(function(hit)
+			local char = hit.Parent
+			local p = char and Players:GetPlayerFromCharacter(char)
+			if p and not PlotService._playerPlots[p] then
+				PlotService.ClaimPlot(p, plotIndex)
+			end
+		end)
 	end
 
 	PlotService._playerPlots[player] = nil
-	PlotService.UpdateShowcase(plotIndex)
-	PlotService.UpdateConsolesForPlot(plotIndex)
 	print(`  [PlotService] Released Vault #{plotIndex} from {player.Name}`)
 end
 
+-- ============================================================
+-- TYCOON UPGRADE RESTORATION & NEXT BUTTON SPAWNING
+-- ============================================================
+function PlotService.LoadPlotForPlayer(plotIndex: number, player: Player)
+	local plot = PlotService._plots[plotIndex]
+	if not plot then return end
+
+	local dataSvc = getDataService()
+	local data = dataSvc and dataSvc.GetData(player)
+	local purchased = (data and data.PurchasedUpgrades) or {}
+
+	-- 1. Build all previously purchased upgrades
+	for _, upId in ORDERED_UPGRADES do
+		if purchased[upId] and not plot.BuiltObjects[upId] then
+			local def = UPGRADE_DEFS[upId]
+			if def then
+				def.Build(plot)
+			end
+		end
+	end
+
+	-- 2. Spawn the next unpurchased button
+	PlotService.SpawnNextButton(plotIndex)
+end
+
+function PlotService.SpawnNextButton(plotIndex: number)
+	local plot = PlotService._plots[plotIndex]
+	if not plot then return end
+
+	-- Clean up existing button
+	if plot.CurrentButton and plot.CurrentButton.Parent then
+		plot.CurrentButton:Destroy()
+		plot.CurrentButton = nil
+	end
+
+	local owner = plot.Owner
+	if not owner then return end
+
+	local dataSvc = getDataService()
+	local data = dataSvc and dataSvc.GetData(owner)
+	local purchased = (data and data.PurchasedUpgrades) or {}
+
+	-- Find the first unpurchased upgrade
+	local nextUpgradeId: string? = nil
+	for _, upId in ORDERED_UPGRADES do
+		if not purchased[upId] then
+			nextUpgradeId = upId
+			break
+		end
+	end
+
+	if not nextUpgradeId then
+		-- Vault is fully maxed! Spawn prestigious completion monument
+		local maxModel = Instance.new("Model")
+		maxModel.Name = "VaultMaxedBadge"
+		maxModel.Parent = plot.Folder
+		local flange = createPart("MaxFlange", Vector3.new(8, 0.4, 8), plot.CF * CFrame.new(0, 0.2, 0), Color3.fromRGB(245, 158, 11), Enum.Material.Neon, maxModel, false)
+		local bGui = Instance.new("BillboardGui")
+		bGui.Size = UDim2.new(0, 240, 0, 50)
+		bGui.StudsOffset = Vector3.new(0, 3.5, 0)
+		bGui.AlwaysOnTop = true
+		bGui.Parent = flange
+		local lbl = Instance.new("TextLabel")
+		lbl.Size = UDim2.fromScale(1, 1)
+		lbl.BackgroundTransparency = 1
+		lbl.Text = "👑 VAULT FULLY MAXED OUT 👑"
+		lbl.TextColor3 = Color3.fromRGB(254, 240, 138)
+		lbl.TextSize = 14
+		lbl.Font = Enum.Font.GothamBlack
+		lbl.Parent = bGui
+		plot.CurrentButton = maxModel
+		return
+	end
+
+	local def = UPGRADE_DEFS[nextUpgradeId]
+	if not def then return end
+
+	local btnModel, stepPad, bGui, costLbl = ModelEngine.CreateTycoonButton(
+		plot.Folder,
+		plot.CF * CFrame.new(def.ButtonOffset),
+		nextUpgradeId,
+		def.Title,
+		def.Cost,
+		def.AccentColor
+	)
+	plot.CurrentButton = btnModel
+
+	-- Handle Button Step
+	local debounce = false
+	stepPad.Touched:Connect(function(hit)
+		if debounce then return end
+		local char = hit.Parent
+		local player = char and Players:GetPlayerFromCharacter(char)
+		if not player or player ~= plot.Owner then return end
+		debounce = true
+
+		local dSvc = getDataService()
+		if not dSvc then
+			debounce = false
+			return
+		end
+
+		-- Verify funds
+		if not dSvc.SpendForUpgrade(player, def.Cost) then
+			-- Flash cost label red
+			costLbl.TextColor3 = Color3.fromRGB(239, 68, 68)
+			task.delay(0.45, function()
+				if costLbl and costLbl.Parent then
+					costLbl.TextColor3 = (def.Cost == 0) and Color3.fromRGB(16, 185, 129) or Color3.fromRGB(250, 204, 21)
+				end
+				debounce = false
+			end)
+			return
+		end
+
+		-- Animate pad depression
+		local origCF = stepPad.CFrame
+		TweenService:Create(stepPad, TweenInfo.new(0.08, Enum.EasingStyle.Quad), { CFrame = origCF * CFrame.new(0, -0.35, 0) }):Play()
+
+		-- Sparkle burst
+		local p = Instance.new("ParticleEmitter")
+		p.Rate = 0
+		p.Speed = NumberRange.new(8, 16)
+		p.Lifetime = NumberRange.new(0.3, 0.6)
+		p.Color = ColorSequence.new(def.AccentColor)
+		p.Parent = stepPad
+		p:Emit(25)
+
+		-- Chime sound
+		local s = Instance.new("Sound")
+		s.SoundId = "rbxassetid://9069609200"
+		s.Volume = 0.85
+		s.Parent = stepPad
+		s:Play()
+
+		-- Save upgrade
+		dSvc.AddUpgrade(player, nextUpgradeId)
+
+		task.wait(0.12)
+		-- Build purchased structure
+		def.Build(plot)
+
+		task.wait(0.2)
+		if btnModel and btnModel.Parent then
+			btnModel:Destroy()
+		end
+
+		-- Spawn the next button in sequence!
+		PlotService.SpawnNextButton(plotIndex)
+	end)
+end
+
+-- ============================================================
+-- HELPERS & QUERIES
+-- ============================================================
 function PlotService.GetPlotForPlayer(player: Player): any?
 	local idx = PlotService._playerPlots[player]
 	return idx and PlotService._plots[idx] or nil
@@ -941,75 +1094,7 @@ function PlotService.UpdateShowcaseForPlayer(player: Player)
 end
 
 function PlotService.UpdateConsolesForPlot(plotIndex: number)
-	local plot = PlotService._plots[plotIndex]
-	if not plot or not plot.Consoles then return end
-
-	local owner = plot.Owner
-	local dataSvc = getDataService()
-	local data = owner and dataSvc and dataSvc.GetData(owner)
-
-	-- 1. Conveyor Console
-	local convInfo = plot.Consoles["Conveyor"]
-	if convInfo and convInfo.Gui then
-		local card = convInfo.Gui:FindFirstChild("HoloCard")
-		if card then
-			local statLbl = card:FindFirstChild("StatLabel") :: TextLabel?
-			local costLbl = card:FindFirstChild("CostLabel") :: TextLabel?
-			if not owner or not data then
-				if statLbl then statLbl.Text = "Level 1" end
-				if costLbl then costLbl.Text = "Cost: $50" end
-			else
-				local lv = data.ConveyorLevel or 1
-				local maxLv = Config.Economy.MaxConveyorLevel
-				local income = Config.Economy.GetConveyorIncome(lv, data.PrestigeTokens or 0)
-				local cost = Config.Economy.GetConveyorCost(lv + 1)
-				if statLbl then statLbl.Text = `Lv {lv}/{maxLv} (${income}/sec)` end
-				if costLbl then costLbl.Text = (lv >= maxLv) and "MAX LEVEL" or `Cost: ${cost}` end
-			end
-		end
-	end
-
-	-- 2. Laser Console
-	local laserInfo = plot.Consoles["Laser"]
-	if laserInfo and laserInfo.Gui then
-		local card = laserInfo.Gui:FindFirstChild("HoloCard")
-		if card then
-			local statLbl = card:FindFirstChild("StatLabel") :: TextLabel?
-			local costLbl = card:FindFirstChild("CostLabel") :: TextLabel?
-			if not owner or not data then
-				if statLbl then statLbl.Text = "Tier 1" end
-				if costLbl then costLbl.Text = "Cost: $250" end
-			else
-				local tier = data.LaserTier or 1
-				local maxTier = Config.Economy.MaxLaserTier
-				local dmg = Config.Heist.LaserDamageByTier[tier] or 20
-				local cost = Config.Economy.GetLaserCost(tier + 1)
-				if statLbl then statLbl.Text = `Tier {tier}/{maxTier} ({dmg} DPS)` end
-				if costLbl then costLbl.Text = (tier >= maxTier) and "MAX TIER" or `Cost: ${cost}` end
-			end
-		end
-	end
-
-	-- 3. Turret Console
-	local turretInfo = plot.Consoles["Turret"]
-	if turretInfo and turretInfo.Gui then
-		local card = turretInfo.Gui:FindFirstChild("HoloCard")
-		if card then
-			local statLbl = card:FindFirstChild("StatLabel") :: TextLabel?
-			local costLbl = card:FindFirstChild("CostLabel") :: TextLabel?
-			if not owner or not data then
-				if statLbl then statLbl.Text = "Tier 1: Sentry Minigun" end
-				if costLbl then costLbl.Text = "Cost: $500" end
-			else
-				local tier = data.TurretTier or 1
-				local maxTier = Config.Turret.MaxTier or 4
-				local spec = Config.Turret.TierSpecs[tier] or Config.Turret.TierSpecs[1]
-				local cost = Config.Economy.GetTurretCost(tier + 1)
-				if statLbl then statLbl.Text = `Tier {tier}/{maxTier}: {spec.Name}` end
-				if costLbl then costLbl.Text = (tier >= maxTier) and "MAX TIER" or `Cost: ${cost}` end
-			end
-		end
-	end
+	-- Compatibility hook for legacy console updates
 end
 
 return PlotService

@@ -66,6 +66,7 @@ export type PlayerData = {
 	TotalXPAccumulated: number,
 
 	-- Base Upgrades
+	PurchasedUpgrades: { [string]: boolean },
 	ConveyorLevel: number,
 	LaserTier: number,
 	TurretTier: number,
