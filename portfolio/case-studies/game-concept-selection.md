@@ -1,7 +1,7 @@
 # 📊 Case Study: Data-Driven Game Concept Selection
 ## How I Used Market Research to Design a Hybrid Simulator for Maximum ROI
 
-**Author:** Yassein Shehata  
+**Author:** Yassein ([@intradient](https://www.roblox.com/search/users?keyword=intradient) / [@voi0](https://github.com/voi0))  
 **Date:** September 2026  
 **Methodology:** Multi-source market analysis across player psychology, genre economics, platform algorithm mechanics, and viral content patterns
 

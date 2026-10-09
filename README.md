@@ -2,15 +2,16 @@
 
 <div align="center">
 
-[![Roblox Developer](https://img.shields.io/badge/Roblox-Developer-blue?style=for-the-badge&logo=roblox&logoColor=white)](https://github.com/voi0/Roblox-Developer-Portfolio)
+[![Roblox Developer](https://img.shields.io/badge/Roblox-@intradient-00A2FF?style=for-the-badge&logo=roblox&logoColor=white)](https://www.roblox.com/search/users?keyword=intradient)
 [![Luau Strict](https://img.shields.io/badge/Luau-Strict_Typing-purple?style=for-the-badge)](https://github.com/voi0/Roblox-Developer-Portfolio)
 [![Systems Architect](https://img.shields.io/badge/Systems-Architect-green?style=for-the-badge)](https://github.com/voi0/Roblox-Developer-Portfolio)
 [![ProfileService](https://img.shields.io/badge/ProfileService-Session_Locking-red?style=for-the-badge)](https://github.com/voi0/Roblox-Developer-Portfolio)
 
-**Yassein Shehata**  
-*Solo Game Studio Founder · Systems Architect · Full-Stack Luau Engineer*
+**Yassein**  
+*Solo Game Studio Founder · Systems Architect · Full-Stack Luau Engineer*  
+*Roblox: [@intradient](https://www.roblox.com/search/users?keyword=intradient) · GitHub: [@voi0](https://github.com/voi0)*
 
-[Systems Architecture](./portfolio/systems-design/starweave-architecture.md) · [UI/UX Showcase](./portfolio/ui-ux/cosmic-design-system.md) · [Market Analysis](./portfolio/case-studies/game-concept-selection.md) · [License](./LICENSE)
+[Visual Showcase](./portfolio/SHOWCASE.md) · [Systems Architecture](./portfolio/systems-design/starweave-architecture.md) · [UI/UX Showcase](./portfolio/ui-ux/cosmic-design-system.md) · [Market Analysis](./portfolio/case-studies/game-concept-selection.md) · [License](./LICENSE)
 
 </div>
 
@@ -83,9 +84,20 @@ STARWEAVE combines high-retention agricultural progression with exponential RNG 
 
 ---
 
+## 💼 Services & Available Roles
+
+I am currently open to **Contract, Full-Time, and Lead Developer** opportunities with established studios and ambitious indie teams:
+
+- **Lead Scripter / Gameplay Systems Engineer:** Core loop programming, mechanics prototyping, server-authoritative logic.
+- **Backend & Data Architect:** Exploit-resistant networking, ProfileService session locking, safe data migration pipelines.
+- **UI/UX Engineer:** Custom design system engineering, 60 FPS tween micro-interactions, responsive mobile/tablet layouts.
+- **Economy & Progression Balancer:** Mathematical simulation models, exponential drop rates, rebirth/prestige math, monetization pipelines.
+
+---
+
 ## 📄 License & Rights
 
-This repository and its codebase are the proprietary work of **Yassein Shehata (@voi0)**. 
+This repository and its codebase are the proprietary work of **Yassein (@intradient / @voi0)**. 
 - **Recruiters, hiring managers, and prospective clients:** You are warmly invited to inspect, review, and evaluate the codebase for employment and contracting purposes.
 - **Commercial Use:** All rights reserved. Commercial deployment, re-uploading, or unauthorized duplication is strictly prohibited. See [LICENSE](./LICENSE) for terms.
 
@@ -93,5 +105,6 @@ This repository and its codebase are the proprietary work of **Yassein Shehata (
 
 ## 📬 Contact & Inquiries
 
+- **Roblox Profile:** [@intradient](https://www.roblox.com/search/users?keyword=intradient)
+- **Discord:** Direct inquiries welcomed (Username: `intradient` / `yassein`)
 - **GitHub:** [@voi0](https://github.com/voi0)
-- **Roblox Developer:** *Available upon direct inquiry*

@@ -1,7 +1,7 @@
 # 🏗️ Systems Architecture Deep Dive: STARWEAVE
 ### Enterprise-Grade Luau Architecture for High-Retention Roblox Experiences
 
-**Author:** Yassein Shehata (@voi0)  
+**Author:** Yassein ([@intradient](https://www.roblox.com/search/users?keyword=intradient) / [@voi0](https://github.com/voi0))  
 **Role:** Systems Architect & Lead Luau Engineer  
 **Stack:** Luau (Strict Typing) · ProfileService · Rojo · Wally · Server-Authoritative Architecture  
 

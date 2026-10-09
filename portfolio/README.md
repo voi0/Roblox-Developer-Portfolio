@@ -21,4 +21,4 @@ Welcome to my technical portfolio. Here you will find architecture specification
 
 ---
 
-*Authored by Yassein Shehata ([@voi0](https://github.com/voi0)). All rights reserved.*
+*Authored by Yassein ([@intradient](https://www.roblox.com/search/users?keyword=intradient) / [@voi0](https://github.com/voi0)). All rights reserved.*

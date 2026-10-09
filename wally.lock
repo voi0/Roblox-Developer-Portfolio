@@ -8,6 +8,6 @@ version = "1.0.4"
 dependencies = []
 
 [[package]]
-name = "yasseinshehata/myrobloxgame"
+name = "intradient/starweave"
 version = "0.1.0"
 dependencies = [["ProfileService", "alreadypro/profileservice@1.0.4"]]

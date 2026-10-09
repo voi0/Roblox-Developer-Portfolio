@@ -1,7 +1,7 @@
 # 🎨 UI/UX Design System: Cosmic Glassmorphism
 ### Production-Grade Interface Architecture for STARWEAVE
 
-**Author:** Yassein Shehata (@voi0)  
+**Author:** Yassein ([@intradient](https://www.roblox.com/search/users?keyword=intradient) / [@voi0](https://github.com/voi0))  
 **Role:** Lead UI/UX Engineer & Systems Architect  
 **Framework:** Luau / UILib / TweenService / Custom Design Tokens  
 
