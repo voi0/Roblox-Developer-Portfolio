@@ -1,140 +1,65 @@
 --!strict
 --[[
-	Types.luau — Central type definitions for STARWEAVE
-	All game objects are strictly typed for safety and autocompletion.
+	Types.luau — Central type definitions for ESCAPE THE PACK
+	Asymmetrical Survival / Ankle-Breaking Tag / Infection Arena
 	Located in: ReplicatedStorage.Shared.Types
 ]]
 
-export type SeedTier = "Common" | "Uncommon" | "Rare" | "Epic" | "Legendary" | "Celestial" | "Void"
+export type PlayerRole = "Runner" | "Chaser" | "Spectator"
 
-export type MutationTier = "None" | "Sprout" | "Bloom" | "Radiant" | "Astral" | "Celestial" | "Primordial"
+export type RoundState = 
+	| "WaitingForPlayers"
+	| "Intermission" 
+	| "HeroSelection" 
+	| "RoundActive" 
+	| "RoundIntermission" 
+	| "MatchOver"
 
-export type CurrencyType = "Stardust" | "NebulaGems" | "Starlight"
+export type AbilityId = "Cloak" | "PocketDoor" | "RufusLeash" | "Decoy" | "Adrenaline"
 
-export type PlotState = "Empty" | "Planted" | "Growing" | "Ready" | "Mutating"
-
-export type SeedDefinition = {
-	Id: string,
+export type AbilityDefinition = {
+	Id: AbilityId,
 	Name: string,
-	Tier: SeedTier,
-	BaseValue: number,
-	GrowthTime: number, -- seconds
-	BaseMutationChance: number, -- 0.0 to 1.0
-	UnlockRebirth: number, -- minimum rebirth level to unlock
+	Role: "Runner" | "Chaser" | "Universal",
+	GemCost: number,
+	Cooldown: number,
+	Duration: number,
 	Description: string,
+	Icon: string,
 }
 
-export type MutationDefinition = {
-	Tier: MutationTier,
-	MinMultiplier: number,
-	MaxMultiplier: number,
-	Chance: number, -- base probability 0.0 to 1.0
-	ParticleColor: { R: number, G: number, B: number },
-	DisplayName: string,
-}
-
-export type PlantInstance = {
-	PlotIndex: number,
-	SeedId: string,
-	State: PlotState,
-	PlantedAt: number, -- os.time() timestamp
-	GrowthEndAt: number, -- os.time() timestamp
-	MutationTier: MutationTier,
-	MutationMultiplier: number,
-	IsAutoHarvested: boolean,
-}
-
-export type GardenPlot = {
-	Index: number,
-	Unlocked: boolean,
-	Plant: PlantInstance?,
-}
-
-export type PetInstance = {
+export type KnifeDefinition = {
 	Id: string,
 	Name: string,
-	Tier: SeedTier,
-	MutationLuckBonus: number, -- additive bonus to mutation chance
-	HarvestSpeedBonus: number, -- multiplier on growth speed (1.0 = no bonus)
-	Level: number,
-	Experience: number,
+	Rarity: "Common" | "Rare" | "Epic" | "Legendary" | "Secret",
+	BladeColor: Color3,
+	GlowColor: Color3,
 }
 
-export type RebirthData = {
-	Level: number,
-	TotalRebirths: number,
-	CosmicMultiplier: number, -- permanent multiplier to all earnings
-	ConstellationPoints: number, -- spendable prestige currency
-	ConstellationTree: { [string]: number }, -- upgrade_id -> level
-	UnlockedRealms: { string },
+export type TrailDefinition = {
+	Id: string,
+	Name: string,
+	Rarity: "Common" | "Rare" | "Epic" | "Legendary",
+	ColorSequence: ColorSequence,
 }
 
 export type PlayerData = {
-	-- Currency
-	Stardust: number,
-	NebulaGems: number,
-	Starlight: number,
-
-	-- Garden
-	Garden: { GardenPlot },
-	GardenSize: number, -- total unlocked plots (starts at 9 = 3x3)
-
-	-- Inventory
-	SeedInventory: { [string]: number }, -- seed_id -> count
-	PlantCollection: { [string]: boolean }, -- mutation_id -> collected (for collection log)
-
-	-- Pets
-	Pets: { PetInstance },
-	EquippedPetIndex: number?, -- index into Pets array
-
-	-- Progression
-	Rebirth: RebirthData,
-	Level: number,
-	Experience: number,
-	TotalHarvests: number,
-	TotalStardustEarned: number,
-
-	-- Engagement
-	LoginStreak: number,
-	LastLoginDate: string, -- YYYY-MM-DD
-	DailyQuestsCompleted: { [string]: boolean },
-	PlayTimeSeconds: number,
-
-	-- Monetization
-	HasAutoHarvester: boolean,
-	HasDoubleLuck: boolean,
-	HasInstantGrow: boolean,
-	HasVIPGreenhouse: boolean,
-	HasCosmicPass: boolean,
-	HasStarterPack: boolean,
-	SubscriptionActive: boolean,
-	SubscriptionExpiry: number?, -- os.time() timestamp
-
-	-- Meta
-	DataVersion: number,
-	FirstJoinTimestamp: number,
+	Coins: number,
+	Gems: number,
+	Wins: number,
+	Kills: number,
+	HeroClutches: number,
+	TotalCrossings: number,
+	TotalRevives: number,
+	EquippedAbility: AbilityId?,
+	UnlockedAbilities: { [string]: boolean },
+	EquippedKnife: string,
+	UnlockedKnives: { [string]: boolean },
+	EquippedTrail: string,
+	UnlockedTrails: { [string]: boolean },
+	RedeemedCodes: { [string]: boolean },
+	PlaytimeSeconds: number,
 }
 
-export type TransactionResult = {
-	Success: boolean,
-	Message: string,
-	NewBalance: number?,
-}
-
-export type HarvestResult = {
-	Success: boolean,
-	SeedId: string,
-	MutationTier: MutationTier,
-	MutationMultiplier: number,
-	BaseValue: number,
-	FinalValue: number,
-	IsNewCollection: boolean,
-}
-
-export type MutationRollResult = {
-	Tier: MutationTier,
-	Multiplier: number,
-	IsRare: boolean, -- Astral or above
-}
-
-return nil
+local Types = {}
+return Types

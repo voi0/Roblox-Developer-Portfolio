@@ -13,20 +13,18 @@ if not servicesFolder then
 end
 
 print("========================================")
-print("  🌟 STARWEAVE Server Booting...")
+print("  ⚡ ESCAPE THE PACK Server Booting...")
 print("========================================")
 
 local serviceNames = {
-	"WorldService",
-	"WeatherService",
 	"DataService",
-	"MutationService",
-	"GardenService",
+	"ArenaService",
+	"TagService",
+	"AbilityService",
+	"RoundService",
 	"EconomyService",
-	"PetService",
-	"PlaytimeService",
-	"QuestService",
 	"CodeService",
+	"PlaytimeService",
 }
 
 local loadedServices: { [string]: any } = {}
@@ -64,5 +62,5 @@ for _, name in serviceNames do
 end
 
 print("========================================")
-print("  ✅ STARWEAVE Server Online!")
+print("  ✅ ESCAPE THE PACK Server Online!")
 print("========================================")
