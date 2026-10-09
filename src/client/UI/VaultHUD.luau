@@ -1,8 +1,8 @@
 --!strict
 --[[
-	VaultHUD.luau — Tactical Glassmorphic Survival & Economy HUD for VAULT WARS
+	VaultHUD.luau — Tactical 2026 Liquid Glass & Bento-Grid HUD for VAULT WARS
 	Displays Live Banked Net Worth, $/sec Income Rate, Unbanked Stash Alert,
-	Security Breach Alarms, and Quick-Access Upgrades.
+	Security Breach Alarms, and Quick-Access Upgrades using modern Bento capsules.
 	Located in: StarterPlayerScripts.Client.UI.VaultHUD
 ]]
 
@@ -20,12 +20,12 @@ local VaultHUD = {}
 VaultHUD._gui = nil :: ScreenGui?
 VaultHUD._bankedLabel = nil :: TextLabel?
 VaultHUD._incomeLabel = nil :: TextLabel?
+VaultHUD._rankLabel = nil :: TextLabel?
 VaultHUD._unbankedLabel = nil :: TextLabel?
 VaultHUD._unbankedFrame = nil :: Frame?
 VaultHUD._adrenalineBtn = nil :: TextButton?
 VaultHUD._breachVignette = nil :: Frame?
 VaultHUD._breachMsg = nil :: TextLabel?
-VaultHUD._levelPill = nil :: TextLabel?
 VaultHUD._onUpgradesToggle = nil :: (() -> ())?
 VaultHUD._onFusionToggle = nil :: (() -> ())?
 VaultHUD._onDailyToggle = nil :: (() -> ())?
@@ -57,6 +57,32 @@ local function formatCurrency(n: number): string
 end
 
 -- ============================================================
+-- HOVER / SPRING HELPER
+-- ============================================================
+local function applyBentoHover(btn: TextButton, stroke: UIStroke, accentColor: Color3)
+	btn.MouseEnter:Connect(function()
+		TweenService:Create(btn, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			BackgroundColor3 = Color3.fromRGB(30, 36, 54),
+			BackgroundTransparency = 0.1,
+		}):Play()
+		TweenService:Create(stroke, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			Thickness = 2.0,
+			Color = accentColor,
+		}):Play()
+	end)
+	btn.MouseLeave:Connect(function()
+		TweenService:Create(btn, TweenInfo.new(0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			BackgroundColor3 = Color3.fromRGB(15, 17, 26),
+			BackgroundTransparency = 0.25,
+		}):Play()
+		TweenService:Create(stroke, TweenInfo.new(0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			Thickness = 1.2,
+			Color = Color3.fromRGB(39, 45, 66),
+		}):Play()
+	end)
+end
+
+-- ============================================================
 -- CREATE VAULT HUD
 -- ============================================================
 function VaultHUD.Create()
@@ -75,59 +101,93 @@ function VaultHUD.Create()
 	gui.Parent = pGui
 	VaultHUD._gui = gui
 
-	-- ── 1. TOP CENTER: NET WORTH & INCOME TICKER ──
-	local topBanner = Instance.new("Frame")
-	topBanner.Name = "TopBanner"
-	topBanner.Size = UDim2.new(0, 480, 0, 78)
-	topBanner.Position = UDim2.new(0.5, 0, 0, 16)
-	topBanner.AnchorPoint = Vector2.new(0.5, 0)
-	topBanner.BackgroundColor3 = Color3.fromRGB(11, 13, 20)
-	topBanner.BackgroundTransparency = 0.15
-	topBanner.BorderSizePixel = 0
-	topBanner.Parent = gui
+	-- ── 1. TOP CENTER: BENTO STATUS CAPSULE ──
+	local topCapsule = Instance.new("Frame")
+	topCapsule.Name = "TopStatusCapsule"
+	topCapsule.Size = UDim2.new(0, 520, 0, 58)
+	topCapsule.Position = UDim2.new(0.5, 0, 0, 18)
+	topCapsule.AnchorPoint = Vector2.new(0.5, 0)
+	topCapsule.BackgroundColor3 = Color3.fromRGB(15, 17, 26)
+	topCapsule.BackgroundTransparency = 0.15
+	topCapsule.BorderSizePixel = 0
+	topCapsule.Parent = gui
 
-	local bCorner = Instance.new("UICorner")
-	bCorner.CornerRadius = UDim.new(0, 16)
-	bCorner.Parent = topBanner
+	local tcCorner = Instance.new("UICorner")
+	tcCorner.CornerRadius = UDim.new(0, 18)
+	tcCorner.Parent = topCapsule
 
-	local bStroke = Instance.new("UIStroke")
-	bStroke.Color = Color3.fromRGB(30, 41, 59)
-	bStroke.Thickness = 2
-	bStroke.Parent = topBanner
+	local tcStroke = Instance.new("UIStroke")
+	tcStroke.Color = Color3.fromRGB(30, 41, 59)
+	tcStroke.Thickness = 1.5
+	tcStroke.Parent = topCapsule
 
-	-- Banked Net Worth
+	-- Left Sub-Pill: Syndicate Rank Badge
+	local rankPill = Instance.new("Frame")
+	rankPill.Name = "RankBadge"
+	rankPill.Size = UDim2.new(0, 130, 0, 36)
+	rankPill.Position = UDim2.new(0, 12, 0.5, -18)
+	rankPill.BackgroundColor3 = Color3.fromRGB(22, 26, 40)
+	rankPill.BorderSizePixel = 0
+	rankPill.Parent = topCapsule
+	Instance.new("UICorner", rankPill).CornerRadius = UDim.new(0, 10)
+	local rStroke = Instance.new("UIStroke", rankPill)
+	rStroke.Color = Color3.fromRGB(56, 189, 248)
+	rStroke.Thickness = 1.2
+
+	local rankLbl = Instance.new("TextLabel")
+	rankLbl.Size = UDim2.new(1, 0, 1, 0)
+	rankLbl.BackgroundTransparency = 1
+	rankLbl.Text = "⚔️ RANK 1"
+	rankLbl.TextColor3 = Color3.fromRGB(56, 189, 248)
+	rankLbl.TextSize = 12
+	rankLbl.Font = Enum.Font.GothamBlack
+	rankLbl.Parent = rankPill
+	VaultHUD._rankLabel = rankLbl
+
+	-- Center: Banked Net Worth
 	local bankedLabel = Instance.new("TextLabel")
 	bankedLabel.Name = "BankedNetWorth"
-	bankedLabel.Size = UDim2.new(1, -20, 0, 32)
-	bankedLabel.Position = UDim2.new(0, 10, 0, 10)
+	bankedLabel.Size = UDim2.new(0, 200, 1, 0)
+	bankedLabel.Position = UDim2.new(0.5, -100, 0, 0)
 	bankedLabel.BackgroundTransparency = 1
 	bankedLabel.Text = "$0"
 	bankedLabel.TextColor3 = Color3.fromRGB(250, 204, 21)
-	bankedLabel.TextSize = 28
+	bankedLabel.TextSize = 26
 	bankedLabel.Font = Enum.Font.GothamBlack
 	bankedLabel.TextXAlignment = Enum.TextXAlignment.Center
-	bankedLabel.Parent = topBanner
+	bankedLabel.Parent = topCapsule
 	VaultHUD._bankedLabel = bankedLabel
 
-	-- Income Rate ($/sec)
+	-- Right Sub-Pill: Live Income Rate Ticker
+	local incomePill = Instance.new("Frame")
+	incomePill.Name = "IncomePill"
+	incomePill.Size = UDim2.new(0, 140, 0, 36)
+	incomePill.Position = UDim2.new(1, -152, 0.5, -18)
+	incomePill.BackgroundColor3 = Color3.fromRGB(16, 42, 34)
+	incomePill.BorderSizePixel = 0
+	incomePill.Parent = topCapsule
+	Instance.new("UICorner", incomePill).CornerRadius = UDim.new(0, 10)
+	local iStroke = Instance.new("UIStroke", incomePill)
+	iStroke.Color = Color3.fromRGB(16, 185, 129)
+	iStroke.Thickness = 1.2
+
 	local incomeLabel = Instance.new("TextLabel")
 	incomeLabel.Name = "IncomeRate"
-	incomeLabel.Size = UDim2.new(1, -20, 0, 20)
-	incomeLabel.Position = UDim2.new(0, 10, 0, 46)
+	incomeLabel.Size = UDim2.new(1, 0, 1, 0)
 	incomeLabel.BackgroundTransparency = 1
-	incomeLabel.Text = "+$5/sec (Level 1 Conveyor)"
-	incomeLabel.TextColor3 = Color3.fromRGB(16, 185, 129)
+	incomeLabel.Text = "▲ +$5/s"
+	incomeLabel.TextColor3 = Color3.fromRGB(110, 231, 183)
 	incomeLabel.TextSize = 13
-	incomeLabel.Font = Enum.Font.GothamBold
+	incomeLabel.Font = Enum.Font.GothamBlack
 	incomeLabel.TextXAlignment = Enum.TextXAlignment.Center
-	incomeLabel.Parent = topBanner
+	incomeLabel.Parent = incomePill
 	VaultHUD._incomeLabel = incomeLabel
 
-	-- ── 2. TOP RIGHT: ACTION BUTTONS (DAILY, FUSION, UPGRADES & PROGRESS) ──
+	-- ── 2. TOP RIGHT: BENTO ACTION TRAY ──
 	local topRight = Instance.new("Frame")
-	topRight.Name = "TopRight"
-	topRight.Size = UDim2.new(0, 540, 0, 48)
-	topRight.Position = UDim2.new(1, -20, 0, 16)
+	topRight.Name = "TopRightActionTray"
+	topRight.Size = UDim2.new(0, 600, 0, 42)
+	topRight.Position = UDim2.new(1, -20, 0, 26)
 	topRight.AnchorPoint = Vector2.new(1, 0)
 	topRight.BackgroundTransparency = 1
 	topRight.Parent = gui
@@ -135,131 +195,82 @@ function VaultHUD.Create()
 	local trLayout = Instance.new("UIListLayout")
 	trLayout.FillDirection = Enum.FillDirection.Horizontal
 	trLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
-	trLayout.Padding = UDim.new(0, 10)
+	trLayout.Padding = UDim.new(0, 8)
 	trLayout.Parent = topRight
 
-	local progressBtn = Instance.new("TextButton")
-	progressBtn.Name = "ProgressButton"
-	progressBtn.Size = UDim2.new(0, 120, 0, 42)
-	progressBtn.BackgroundColor3 = Color3.fromRGB(24, 24, 27)
-	progressBtn.Text = "🌟 PROGRESS"
-	progressBtn.TextColor3 = Color3.fromRGB(250, 204, 21)
-	progressBtn.TextSize = 13
-	progressBtn.Font = Enum.Font.GothamBlack
-	progressBtn.Parent = topRight
-	Instance.new("UICorner", progressBtn).CornerRadius = UDim.new(0, 12)
-	local pStroke = Instance.new("UIStroke", progressBtn)
-	pStroke.Color = Color3.fromRGB(250, 204, 21)
-	pStroke.Thickness = 2
+	local function createBentoBtn(name: string, text: string, accentColor: Color3, onClick: () -> ()): TextButton
+		local btn = Instance.new("TextButton")
+		btn.Name = name
+		btn.Size = UDim2.new(0, 112, 0, 38)
+		btn.BackgroundColor3 = Color3.fromRGB(15, 17, 26)
+		btn.BackgroundTransparency = 0.25
+		btn.Text = text
+		btn.TextColor3 = accentColor
+		btn.TextSize = 12
+		btn.Font = Enum.Font.GothamBlack
+		btn.Parent = topRight
 
-	progressBtn.MouseButton1Click:Connect(function()
-		if VaultHUD._onProgressToggle then
-			VaultHUD._onProgressToggle()
-		end
+		local corner = Instance.new("UICorner")
+		corner.CornerRadius = UDim.new(0, 12)
+		corner.Parent = btn
+
+		local stroke = Instance.new("UIStroke")
+		stroke.Color = Color3.fromRGB(39, 45, 66)
+		stroke.Thickness = 1.2
+		stroke.Parent = btn
+
+		applyBentoHover(btn, stroke, accentColor)
+		btn.MouseButton1Click:Connect(onClick)
+		return btn
+	end
+
+	createBentoBtn("ProgressButton", "🌟 PROGRESS", Color3.fromRGB(250, 204, 21), function()
+		if VaultHUD._onProgressToggle then VaultHUD._onProgressToggle() end
 	end)
 
-	local contractsBtn = Instance.new("TextButton")
-	contractsBtn.Name = "ContractsButton"
-	contractsBtn.Size = UDim2.new(0, 130, 0, 42)
-	contractsBtn.BackgroundColor3 = Color3.fromRGB(24, 24, 27)
-	contractsBtn.Text = "📜 CONTRACTS"
-	contractsBtn.TextColor3 = Color3.fromRGB(250, 204, 21)
-	contractsBtn.TextSize = 13
-	contractsBtn.Font = Enum.Font.GothamBlack
-	contractsBtn.Parent = topRight
-	Instance.new("UICorner", contractsBtn).CornerRadius = UDim.new(0, 12)
-	local cStroke = Instance.new("UIStroke", contractsBtn)
-	cStroke.Color = Color3.fromRGB(250, 204, 21)
-	cStroke.Thickness = 2
-
-	contractsBtn.MouseButton1Click:Connect(function()
-		if VaultHUD._onContractsToggle then
-			VaultHUD._onContractsToggle()
-		end
+	createBentoBtn("ContractsButton", "📜 CONTRACTS", Color3.fromRGB(245, 158, 11), function()
+		if VaultHUD._onContractsToggle then VaultHUD._onContractsToggle() end
 	end)
 
-	local dailyBtn = Instance.new("TextButton")
-	dailyBtn.Name = "DailyButton"
-	dailyBtn.Size = UDim2.new(0, 110, 0, 42)
-	dailyBtn.BackgroundColor3 = Color3.fromRGB(24, 24, 27)
-	dailyBtn.Text = "📅 DAILY"
-	dailyBtn.TextColor3 = Color3.fromRGB(245, 158, 11)
-	dailyBtn.TextSize = 13
-	dailyBtn.Font = Enum.Font.GothamBlack
-	dailyBtn.Parent = topRight
-	Instance.new("UICorner", dailyBtn).CornerRadius = UDim.new(0, 12)
-	local dStroke = Instance.new("UIStroke", dailyBtn)
-	dStroke.Color = Color3.fromRGB(245, 158, 11)
-	dStroke.Thickness = 2
-
-	dailyBtn.MouseButton1Click:Connect(function()
-		if VaultHUD._onDailyToggle then
-			VaultHUD._onDailyToggle()
-		end
+	createBentoBtn("DailyButton", "📅 DAILY", Color3.fromRGB(249, 115, 22), function()
+		if VaultHUD._onDailyToggle then VaultHUD._onDailyToggle() end
 	end)
 
-	local fusionBtn = Instance.new("TextButton")
-	fusionBtn.Name = "FusionButton"
-	fusionBtn.Size = UDim2.new(0, 110, 0, 42)
-	fusionBtn.BackgroundColor3 = Color3.fromRGB(24, 24, 27)
-	fusionBtn.Text = "🔮 FUSION"
-	fusionBtn.TextColor3 = Color3.fromRGB(168, 85, 247)
-	fusionBtn.TextSize = 13
-	fusionBtn.Font = Enum.Font.GothamBlack
-	fusionBtn.Parent = topRight
-	Instance.new("UICorner", fusionBtn).CornerRadius = UDim.new(0, 12)
-	local fStroke = Instance.new("UIStroke", fusionBtn)
-	fStroke.Color = Color3.fromRGB(168, 85, 247)
-	fStroke.Thickness = 2
-
-	fusionBtn.MouseButton1Click:Connect(function()
-		if VaultHUD._onFusionToggle then
-			VaultHUD._onFusionToggle()
-		end
+	createBentoBtn("FusionButton", "🔮 FUSION", Color3.fromRGB(168, 85, 247), function()
+		if VaultHUD._onFusionToggle then VaultHUD._onFusionToggle() end
 	end)
 
-	local upBtn = Instance.new("TextButton")
-	upBtn.Name = "UpgradesButton"
-	upBtn.Size = UDim2.new(0, 120, 0, 42)
-	upBtn.BackgroundColor3 = Color3.fromRGB(24, 24, 27)
-	upBtn.Text = "⚡ UPGRADES"
-	upBtn.TextColor3 = Color3.fromRGB(56, 189, 248)
-	upBtn.TextSize = 13
-	upBtn.Font = Enum.Font.GothamBlack
-	upBtn.Parent = topRight
-	Instance.new("UICorner", upBtn).CornerRadius = UDim.new(0, 12)
-	local uStroke = Instance.new("UIStroke", upBtn)
-	uStroke.Color = Color3.fromRGB(56, 189, 248)
-	uStroke.Thickness = 2
-
-	upBtn.MouseButton1Click:Connect(function()
-		if VaultHUD._onUpgradesToggle then
-			VaultHUD._onUpgradesToggle()
-		end
+	createBentoBtn("UpgradesButton", "⚡ UPGRADES", Color3.fromRGB(56, 189, 248), function()
+		if VaultHUD._onUpgradesToggle then VaultHUD._onUpgradesToggle() end
 	end)
 
 	-- ── 3. BOTTOM CENTER: UNBANKED STASH ALERT ──
 	local unbankedFrame = Instance.new("Frame")
 	unbankedFrame.Name = "UnbankedFrame"
-	unbankedFrame.Size = UDim2.new(0, 420, 0, 44)
+	unbankedFrame.Size = UDim2.new(0, 440, 0, 42)
 	unbankedFrame.Position = UDim2.new(0.5, 0, 1, -24)
 	unbankedFrame.AnchorPoint = Vector2.new(0.5, 1)
 	unbankedFrame.BackgroundColor3 = Color3.fromRGB(15, 17, 26)
-	unbankedFrame.BackgroundTransparency = 0.1
+	unbankedFrame.BackgroundTransparency = 0.12
 	unbankedFrame.BorderSizePixel = 0
 	unbankedFrame.Visible = false
 	unbankedFrame.Parent = gui
-	Instance.new("UICorner", unbankedFrame).CornerRadius = UDim.new(0, 12)
-	local ubStroke = Instance.new("UIStroke", unbankedFrame)
+
+	local ubCorner = Instance.new("UICorner")
+	ubCorner.CornerRadius = UDim.new(0, 12)
+	ubCorner.Parent = unbankedFrame
+
+	local ubStroke = Instance.new("UIStroke")
 	ubStroke.Color = Color3.fromRGB(245, 158, 11)
 	ubStroke.Thickness = 2
+	ubStroke.Parent = unbankedFrame
 	VaultHUD._unbankedFrame = unbankedFrame
 
 	local ubLabel = Instance.new("TextLabel")
 	ubLabel.Name = "UnbankedLabel"
 	ubLabel.Size = UDim2.new(1, 0, 1, 0)
 	ubLabel.BackgroundTransparency = 1
-	ubLabel.Text = "⚠️ UNBANKED: $0 — STEP ON SAFE TO SECURE!"
+	ubLabel.Text = "⚠️ UNBANKED: $0 — STEP ON GREEN SAFE PAD TO SECURE!"
 	ubLabel.TextColor3 = Color3.fromRGB(250, 204, 21)
 	ubLabel.TextSize = 12
 	ubLabel.Font = Enum.Font.GothamBlack
@@ -269,7 +280,7 @@ function VaultHUD.Create()
 	-- ── 3.3. FLOATING 25 R$ ADRENALINE IMPULSE ESCAPE PILL ──
 	local adrenalineBtn = Instance.new("TextButton")
 	adrenalineBtn.Name = "AdrenalineSurgeButton"
-	adrenalineBtn.Size = UDim2.new(0, 380, 0, 44)
+	adrenalineBtn.Size = UDim2.new(0, 400, 0, 44)
 	adrenalineBtn.Position = UDim2.new(0.5, 0, 1, -114)
 	adrenalineBtn.AnchorPoint = Vector2.new(0.5, 1)
 	adrenalineBtn.BackgroundColor3 = Color3.fromRGB(15, 17, 26)
@@ -322,7 +333,7 @@ function VaultHUD.Create()
 	-- ── 3.5. BOTTOM CONTROLS TIPS BAR ──
 	local tipsBar = Instance.new("Frame")
 	tipsBar.Name = "ControlsTipsBar"
-	tipsBar.Size = UDim2.new(0, 520, 0, 32)
+	tipsBar.Size = UDim2.new(0, 560, 0, 32)
 	tipsBar.Position = UDim2.new(0.5, 0, 1, -72)
 	tipsBar.AnchorPoint = Vector2.new(0.5, 1)
 	tipsBar.BackgroundColor3 = Color3.fromRGB(11, 13, 20)
@@ -336,7 +347,7 @@ function VaultHUD.Create()
 	local tbLabel = Instance.new("TextLabel")
 	tbLabel.Size = UDim2.new(1, 0, 1, 0)
 	tbLabel.BackgroundTransparency = 1
-	tbLabel.Text = "⚡ [U] Upgrades  •  🔮 [B] Fusion  •  📅 [Y] Daily  •  🥊 [F] Tackle  •  📥 [Step Safe] Bank"
+	tbLabel.Text = "⚡ [U] Upgrades  •  🔮 [B] Fusion  •  📜 [C] Contracts  •  📅 [Y] Daily  •  🥊 [F] Tackle  •  📥 [Step Safe] Bank"
 	tbLabel.TextColor3 = Color3.fromRGB(203, 213, 225)
 	tbLabel.TextSize = 11
 	tbLabel.Font = Enum.Font.GothamMedium
@@ -355,7 +366,7 @@ function VaultHUD.Create()
 
 	local breachMsg = Instance.new("TextLabel")
 	breachMsg.Name = "BreachMessage"
-	breachMsg.Size = UDim2.new(0, 520, 0, 60)
+	breachMsg.Size = UDim2.new(0, 540, 0, 60)
 	breachMsg.Position = UDim2.new(0.5, 0, 0.22, 0)
 	breachMsg.AnchorPoint = Vector2.new(0.5, 0.5)
 	breachMsg.BackgroundColor3 = Color3.fromRGB(15, 17, 26)
@@ -371,7 +382,7 @@ function VaultHUD.Create()
 	bmStroke.Thickness = 2.5
 	VaultHUD._breachMsg = breachMsg
 
-	print("  [VaultHUD] Tactical Cyber-Glass HUD mounted ✓")
+	print("  [VaultHUD] 2026 Bento-Grid Glass HUD mounted ✓")
 end
 
 -- ============================================================
@@ -386,14 +397,19 @@ function VaultHUD.Update(data: Types.PlayerData)
 
 	if VaultHUD._incomeLabel then
 		local rate = Config.Economy.GetConveyorIncome(data.ConveyorLevel, data.PrestigeTokens)
-		VaultHUD._incomeLabel.Text = `+{formatCurrency(rate)}/sec (Level {data.ConveyorLevel})`
+		VaultHUD._incomeLabel.Text = `▲ +{formatCurrency(rate)}/s`
+	end
+
+	if VaultHUD._rankLabel then
+		local rank = data.Level or 1
+		VaultHUD._rankLabel.Text = `⚔️ RANK {rank}`
 	end
 
 	if VaultHUD._unbankedFrame and VaultHUD._unbankedLabel then
 		local unbanked = data.UnbankedCash or 0
 		if unbanked > 0 then
 			VaultHUD._unbankedFrame.Visible = true
-			VaultHUD._unbankedLabel.Text = `⚠️ UNBANKED: {formatCurrency(unbanked)} — STEP ON SAFE TO SECURE!`
+			VaultHUD._unbankedLabel.Text = `⚠️ UNBANKED: {formatCurrency(unbanked)} — STEP ON GREEN SAFE PAD TO SECURE!`
 		else
 			VaultHUD._unbankedFrame.Visible = false
 		end

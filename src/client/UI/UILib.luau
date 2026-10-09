@@ -14,50 +14,51 @@ local UILib = {}
 -- DESIGN TOKENS (Vibrant, Kid-Friendly Roblox Simulator Style)
 -- ============================================================
 UILib.Colors = {
-	-- Core Roblox Simulator Palette (Rich warm indigo, NOT depressing black)
-	Surface0    = Color3.fromRGB(24, 18, 44),     -- Deep cosmic purple-navy
-	Surface1    = Color3.fromRGB(34, 26, 60),     -- Rich modal base
-	Surface2    = Color3.fromRGB(46, 36, 80),     -- Elevated card face
-	Surface3    = Color3.fromRGB(64, 50, 110),    -- Bright hover state
-	Surface4    = Color3.fromRGB(82, 64, 136),    -- Pressed arcade state
+	-- 2026 Bento-Grid Carbon & Obsidian Palette
+	Surface0    = Color3.fromRGB(7, 9, 14),       -- Deep obsidian background
+	Surface1    = Color3.fromRGB(15, 17, 26),     -- Dark carbon modal surface
+	Surface2    = Color3.fromRGB(22, 25, 38),     -- Elevated bento card face
+	Surface3    = Color3.fromRGB(30, 36, 54),     -- Hover state
+	Surface4    = Color3.fromRGB(42, 50, 76),     -- Active pressed state
 
-	-- Text (Crisp White and Saturated Lavender)
-	TextPrimary   = Color3.fromRGB(255, 255, 255),
-	TextSecondary = Color3.fromRGB(224, 210, 255),
-	TextMuted     = Color3.fromRGB(160, 145, 195),
+	-- Text (Crisp White and Cool Slate)
+	TextPrimary   = Color3.fromRGB(248, 250, 252),
+	TextSecondary = Color3.fromRGB(203, 213, 225),
+	TextMuted     = Color3.fromRGB(148, 163, 184),
 
-	-- Cartoon Outlines
-	StrokeDark    = Color3.fromRGB(16, 12, 28),     -- Thick cartoon dark outline
-	StrokeGold    = Color3.fromRGB(180, 130, 15),
+	-- Sleek Metallic & Cyber Borders
+	StrokeDark    = Color3.fromRGB(30, 41, 59),     -- Refined dark slate outline
+	StrokeGold    = Color3.fromRGB(245, 158, 11),
+	StrokeCyan    = Color3.fromRGB(56, 189, 248),
 
-	-- Bright Candy Accents
-	Gold        = Color3.fromRGB(251, 191, 36),     -- Cheerful Sunny Gold
+	-- Neon Cyber-Heist Accents
+	Gold        = Color3.fromRGB(245, 158, 11),     -- Bullion Amber Gold
 	GoldBright  = Color3.fromRGB(254, 240, 138),
 	GoldDark    = Color3.fromRGB(217, 119, 6),
-	Cyan        = Color3.fromRGB(14, 165, 233),     -- Vibrant Sky Cyan
-	CyanBright  = Color3.fromRGB(125, 211, 252),
+	Cyan        = Color3.fromRGB(56, 189, 248),     -- Electric Cyan
+	CyanBright  = Color3.fromRGB(186, 230, 253),
 	CyanDark    = Color3.fromRGB(3, 105, 161),
-	Pink        = Color3.fromRGB(244, 114, 182),    -- Bubblegum Candy Pink
+	Pink        = Color3.fromRGB(244, 114, 182),
 	PinkBright  = Color3.fromRGB(249, 168, 212),
 	PinkDark    = Color3.fromRGB(190, 24, 93),
-	Green       = Color3.fromRGB(34, 197, 94),      -- Juicy Emerald Lime
-	GreenBright = Color3.fromRGB(134, 239, 172),
-	GreenDark   = Color3.fromRGB(21, 128, 61),
-	Purple      = Color3.fromRGB(168, 85, 247),     -- Arcane Amethyst
+	Green       = Color3.fromRGB(16, 185, 129),     -- Emerald Vault Green
+	GreenBright = Color3.fromRGB(110, 231, 183),
+	GreenDark   = Color3.fromRGB(5, 150, 105),
+	Purple      = Color3.fromRGB(168, 85, 247),     -- Arcane Singularity Purple
 	PurpleLight = Color3.fromRGB(216, 180, 254),
 	PurpleDark  = Color3.fromRGB(126, 34, 206),
 	PurpleDim   = Color3.fromRGB(109, 40, 217),
-	GreenDim    = Color3.fromRGB(22, 101, 52),
-	Red         = Color3.fromRGB(239, 68, 68),
+	GreenDim    = Color3.fromRGB(6, 78, 59),
+	Red         = Color3.fromRGB(239, 68, 68),      -- Breach Crimson
 	Orange      = Color3.fromRGB(249, 115, 22),
 
 	-- Tier Colors
 	Common     = Color3.fromRGB(148, 163, 184),
 	Uncommon   = Color3.fromRGB(74, 222, 128),
 	Rare       = Color3.fromRGB(56, 189, 248),
-	Epic       = Color3.fromRGB(192, 132, 252),
-	Legendary  = Color3.fromRGB(251, 191, 36),
-	Celestial  = Color3.fromRGB(244, 114, 182),
+	Epic       = Color3.fromRGB(239, 68, 68),
+	Legendary  = Color3.fromRGB(245, 158, 11),
+	Celestial  = Color3.fromRGB(250, 204, 21),
 	Void       = Color3.fromRGB(168, 85, 247),
 }
 
@@ -71,13 +72,13 @@ UILib.TierColor = {
 	Void       = UILib.Colors.Void,
 }
 
--- Gold-standard kid-friendly Roblox font
+-- 2026 Modern Professional Typography
 UILib.Fonts = {
-	Black  = Enum.Font.FredokaOne,
-	Bold   = Enum.Font.FredokaOne,
-	Medium = Enum.Font.FredokaOne,
-	Body   = Enum.Font.FredokaOne,
-	Alt    = Enum.Font.LuckiestGuy,
+	Black  = Enum.Font.GothamBlack,
+	Bold   = Enum.Font.GothamBold,
+	Medium = Enum.Font.GothamMedium,
+	Body   = Enum.Font.Gotham,
+	Alt    = Enum.Font.GothamBlack,
 }
 
 UILib.Icons = {

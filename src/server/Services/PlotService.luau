@@ -53,7 +53,17 @@ end
 -- INITIALIZE ARENA & 6 MODULAR PLOTS
 -- ============================================================
 function PlotService.Init()
-	print("  [PlotService] Constructing Cyber-Industrial Plaza & 6 Modular Vault Bases...")
+	print("  [PlotService] Constructing Cyber-Industrial Plaza & 6 Fortified Bunker Bases...")
+
+	-- ── 0. BASEPLATE CLEANUP (Eliminates ground flickering & Z-fighting) ──
+	for _, child in Workspace:GetChildren() do
+		if child:IsA("BasePart") then
+			local lowerName = child.Name:lower()
+			if lowerName == "baseplate" or lowerName:find("baseplate") then
+				pcall(function() child:Destroy() end)
+			end
+		end
+	end
 
 	local existing = Workspace:FindFirstChild("VaultWarsArena")
 	if existing then existing:Destroy() end
@@ -63,23 +73,48 @@ function PlotService.Init()
 	rootFolder.Parent = Workspace
 	PlotService._folder = rootFolder
 
-	-- ── 1. CENTRAL LOBBY PLAZA FLOOR ──
+	local ARENA_Y = 2.0 -- Center Y of foundation
+	local FLOOR_Y = 4.0 -- Walkable deck surface
+
+	-- ── 1. CENTRAL LOBBY PLAZA FLOOR (Elevated multi-tier foundation) ──
 	local plaza = createPart(
 		"CentralPlazaFloor",
-		Vector3.new(160, 2, 160),
-		CFrame.new(0, -1, 0),
+		Vector3.new(160, 4, 160),
+		CFrame.new(0, ARENA_Y, 0),
 		Config.Arena.LobbyFloorColor,
 		Enum.Material.Slate,
 		rootFolder
 	)
 
+	-- Plaza Perimeter Diamond-Plate Trim Skirt
+	createPart(
+		"PlazaPerimeterSkirt",
+		Vector3.new(164, 4.2, 164),
+		CFrame.new(0, ARENA_Y, 0),
+		Color3.fromRGB(15, 23, 42),
+		Enum.Material.DiamondPlate,
+		rootFolder,
+		false
+	)
+
 	-- Center Octagonal Trim Ring
 	local ring = createPart(
 		"PlazaCenterRing",
-		Vector3.new(28, 0.2, 28),
-		CFrame.new(0, 0.1, 0),
+		Vector3.new(34, 0.2, 34),
+		CFrame.new(0, FLOOR_Y + 0.05, 0),
 		Color3.fromRGB(30, 41, 59),
 		Enum.Material.SmoothPlastic,
+		rootFolder,
+		false
+	)
+
+	-- Glowing Cyan Inlay Ring
+	createPart(
+		"PlazaCenterNeonTrim",
+		Vector3.new(28, 0.1, 28),
+		CFrame.new(0, FLOOR_Y + 0.08, 0),
+		Color3.fromRGB(56, 189, 248),
+		Enum.Material.Neon,
 		rootFolder,
 		false
 	)
@@ -87,8 +122,8 @@ function PlotService.Init()
 	-- ── 2. CENTRAL MONOLITH & LEADERBOARD ──
 	local monolith = createPart(
 		"CenterMonolith",
-		Vector3.new(10, 22, 10),
-		CFrame.new(0, 11, 0),
+		Vector3.new(12, 28, 12),
+		CFrame.new(0, FLOOR_Y + 14, 0),
 		Color3.fromRGB(15, 23, 42),
 		Enum.Material.Metal,
 		rootFolder
@@ -97,8 +132,8 @@ function PlotService.Init()
 	-- Glowing Cyan Trims on Monolith
 	createPart(
 		"MonolithTrim1",
-		Vector3.new(10.4, 0.8, 10.4),
-		CFrame.new(0, 20, 0),
+		Vector3.new(12.5, 1.0, 12.5),
+		CFrame.new(0, FLOOR_Y + 25, 0),
 		Color3.fromRGB(56, 189, 248),
 		Enum.Material.Neon,
 		monolith,
@@ -128,11 +163,11 @@ function PlotService.Init()
 	lbFrame.BackgroundColor3 = Color3.fromRGB(24, 24, 27)
 	lbFrame.Parent = sGui
 
-	-- Spawn Location in Plaza
+	-- Spawn Location in Plaza (Firmly on deck)
 	local spawnPad = Instance.new("SpawnLocation")
 	spawnPad.Name = "PlazaSpawn"
-	spawnPad.Size = Vector3.new(10, 1, 10)
-	spawnPad.CFrame = CFrame.new(0, 0.5, 25)
+	spawnPad.Size = Vector3.new(12, 1, 12)
+	spawnPad.CFrame = CFrame.new(0, FLOOR_Y + 0.5, 26)
 	spawnPad.Anchored = true
 	spawnPad.CanCollide = true
 	spawnPad.Material = Enum.Material.Neon
@@ -151,7 +186,7 @@ function PlotService.Init()
 	local altarBase = createPart(
 		"FusionAltarBase",
 		Vector3.new(14, 1.2, 14),
-		CFrame.new(0, 0.6, -26),
+		CFrame.new(0, FLOOR_Y + 0.6, -26),
 		Color3.fromRGB(24, 24, 32),
 		Enum.Material.Slate,
 		rootFolder
@@ -159,7 +194,7 @@ function PlotService.Init()
 	createPart(
 		"FusionAltarRing",
 		Vector3.new(10, 0.3, 10),
-		CFrame.new(0, 1.35, -26),
+		CFrame.new(0, FLOOR_Y + 1.35, -26),
 		Color3.fromRGB(168, 85, 247),
 		Enum.Material.Neon,
 		rootFolder,
@@ -168,7 +203,7 @@ function PlotService.Init()
 	local altarCore = createPart(
 		"FusionAltarCore",
 		Vector3.new(3.2, 3.2, 3.2),
-		CFrame.new(0, 4.2, -26),
+		CFrame.new(0, FLOOR_Y + 4.2, -26),
 		Color3.fromRGB(192, 132, 252),
 		Enum.Material.Glass,
 		rootFolder,
@@ -186,7 +221,7 @@ function PlotService.Init()
 		createPart(
 			`AltarPylon_{idx}`,
 			Vector3.new(1.4, 6.0, 1.4),
-			CFrame.new(Vector3.new(0, 0, -26) + offset),
+			CFrame.new(Vector3.new(0, FLOOR_Y, -26) + offset),
 			Color3.fromRGB(51, 65, 85),
 			Enum.Material.Metal,
 			rootFolder
@@ -194,7 +229,7 @@ function PlotService.Init()
 		createPart(
 			`AltarPylonCap_{idx}`,
 			Vector3.new(1.6, 0.6, 1.6),
-			CFrame.new(Vector3.new(0, 6.6, -26) + offset),
+			CFrame.new(Vector3.new(0, FLOOR_Y + 3.1, -26) + offset),
 			Color3.fromRGB(168, 85, 247),
 			Enum.Material.Neon,
 			rootFolder,
@@ -236,8 +271,8 @@ function PlotService.Init()
 	end)
 
 	-- ── 2.6. CENTRAL PLAZA SYNDICATE BLACK MARKET KIOSK ──
-	ModelEngine.CreateSyndicateKiosk(rootFolder, CFrame.new(0, 0, -50))
-	local brokerNpc = ModelEngine.CreateSyndicateBrokerNPC(rootFolder, CFrame.new(0, 0, -50) * CFrame.new(0, 0, 1.2))
+	ModelEngine.CreateSyndicateKiosk(rootFolder, CFrame.new(0, FLOOR_Y, -50))
+	local brokerNpc = ModelEngine.CreateSyndicateBrokerNPC(rootFolder, CFrame.new(0, FLOOR_Y, -50) * CFrame.new(0, 0, 1.2))
 	local brokerPrompt = brokerNpc:FindFirstChildWhichIsA("ProximityPrompt", true)
 	if brokerPrompt then
 		brokerPrompt.Triggered:Connect(function(player: Player)
@@ -248,7 +283,7 @@ function PlotService.Init()
 		end)
 	end
 
-	-- ── 3. BUILD 6 MODULAR PLOTS CIRCULARLY ──
+	-- ── 3. BUILD 6 MODULAR FORTIFIED BUNKER PLOTS CIRCULARLY ──
 	local plotsFolder = Instance.new("Folder")
 	plotsFolder.Name = "Plots"
 	plotsFolder.Parent = rootFolder
@@ -261,55 +296,64 @@ function PlotService.Init()
 	for i = 1, numPlots do
 		local angle = ((i - 1) / numPlots) * (math.pi * 2)
 		local plotDir = Vector3.new(math.cos(angle), 0, math.sin(angle))
-		local plotPos = plotDir * (radius + pLen / 2)
-		local faceCenterCF = CFrame.lookAt(plotPos, Vector3.new(0, plotPos.Y, 0))
+		local plotPos = Vector3.new(plotDir.X * (radius + pLen / 2), ARENA_Y, plotDir.Z * (radius + pLen / 2))
+		local faceCenterCF = CFrame.lookAt(plotPos, Vector3.new(0, ARENA_Y, 0))
 
 		local pFolder = Instance.new("Folder")
 		pFolder.Name = "Plot_" .. i
 		pFolder.Parent = plotsFolder
 
-		-- Plot Floor
+		-- ── 3.1. INDUSTRIAL CATWALK BRIDGE (CONNECTS PLAZA TO BUNKER) ──
+		local bridgePos = Vector3.new(plotDir.X * (radius - 4), FLOOR_Y - 0.2, plotDir.Z * (radius - 4))
+		local bridgeCF = CFrame.lookAt(bridgePos, Vector3.new(0, FLOOR_Y - 0.2, 0))
+		createPart(
+			`CatwalkBridge_{i}`,
+			Vector3.new(14, 0.4, 18),
+			bridgeCF,
+			Color3.fromRGB(24, 28, 40),
+			Enum.Material.DiamondPlate,
+			pFolder,
+			true
+		)
+		-- Glowing Cyan Edge Guides on Bridge
+		createPart(
+			`BridgeCurbL_{i}`,
+			Vector3.new(0.4, 0.6, 18),
+			bridgeCF * CFrame.new(-6.8, 0.3, 0),
+			Color3.fromRGB(56, 189, 248),
+			Enum.Material.Neon,
+			pFolder,
+			false
+		)
+		createPart(
+			`BridgeCurbR_{i}`,
+			Vector3.new(0.4, 0.6, 18),
+			bridgeCF * CFrame.new(6.8, 0.3, 0),
+			Color3.fromRGB(56, 189, 248),
+			Enum.Material.Neon,
+			pFolder,
+			false
+		)
+
+		-- ── 3.2. ELEVATED BUNKER FOUNDATION FLOOR ──
 		local floor = createPart(
 			"PlotFloor",
-			Vector3.new(pWidth, 2, pLen),
+			Vector3.new(pWidth, 4, pLen),
 			faceCenterCF * CFrame.new(0, 0, 0),
-			Color3.fromRGB(24, 24, 27),
-			Enum.Material.SmoothPlastic,
+			Color3.fromRGB(24, 28, 40),
+			Enum.Material.Slate,
 			pFolder
 		)
 
-		-- Plot Perimeter Walls (Left, Right, Back)
-		local leftWall = createPart(
-			"LeftWall",
-			Vector3.new(1.5, Config.Arena.WallHeight, pLen),
-			faceCenterCF * CFrame.new(-pWidth / 2, Config.Arena.WallHeight / 2, 0),
-			Color3.fromRGB(39, 39, 42),
-			Enum.Material.Concrete,
-			pFolder
-		)
-		local rightWall = createPart(
-			"RightWall",
-			Vector3.new(1.5, Config.Arena.WallHeight, pLen),
-			faceCenterCF * CFrame.new(pWidth / 2, Config.Arena.WallHeight / 2, 0),
-			Color3.fromRGB(39, 39, 42),
-			Enum.Material.Concrete,
-			pFolder
-		)
-		local backWall = createPart(
-			"BackWall",
-			Vector3.new(pWidth + 1.5, Config.Arena.WallHeight, 1.5),
-			faceCenterCF * CFrame.new(0, Config.Arena.WallHeight / 2, pLen / 2),
-			Color3.fromRGB(39, 39, 42),
-			Enum.Material.Concrete,
-			pFolder
-		)
+		-- ── 3.3. FORTIFIED CYBER-VAULT BUNKER SHELL ──
+		ModelEngine.CreateBunkerShell(pFolder, faceCenterCF * CFrame.new(0, 2, 0), pWidth, pLen, Config.Arena.WallHeight)
 
 		-- ── 4. CHUNKY MULTI-TIER VAULT DOOR AT BACK ──
-		local vaultDoorModel = ModelEngine.CreateVaultDoor(pFolder, faceCenterCF * CFrame.new(0, 0, pLen / 2 - 1.5))
+		local vaultDoorModel = ModelEngine.CreateVaultDoor(pFolder, faceCenterCF * CFrame.new(0, 2, pLen / 2 - 1.5))
 		local vaultWheel = vaultDoorModel:FindFirstChild("CogWheelCenter") :: Part?
 
 		-- ── 5. INDUSTRIAL MINT MACHINE & CONVEYOR ──
-		local mintMachine = ModelEngine.CreateMintMachine(pFolder, faceCenterCF * CFrame.new(8, 0, 0))
+		local mintMachine = ModelEngine.CreateMintMachine(pFolder, faceCenterCF * CFrame.new(8, 2, 0))
 		local conveyor = (mintMachine:FindFirstChild("BaseChassis") or mintMachine.PrimaryPart) :: Part
 		local belt = (mintMachine:FindFirstChild("ConveyorBelt") or conveyor) :: Part
 		local stampingHead = mintMachine:FindFirstChild("StampingHead") :: Part?
@@ -317,52 +361,75 @@ function PlotService.Init()
 		-- ── 6. PHYSICAL HYDRAULIC DEPOSIT SWITCH ──
 		local safeBtnModel, safePad = ModelEngine.CreateHydraulicFloorButton(
 			pFolder,
-			faceCenterCF * CFrame.new(0, 0, pLen / 2 - 9),
+			faceCenterCF * CFrame.new(0, 2, pLen / 2 - 9),
 			Color3.fromRGB(16, 185, 129),
 			"📥 STEP TO BANK"
 		)
 
-		-- ── 7. FRONT LASER PILLARS (SECURITY ENTRANCE) ──
+		-- ── 7. FRONT HIGH-VOLTAGE LASER PYLONS (SECURITY ENTRANCE) ──
 		local leftLaserPost = createPart(
 			"LaserPostLeft",
-			Vector3.new(1.5, 10, 1.5),
-			faceCenterCF * CFrame.new(-pWidth / 2 + 3, 5, -pLen / 2 + 1),
+			Vector3.new(2.0, 10, 2.0),
+			faceCenterCF * CFrame.new(-pWidth / 2 + 2.5, 7, -pLen / 2 + 1),
 			Color3.fromRGB(51, 65, 85),
 			Enum.Material.Metal,
 			pFolder
 		)
 		local rightLaserPost = createPart(
 			"LaserPostRight",
-			Vector3.new(1.5, 10, 1.5),
-			faceCenterCF * CFrame.new(pWidth / 2 - 3, 5, -pLen / 2 + 1),
+			Vector3.new(2.0, 10, 2.0),
+			faceCenterCF * CFrame.new(pWidth / 2 - 2.5, 7, -pLen / 2 + 1),
 			Color3.fromRGB(51, 65, 85),
 			Enum.Material.Metal,
 			pFolder
 		)
 
+		-- Glowing Magnetic Induction Rings on Pylons
+		for _, yRing in { 4, 7, 10 } do
+			createPart(
+				`LaserRingL_{yRing}`,
+				Vector3.new(2.4, 0.4, 2.4),
+				leftLaserPost.CFrame * CFrame.new(0, yRing - 7, 0),
+				Color3.fromRGB(245, 158, 11),
+				Enum.Material.Neon,
+				leftLaserPost,
+				false
+			)
+			createPart(
+				`LaserRingR_{yRing}`,
+				Vector3.new(2.4, 0.4, 2.4),
+				rightLaserPost.CFrame * CFrame.new(0, yRing - 7, 0),
+				Color3.fromRGB(245, 158, 11),
+				Enum.Material.Neon,
+				rightLaserPost,
+				false
+			)
+		end
+
 		-- ── 7.5. BIOMETRIC SECURITY TERMINAL & AUTOMATED DEFENSE TURRET ──
-		ModelEngine.CreateBiometricTerminal(pFolder, faceCenterCF * CFrame.new(-pWidth / 2 + 4.5, 0, -pLen / 2 + 3.5))
-		ModelEngine.CreateSecurityTurret(pFolder, faceCenterCF * CFrame.new(0, 10.4, -pLen / 2 + 1))
+		ModelEngine.CreateBiometricTerminal(pFolder, faceCenterCF * CFrame.new(-pWidth / 2 + 4.5, 2, -pLen / 2 + 4.5))
+		-- Mounted directly onto the front elevated catwalk perch!
+		ModelEngine.CreateSecurityTurret(pFolder, faceCenterCF * CFrame.new(0, Config.Arena.WallHeight + 2.2, -pLen / 2 + 2.6))
 
 		-- ── 7.6. IN-WORLD PHYSICAL TYCOON UPGRADE CONSOLES ──
 		local consoles = {}
 		local cModel1, cBtn1, cGui1 = ModelEngine.CreateUpgradeConsole(
 			pFolder,
-			faceCenterCF * CFrame.new(-pWidth / 2 + 4.5, 0, 7),
+			faceCenterCF * CFrame.new(-pWidth / 2 + 4.5, 2, 7),
 			"Conveyor",
 			"MINT PRESS OVERCLOCK",
 			Color3.fromRGB(56, 189, 248)
 		)
 		local cModel2, cBtn2, cGui2 = ModelEngine.CreateUpgradeConsole(
 			pFolder,
-			faceCenterCF * CFrame.new(-pWidth / 2 + 4.5, 0, -2),
+			faceCenterCF * CFrame.new(-pWidth / 2 + 4.5, 2, -2),
 			"Laser",
 			"LASER SECURITY MATRIX",
 			Color3.fromRGB(245, 158, 11)
 		)
 		local cModel3, cBtn3, cGui3 = ModelEngine.CreateUpgradeConsole(
 			pFolder,
-			faceCenterCF * CFrame.new(pWidth / 2 - 4.5, 0, -2),
+			faceCenterCF * CFrame.new(pWidth / 2 - 4.5, 2, -2),
 			"Turret",
 			"AUTOMATED BASE TURRET",
 			Color3.fromRGB(239, 68, 68)
@@ -412,31 +479,23 @@ function PlotService.Init()
 			end
 		end
 
-		-- ── 8. SIREN BEACON ON FRONT ARCHWAY ──
-		local frontArch = createPart(
-			"FrontArch",
-			Vector3.new(pWidth, 2, 2),
-			faceCenterCF * CFrame.new(0, 11, -pLen / 2 + 1),
-			Color3.fromRGB(30, 41, 59),
-			Enum.Material.Metal,
-			pFolder
-		)
+		-- ── 8. SIREN BEACON ON BUNKER GATE LINTEL ──
 		local siren = createPart(
 			"SirenBeacon",
-			Vector3.new(1.8, 2.5, 1.8),
-			faceCenterCF * CFrame.new(0, 13.2, -pLen / 2 + 1),
+			Vector3.new(1.8, 2.4, 1.8),
+			faceCenterCF * CFrame.new(0, Config.Arena.WallHeight + 3.4, -pLen / 2 + 1.2),
 			Color3.fromRGB(239, 68, 68),
 			Enum.Material.Neon,
 			pFolder
 		)
 
-		-- Owner Billboard on Front Arch
+		-- Owner Billboard Mounted on Siren
 		local ownerGui = Instance.new("BillboardGui")
 		ownerGui.Name = "OwnerBillboard"
-		ownerGui.Size = UDim2.new(0, 220, 0, 48)
-		ownerGui.StudsOffset = Vector3.new(0, 2, 0)
+		ownerGui.Size = UDim2.new(0, 240, 0, 50)
+		ownerGui.StudsOffset = Vector3.new(0, 2.4, 0)
 		ownerGui.AlwaysOnTop = true
-		ownerGui.Parent = frontArch
+		ownerGui.Parent = siren
 
 		local obText = Instance.new("TextLabel")
 		obText.Name = "OwnerNameLabel"
@@ -448,8 +507,8 @@ function PlotService.Init()
 		obText.Font = Enum.Font.GothamBold
 		obText.Parent = ownerGui
 
-		-- ── 8.5. BASE RELIC SHOWCASE PEDESTAL (FRONT PLAZA ENTRANCE) ──
-		local pedCF = faceCenterCF * CFrame.new(-9, 1.4, -pLen / 2 + 5)
+		-- ── 8.5. BASE RELIC SHOWCASE PEDESTAL (FRONT ENTRANCE) ──
+		local pedCF = faceCenterCF * CFrame.new(-9, 3.4, -pLen / 2 + 5.5)
 		local pedBase = createPart(
 			"ShowcasePedestal",
 			Vector3.new(3.5, 2.8, 3.5),

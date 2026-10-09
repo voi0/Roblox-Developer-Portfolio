@@ -706,4 +706,243 @@ function ModelEngine.CreateSyndicateBrokerNPC(parent: Instance, baseCF: CFrame):
 	return npc
 end
 
+-- ============================================================
+-- 12. FORTIFIED CYBER-VAULT BUNKER SHELL
+-- ============================================================
+function ModelEngine.CreateBunkerShell(
+	parent: Instance,
+	baseCF: CFrame,
+	plotWidth: number,
+	plotLength: number,
+	wallHeight: number
+): Model
+	local model = Instance.new("Model")
+	model.Name = "FortifiedBunkerShell"
+	model.Parent = parent
+
+	-- 12.1. Left Armored Wall Complex
+	local leftCore = createPart(
+		"LeftWallCore",
+		Vector3.new(2.4, wallHeight, plotLength),
+		baseCF * CFrame.new(-plotWidth / 2, wallHeight / 2, 0),
+		Color3.fromRGB(28, 33, 46),
+		Enum.Material.Slate,
+		model,
+		true
+	)
+	model.PrimaryPart = leftCore
+
+	-- Beveled Base Skirt (DiamondPlate)
+	createPart(
+		"LeftWallSkirt",
+		Vector3.new(3.2, 2.2, plotLength),
+		baseCF * CFrame.new(-plotWidth / 2, 1.1, 0),
+		Color3.fromRGB(15, 23, 42),
+		Enum.Material.DiamondPlate,
+		model,
+		true
+	)
+
+	-- Exterior Pilasters / Vertical Armor Ribs (3 on left)
+	for _, zRel in { -plotLength * 0.32, 0, plotLength * 0.32 } do
+		createPart(
+			"LeftRib",
+			Vector3.new(1.4, wallHeight + 1.2, 4.5),
+			baseCF * CFrame.new(-plotWidth / 2 - 1.2, (wallHeight + 1.2) / 2, zRel),
+			Color3.fromRGB(20, 24, 34),
+			Enum.Material.Metal,
+			model,
+			true
+		)
+		-- Glowing Status Conduit on Rib
+		createPart(
+			"LeftRibGlow",
+			Vector3.new(0.3, wallHeight - 2, 0.6),
+			baseCF * CFrame.new(-plotWidth / 2 - 1.9, wallHeight / 2, zRel),
+			Color3.fromRGB(56, 189, 248),
+			Enum.Material.Neon,
+			model,
+			false
+		)
+	end
+
+	-- Horizontal Cyber Inlay Conduit
+	createPart(
+		"LeftConduit",
+		Vector3.new(0.4, 0.6, plotLength - 4),
+		baseCF * CFrame.new(-plotWidth / 2 - 1.3, 7.5, 0),
+		Color3.fromRGB(56, 189, 248),
+		Enum.Material.Neon,
+		model,
+		false
+	)
+
+	-- 12.2. Right Armored Wall Complex
+	local rightCore = createPart(
+		"RightWallCore",
+		Vector3.new(2.4, wallHeight, plotLength),
+		baseCF * CFrame.new(plotWidth / 2, wallHeight / 2, 0),
+		Color3.fromRGB(28, 33, 46),
+		Enum.Material.Slate,
+		model,
+		true
+	)
+
+	createPart(
+		"RightWallSkirt",
+		Vector3.new(3.2, 2.2, plotLength),
+		baseCF * CFrame.new(plotWidth / 2, 1.1, 0),
+		Color3.fromRGB(15, 23, 42),
+		Enum.Material.DiamondPlate,
+		model,
+		true
+	)
+
+	for _, zRel in { -plotLength * 0.32, 0, plotLength * 0.32 } do
+		createPart(
+			"RightRib",
+			Vector3.new(1.4, wallHeight + 1.2, 4.5),
+			baseCF * CFrame.new(plotWidth / 2 + 1.2, (wallHeight + 1.2) / 2, zRel),
+			Color3.fromRGB(20, 24, 34),
+			Enum.Material.Metal,
+			model,
+			true
+		)
+		createPart(
+			"RightRibGlow",
+			Vector3.new(0.3, wallHeight - 2, 0.6),
+			baseCF * CFrame.new(plotWidth / 2 + 1.9, wallHeight / 2, zRel),
+			Color3.fromRGB(56, 189, 248),
+			Enum.Material.Neon,
+			model,
+			false
+		)
+	end
+
+	createPart(
+		"RightConduit",
+		Vector3.new(0.4, 0.6, plotLength - 4),
+		baseCF * CFrame.new(plotWidth / 2 + 1.3, 7.5, 0),
+		Color3.fromRGB(56, 189, 248),
+		Enum.Material.Neon,
+		model,
+		false
+	)
+
+	-- 12.3. Rear Armored Bulkhead Wall & Recessed Alcove
+	createPart(
+		"BackWallCore",
+		Vector3.new(plotWidth + 4, wallHeight, 3.2),
+		baseCF * CFrame.new(0, wallHeight / 2, plotLength / 2),
+		Color3.fromRGB(20, 24, 34),
+		Enum.Material.Concrete,
+		model,
+		true
+	)
+	createPart(
+		"BackWallUpperTrim",
+		Vector3.new(plotWidth + 4.8, 2.2, 4.2),
+		baseCF * CFrame.new(0, wallHeight + 0.6, plotLength / 2),
+		Color3.fromRGB(15, 23, 42),
+		Enum.Material.DiamondPlate,
+		model,
+		true
+	)
+
+	-- 12.4. Armored Blast Roof (Covers Rear 65% of the bunker)
+	local roofLen = plotLength * 0.65
+	local roofZ = plotLength * 0.175
+	createPart(
+		"BlastRoofDeck",
+		Vector3.new(plotWidth + 4, 1.8, roofLen),
+		baseCF * CFrame.new(0, wallHeight + 0.9, roofZ),
+		Color3.fromRGB(24, 28, 40),
+		Enum.Material.Metal,
+		model,
+		true
+	)
+
+	-- Roof HVAC Industrial Fan & Duct
+	local hvac = createPart(
+		"RoofHVAC",
+		Vector3.new(7.0, 3.2, 9.0),
+		baseCF * CFrame.new(-6.0, wallHeight + 3.2, roofZ),
+		Color3.fromRGB(15, 20, 30),
+		Enum.Material.Corrugated,
+		model,
+		true
+	)
+	createCylinder(
+		"HVACFanVent",
+		Vector3.new(0.8, 4.8, 4.8),
+		hvac.CFrame * CFrame.new(0, 1.8, 0) * CFrame.Angles(0, 0, math.rad(90)),
+		Color3.fromRGB(56, 189, 248),
+		Enum.Material.Neon,
+		hvac,
+		false
+	)
+
+	-- 12.5. Front Elevated Catwalk & Turret Observation Perch
+	local catwalkY = wallHeight - 0.6
+	local catwalkZ = -plotLength / 2 + 2.6
+	-- Catwalk Base Girder
+	createPart(
+		"CatwalkGirder",
+		Vector3.new(plotWidth + 2, 1.4, 5.6),
+		baseCF * CFrame.new(0, catwalkY, catwalkZ),
+		Color3.fromRGB(20, 24, 34),
+		Enum.Material.DiamondPlate,
+		model,
+		true
+	)
+	-- Catwalk Safety Railing (Front)
+	createPart(
+		"CatwalkRailFront",
+		Vector3.new(plotWidth - 2, 2.4, 0.3),
+		baseCF * CFrame.new(0, catwalkY + 1.8, catwalkZ - 2.6),
+		Color3.fromRGB(71, 85, 105),
+		Enum.Material.Metal,
+		model,
+		false
+	)
+
+	-- Turret Observation Perch (Reinforced Pedestal Ring)
+	createCylinder(
+		"TurretPerchRing",
+		Vector3.new(1.0, 6.4, 6.4),
+		baseCF * CFrame.new(0, catwalkY + 0.8, catwalkZ) * CFrame.Angles(0, 0, math.rad(90)),
+		Color3.fromRGB(30, 41, 59),
+		Enum.Material.Metal,
+		model,
+		true
+	)
+
+	-- Hazard Yellow Chevron Underside on Entryway
+	local header = createPart(
+		"GateHeaderLintel",
+		Vector3.new(plotWidth - 3, 2.0, 3.2),
+		baseCF * CFrame.new(0, wallHeight + 0.6, -plotLength / 2 + 1.2),
+		Color3.fromRGB(245, 158, 11),
+		Enum.Material.SmoothPlastic,
+		model,
+		true
+	)
+
+	-- LED Vault Designation Sign
+	local sGui = Instance.new("SurfaceGui")
+	sGui.Face = Enum.NormalId.Front
+	sGui.PixelsPerStud = 50
+	sGui.Parent = header
+	local lbl = Instance.new("TextLabel")
+	lbl.Size = UDim2.new(1, 0, 1, 0)
+	lbl.BackgroundTransparency = 1
+	lbl.Text = "⚡ SECURE HEIST VAULT BASTION ⚡"
+	lbl.TextColor3 = Color3.fromRGB(15, 23, 42)
+	lbl.TextSize = 20
+	lbl.Font = Enum.Font.GothamBlack
+	lbl.Parent = sGui
+
+	return model
+end
+
 return ModelEngine

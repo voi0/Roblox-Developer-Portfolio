@@ -1,9 +1,10 @@
 --!strict
 --[[
-	Loading Screen — STARWEAVE
-	Cinematic cosmic loading experience with animated starfield,
-	logo reveal, constellation drawing, and asset-synced progress.
-	Critical for preventing first-60-second bounce.
+	Loading Screen — VAULT WARS: STEAL & DEFEND TYCOON
+	Cinematic Cyber-Heist Terminal Boot Experience:
+	- Tactical Obsidian theme with scanning matrix & telemetry stream
+	- Biometric verification progress bar
+	- Smooth graceful fade-out on asset readiness (eliminates popping & flickering)
 	Located in: ReplicatedFirst.Loading
 ]]
 
@@ -11,503 +12,234 @@ local Players = game:GetService("Players")
 local ReplicatedFirst = game:GetService("ReplicatedFirst")
 local TweenService = game:GetService("TweenService")
 local ContentProvider = game:GetService("ContentProvider")
-local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
 
 ReplicatedFirst:RemoveDefaultLoadingScreen()
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
-local rng = Random.new()
 
 -- ============================================================
 -- DESIGN TOKENS
 -- ============================================================
 local C = {
-	Void       = Color3.fromRGB(5, 2, 14),
-	DeepSpace  = Color3.fromRGB(10, 6, 24),
-	Nebula     = Color3.fromRGB(18, 12, 38),
-	Purple     = Color3.fromRGB(147, 51, 234),
-	PurpleGlow = Color3.fromRGB(192, 132, 252),
-	Gold       = Color3.fromRGB(255, 204, 0),
-	GoldSoft   = Color3.fromRGB(255, 230, 140),
+	Obsidian   = Color3.fromRGB(7, 9, 14),
+	Carbon     = Color3.fromRGB(15, 17, 26),
+	SlatePanel = Color3.fromRGB(22, 25, 38),
+	Gold       = Color3.fromRGB(245, 158, 11),
+	GoldBright = Color3.fromRGB(254, 240, 138),
 	Cyan       = Color3.fromRGB(56, 189, 248),
+	Emerald    = Color3.fromRGB(16, 185, 129),
+	Crimson    = Color3.fromRGB(239, 68, 68),
 	White      = Color3.fromRGB(248, 250, 252),
-	TextDim    = Color3.fromRGB(120, 108, 156),
-	BarBg      = Color3.fromRGB(22, 16, 40),
-	BarFill    = Color3.fromRGB(74, 222, 128),
+	TextDim    = Color3.fromRGB(148, 163, 184),
 }
 
 -- ============================================================
 -- ROOT GUI
 -- ============================================================
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "LoadingScreen"
+local isDestroyed = false
+screenGui.Name = "VaultWarsLoadingScreen"
 screenGui.IgnoreGuiInset = true
 screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 screenGui.DisplayOrder = 100
 screenGui.Parent = playerGui
 
--- Hard failsafe: Guarantee loading screen is NEVER stuck blocking the game
-task.delay(2.2, function()
+-- Background Frame
+local bg = Instance.new("Frame")
+local isBgDestroyed = false
+bg.Name = "TerminalBackground"
+bg.Size = UDim2.fromScale(1, 1)
+bg.BackgroundColor3 = C.Obsidian
+bg.BorderSizePixel = 0
+bg.Parent = screenGui
+
+-- Center Cyber Console Container
+local consoleBox = Instance.new("Frame")
+consoleBox.Name = "ConsoleBox"
+consoleBox.Size = UDim2.new(0, 520, 0, 340)
+consoleBox.Position = UDim2.fromScale(0.5, 0.48)
+consoleBox.AnchorPoint = Vector2.new(0.5, 0.5)
+consoleBox.BackgroundColor3 = C.Carbon
+consoleBox.BackgroundTransparency = 0.15
+consoleBox.BorderSizePixel = 0
+consoleBox.Parent = bg
+
+local cCorner = Instance.new("UICorner")
+cCorner.CornerRadius = UDim.new(0, 16)
+cCorner.Parent = consoleBox
+
+local cStroke = Instance.new("UIStroke")
+cStroke.Color = Color3.fromRGB(30, 41, 59)
+cStroke.Thickness = 2
+cStroke.Parent = consoleBox
+
+-- Top Status Bar
+local topBar = Instance.new("Frame")
+topBar.Name = "TopBar"
+topBar.Size = UDim2.new(1, 0, 0, 42)
+topBar.BackgroundColor3 = C.SlatePanel
+topBar.BorderSizePixel = 0
+topBar.Parent = consoleBox
+
+local tbCorner = Instance.new("UICorner")
+tbCorner.CornerRadius = UDim.new(0, 16)
+tbCorner.Parent = topBar
+
+-- Status Indicator Dots
+local dotCyan = Instance.new("Frame")
+dotCyan.Size = UDim2.new(0, 10, 0, 10)
+dotCyan.Position = UDim2.new(0, 16, 0.5, -5)
+dotCyan.BackgroundColor3 = C.Cyan
+dotCyan.BorderSizePixel = 0
+dotCyan.Parent = topBar
+Instance.new("UICorner", dotCyan).CornerRadius = UDim.new(1, 0)
+
+local statusLbl = Instance.new("TextLabel")
+statusLbl.Size = UDim2.new(1, -50, 1, 0)
+statusLbl.Position = UDim2.new(0, 36, 0, 0)
+statusLbl.BackgroundTransparency = 1
+statusLbl.Text = "⚡ SECURE HEIST NETWORK // SYNDICATE TERMINAL"
+statusLbl.TextColor3 = C.TextDim
+statusLbl.TextSize = 11
+statusLbl.Font = Enum.Font.GothamBold
+statusLbl.TextXAlignment = Enum.TextXAlignment.Left
+statusLbl.Parent = topBar
+
+-- Game Title
+local titleLbl = Instance.new("TextLabel")
+titleLbl.Name = "TitleLabel"
+titleLbl.Size = UDim2.new(1, -40, 0, 44)
+titleLbl.Position = UDim2.new(0, 20, 0, 60)
+titleLbl.BackgroundTransparency = 1
+titleLbl.Text = "VAULT WARS"
+titleLbl.TextColor3 = C.Gold
+titleLbl.TextSize = 38
+titleLbl.Font = Enum.Font.GothamBlack
+titleLbl.TextXAlignment = Enum.TextXAlignment.Center
+titleLbl.Parent = consoleBox
+
+local subTitle = Instance.new("TextLabel")
+subTitle.Size = UDim2.new(1, -40, 0, 20)
+subTitle.Position = UDim2.new(0, 20, 0, 108)
+subTitle.BackgroundTransparency = 1
+subTitle.Text = "STEAL & DEFEND TYCOON"
+subTitle.TextColor3 = C.Cyan
+subTitle.TextSize = 14
+subTitle.Font = Enum.Font.GothamBold
+subTitle.TextXAlignment = Enum.TextXAlignment.Center
+subTitle.Parent = consoleBox
+
+-- Terminal Telemetry Log Box
+local logBox = Instance.new("Frame")
+logBox.Name = "LogBox"
+logBox.Size = UDim2.new(1, -40, 0, 84)
+logBox.Position = UDim2.new(0, 20, 0, 142)
+logBox.BackgroundColor3 = C.Obsidian
+logBox.BackgroundTransparency = 0.4
+logBox.BorderSizePixel = 0
+logBox.Parent = consoleBox
+Instance.new("UICorner", logBox).CornerRadius = UDim.new(0, 8)
+
+local logText = Instance.new("TextLabel")
+logText.Name = "LogText"
+logText.Size = UDim2.new(1, -16, 1, -10)
+logText.Position = UDim2.new(0, 10, 0, 5)
+logText.BackgroundTransparency = 1
+logText.Text = "> INITIALIZING BIOMETRIC CIPHERS...\n> ESTABLISHING SECURE CONNECTION..."
+logText.TextColor3 = C.Emerald
+logText.TextSize = 11
+logText.Font = Enum.Font.Code
+logText.TextXAlignment = Enum.TextXAlignment.Left
+logText.TextYAlignment = Enum.TextYAlignment.Top
+logText.Parent = logBox
+
+-- Progress Bar Outer Track
+local barTrack = Instance.new("Frame")
+barTrack.Name = "BarTrack"
+barTrack.Size = UDim2.new(1, -40, 0, 14)
+barTrack.Position = UDim2.new(0, 20, 0, 246)
+barTrack.BackgroundColor3 = C.SlatePanel
+barTrack.BorderSizePixel = 0
+barTrack.Parent = consoleBox
+Instance.new("UICorner", barTrack).CornerRadius = UDim.new(1, 0)
+
+-- Progress Bar Fill
+local barFill = Instance.new("Frame")
+barFill.Name = "BarFill"
+barFill.Size = UDim2.new(0.08, 0, 1, 0)
+barFill.BackgroundColor3 = C.Cyan
+barFill.BorderSizePixel = 0
+barFill.Parent = barTrack
+Instance.new("UICorner", barFill).CornerRadius = UDim.new(1, 0)
+
+local pctLbl = Instance.new("TextLabel")
+pctLbl.Name = "PercentLabel"
+pctLbl.Size = UDim2.new(1, -40, 0, 22)
+pctLbl.Position = UDim2.new(0, 20, 0, 270)
+pctLbl.BackgroundTransparency = 1
+pctLbl.Text = "AUTHENTICATING... 8%"
+pctLbl.TextColor3 = C.TextDim
+pctLbl.TextSize = 12
+pctLbl.Font = Enum.Font.GothamMedium
+pctLbl.TextXAlignment = Enum.TextXAlignment.Center
+pctLbl.Parent = consoleBox
+
+-- ============================================================
+-- PROGRESSION & GRACEFUL EXIT
+-- ============================================================
+task.spawn(function()
+	local logs = {
+		"> ESTABLISHING ENCRYPTED TUNNEL... [OK]",
+		"> LOADING SECTOR 07 CAVERN GEOMETRY... [OK]",
+		"> SYNCHRONIZING SYNDICATE HEIST LEDGER... [OK]",
+		"> SYSTEM ONLINE: WELCOME TO VAULT WARS.",
+	}
+
+	for i, log in logs do
+		task.wait(0.35)
+		if isDestroyed then return end
+		logText.Text = logText.Text .. "\n" .. log
+		local targetPct = math.min(1.0, 0.25 * i)
+		TweenService:Create(barFill, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			Size = UDim2.new(targetPct, 0, 1, 0),
+		}):Play()
+		pctLbl.Text = string.format("AUTHENTICATING... %d%%", math.floor(targetPct * 100))
+	end
+
+	-- Wait until VaultWarsArena is in Workspace or max 2.5s
+	local startTime = os.clock()
+	while not Workspace:FindFirstChild("VaultWarsArena") and (os.clock() - startTime < 2.5) do
+		task.wait(0.1)
+	end
+
+	-- Complete progress
+	barFill.BackgroundColor3 = C.Emerald
+	TweenService:Create(barFill, TweenInfo.new(0.2, Enum.EasingStyle.Quad), { Size = UDim2.new(1, 0, 1, 0) }):Play()
+	pctLbl.Text = "ACCESS GRANTED. INITIALIZING..."
+	pctLbl.TextColor3 = C.Emerald
+	task.wait(0.35)
+
+	-- Smooth Graceful Fade-Out (No pop-in or sudden flash!)
 	if screenGui and screenGui.Parent then
+		local fadeInfo = TweenInfo.new(0.45, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+		TweenService:Create(bg, fadeInfo, { BackgroundTransparency = 1 }):Play()
+		TweenService:Create(consoleBox, fadeInfo, { BackgroundTransparency = 1 }):Play()
+		for _, desc in consoleBox:GetDescendants() do
+			if desc:IsA("TextLabel") then
+				TweenService:Create(desc, fadeInfo, { TextTransparency = 1 }):Play()
+			elseif desc:IsA("Frame") then
+				TweenService:Create(desc, fadeInfo, { BackgroundTransparency = 1 }):Play()
+			elseif desc:IsA("UIStroke") then
+				TweenService:Create(desc, fadeInfo, { Transparency = 1 }):Play()
+			end
+		end
+
+		task.wait(0.5)
+		isDestroyed = true
 		pcall(function()
 			screenGui:Destroy()
 		end)
 	end
-end)
-
--- ============================================================
--- BACKGROUND (gradient from deep void to nebula)
--- ============================================================
-local bg = Instance.new("Frame")
-bg.Name = "Background"
-bg.Size = UDim2.fromScale(1, 1)
-bg.BackgroundColor3 = C.Void
-bg.BorderSizePixel = 0
-bg.Parent = screenGui
-
-local bgGrad = Instance.new("UIGradient")
-bgGrad.Color = ColorSequence.new({
-	ColorSequenceKeypoint.new(0, C.Void),
-	ColorSequenceKeypoint.new(0.5, C.DeepSpace),
-	ColorSequenceKeypoint.new(1, C.Nebula),
-})
-bgGrad.Rotation = 160
-bgGrad.Parent = bg
-
--- ============================================================
--- ANIMATED STARFIELD (procedural — no images needed)
--- ============================================================
-local starContainer = Instance.new("Frame")
-starContainer.Name = "Starfield"
-starContainer.Size = UDim2.fromScale(1, 1)
-starContainer.BackgroundTransparency = 1
-starContainer.Parent = bg
-
-local starPool: { Frame } = {}
-
-local function spawnStar()
-	local star = Instance.new("Frame")
-	local size = rng:NextInteger(1, 3)
-	local brightness = rng:NextNumber(0.3, 1.0)
-
-	star.Size = UDim2.new(0, size, 0, size)
-	star.Position = UDim2.fromScale(rng:NextNumber(0.02, 0.98), rng:NextNumber(0.02, 0.98))
-	star.BackgroundColor3 = Color3.new(brightness, brightness * 0.95, brightness * 1.05)
-	star.BackgroundTransparency = rng:NextNumber(0.2, 0.7)
-	star.BorderSizePixel = 0
-	star.Parent = starContainer
-
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(1, 0)
-	corner.Parent = star
-
-	-- Twinkle animation
-	local twinkleDuration = rng:NextNumber(1.5, 4.0)
-	local twinkleDelay = rng:NextNumber(0, 2.0)
-	task.delay(twinkleDelay, function()
-		while star.Parent do
-			local fadeOut = TweenService:Create(star, TweenInfo.new(twinkleDuration * 0.5, Enum.EasingStyle.Sine), {
-				BackgroundTransparency = rng:NextNumber(0.6, 0.95),
-			})
-			fadeOut:Play()
-			fadeOut.Completed:Wait()
-
-			local fadeIn = TweenService:Create(star, TweenInfo.new(twinkleDuration * 0.5, Enum.EasingStyle.Sine), {
-				BackgroundTransparency = rng:NextNumber(0.1, 0.5),
-			})
-			fadeIn:Play()
-			fadeIn.Completed:Wait()
-		end
-	end)
-
-	table.insert(starPool, star)
-end
-
--- Generate starfield
-for _ = 1, 80 do
-	spawnStar()
-end
-
--- ============================================================
--- NEBULA GLOW (soft radial light behind logo)
--- ============================================================
-local nebulaGlow = Instance.new("Frame")
-nebulaGlow.Name = "NebulaGlow"
-nebulaGlow.Size = UDim2.new(0, 400, 0, 400)
-nebulaGlow.Position = UDim2.fromScale(0.5, 0.42)
-nebulaGlow.AnchorPoint = Vector2.new(0.5, 0.5)
-nebulaGlow.BackgroundColor3 = C.Purple
-nebulaGlow.BackgroundTransparency = 0.88
-nebulaGlow.BorderSizePixel = 0
-nebulaGlow.Parent = bg
-
-local nebulaCorner = Instance.new("UICorner")
-nebulaCorner.CornerRadius = UDim.new(1, 0)
-nebulaCorner.Parent = nebulaGlow
-
--- Pulsing glow
-task.spawn(function()
-	while nebulaGlow.Parent do
-		TweenService:Create(nebulaGlow, TweenInfo.new(3, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
-			Size = UDim2.new(0, 460, 0, 460),
-			BackgroundTransparency = 0.82,
-		}):Play()
-		task.wait(3)
-		TweenService:Create(nebulaGlow, TweenInfo.new(3, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
-			Size = UDim2.new(0, 400, 0, 400),
-			BackgroundTransparency = 0.88,
-		}):Play()
-		task.wait(3)
-	end
-end)
-
--- ============================================================
--- TITLE: "STARWEAVE" — revealed with gradient wipe
--- ============================================================
-local titleContainer = Instance.new("Frame")
-titleContainer.Name = "TitleContainer"
-titleContainer.Size = UDim2.new(0, 500, 0, 80)
-titleContainer.Position = UDim2.fromScale(0.5, 0.36)
-titleContainer.AnchorPoint = Vector2.new(0.5, 0.5)
-titleContainer.BackgroundTransparency = 1
-titleContainer.Parent = bg
-
-local title = Instance.new("TextLabel")
-title.Name = "GameTitle"
-title.Size = UDim2.fromScale(1, 1)
-title.BackgroundTransparency = 1
-title.Text = "VAULT WARS"
-title.TextColor3 = Color3.fromRGB(250, 204, 21)
-title.TextSize = 58
-title.Font = Enum.Font.GothamBlack
-title.TextTransparency = 1 -- starts hidden
-title.TextXAlignment = Enum.TextXAlignment.Center
-title.Parent = titleContainer
-
--- Gradient mask for reveal effect
-local titleGrad = Instance.new("UIGradient")
-titleGrad.Color = ColorSequence.new({
-	ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)),
-	ColorSequenceKeypoint.new(1, Color3.new(1, 1, 1)),
-})
-titleGrad.Transparency = NumberSequence.new({
-	NumberSequenceKeypoint.new(0, 0),
-	NumberSequenceKeypoint.new(0.45, 0),
-	NumberSequenceKeypoint.new(0.55, 1),
-	NumberSequenceKeypoint.new(1, 1),
-})
-titleGrad.Offset = Vector2.new(-1, 0) -- starts fully masked
-titleGrad.Parent = title
-
--- Subtitle
-local subtitle = Instance.new("TextLabel")
-subtitle.Name = "Subtitle"
-subtitle.Size = UDim2.new(0, 420, 0, 24)
-subtitle.Position = UDim2.fromScale(0.5, 0.46)
-subtitle.AnchorPoint = Vector2.new(0.5, 0.5)
-subtitle.BackgroundTransparency = 1
-subtitle.Text = "MINT • DEFEND • STEAL"
-subtitle.TextColor3 = Color3.fromRGB(56, 189, 248)
-subtitle.TextSize = 14
-subtitle.Font = Enum.Font.GothamBold
-subtitle.TextTransparency = 1 -- starts hidden
-subtitle.Parent = bg
-
--- ============================================================
--- CONSTELLATION LINES (decorative)
--- ============================================================
-local constellationFrame = Instance.new("Frame")
-constellationFrame.Name = "Constellation"
-constellationFrame.Size = UDim2.fromScale(1, 1)
-constellationFrame.BackgroundTransparency = 1
-constellationFrame.Parent = bg
-
-local constellationPoints = {
-	{0.32, 0.28}, {0.42, 0.22}, {0.52, 0.25}, {0.60, 0.20},
-	{0.68, 0.27}, {0.58, 0.32}, {0.48, 0.30}, {0.38, 0.34},
-}
-
-local constellationDots: { Frame } = {}
-for _, pos in constellationPoints do
-	local dot = Instance.new("Frame")
-	dot.Size = UDim2.new(0, 4, 0, 4)
-	dot.Position = UDim2.fromScale(pos[1], pos[2])
-	dot.AnchorPoint = Vector2.new(0.5, 0.5)
-	dot.BackgroundColor3 = C.PurpleGlow
-	dot.BackgroundTransparency = 1 -- starts hidden
-	dot.BorderSizePixel = 0
-	dot.Parent = constellationFrame
-
-	local dotCorner = Instance.new("UICorner")
-	dotCorner.CornerRadius = UDim.new(1, 0)
-	dotCorner.Parent = dot
-
-	table.insert(constellationDots, dot)
-end
-
--- ============================================================
--- PROGRESS BAR (thin, elegant)
--- ============================================================
-local progressContainer = Instance.new("Frame")
-progressContainer.Name = "ProgressContainer"
-progressContainer.Size = UDim2.new(0, 360, 0, 50)
-progressContainer.Position = UDim2.fromScale(0.5, 0.58)
-progressContainer.AnchorPoint = Vector2.new(0.5, 0.5)
-progressContainer.BackgroundTransparency = 1
-progressContainer.Parent = bg
-
-local barBg = Instance.new("Frame")
-barBg.Name = "BarBg"
-barBg.Size = UDim2.new(1, 0, 0, 4)
-barBg.Position = UDim2.new(0, 0, 0, 0)
-barBg.BackgroundColor3 = C.BarBg
-barBg.BorderSizePixel = 0
-barBg.Parent = progressContainer
-
-local barBgCorner = Instance.new("UICorner")
-barBgCorner.CornerRadius = UDim.new(1, 0)
-barBgCorner.Parent = barBg
-
-local barFill = Instance.new("Frame")
-barFill.Name = "Fill"
-barFill.Size = UDim2.fromScale(0, 1)
-barFill.BackgroundColor3 = C.BarFill
-barFill.BorderSizePixel = 0
-barFill.Parent = barBg
-
-local fillCorner = Instance.new("UICorner")
-fillCorner.CornerRadius = UDim.new(1, 0)
-fillCorner.Parent = barFill
-
--- Animated shimmer on fill bar
-local fillShimmer = Instance.new("UIGradient")
-fillShimmer.Color = ColorSequence.new({
-	ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)),
-	ColorSequenceKeypoint.new(0.35, Color3.new(0.85, 0.85, 0.85)),
-	ColorSequenceKeypoint.new(0.5, Color3.new(1, 1, 1)),
-	ColorSequenceKeypoint.new(0.65, Color3.new(0.85, 0.85, 0.85)),
-	ColorSequenceKeypoint.new(1, Color3.new(1, 1, 1)),
-})
-fillShimmer.Parent = barFill
-
-task.spawn(function()
-	while barFill.Parent do
-		fillShimmer.Offset = Vector2.new(-1, 0)
-		TweenService:Create(fillShimmer, TweenInfo.new(1.8, Enum.EasingStyle.Linear), {
-			Offset = Vector2.new(1, 0),
-		}):Play()
-		task.wait(2.0)
-	end
-end)
-
--- Status text (below bar)
-local statusText = Instance.new("TextLabel")
-statusText.Name = "Status"
-statusText.Size = UDim2.new(1, 0, 0, 16)
-statusText.Position = UDim2.new(0, 0, 0, 14)
-statusText.BackgroundTransparency = 1
-statusText.Text = ""
-statusText.TextColor3 = C.TextDim
-statusText.TextSize = 12
-statusText.Font = Enum.Font.GothamMedium
-statusText.TextXAlignment = Enum.TextXAlignment.Center
-statusText.Parent = progressContainer
-
--- Percentage text (right-aligned above bar)
-local pctText = Instance.new("TextLabel")
-pctText.Name = "Percentage"
-pctText.Size = UDim2.new(0, 40, 0, 14)
-pctText.Position = UDim2.new(1, -40, 0, -18)
-pctText.BackgroundTransparency = 1
-pctText.Text = "0%"
-pctText.TextColor3 = C.White
-pctText.TextSize = 12
-pctText.Font = Enum.Font.GothamBold
-pctText.TextXAlignment = Enum.TextXAlignment.Right
-pctText.Parent = progressContainer
-
--- ============================================================
--- TIP TEXT (bottom)
--- ============================================================
-local tips = {
-	"Higher-tier seeds yield rarer cosmic mutations",
-	"Mutation Storms temporarily double your luck",
-	"Trade rare mutated plants with other gardeners",
-	"Each Transcendence permanently boosts earnings",
-	"Equip a celestial pet to amplify mutation luck",
-	"Combine seeds in the Forge to ascend tiers",
-	"Complete daily quests for free Nebula Gems",
-}
-
-local tipLabel = Instance.new("TextLabel")
-tipLabel.Name = "Tip"
-tipLabel.Size = UDim2.new(0, 500, 0, 16)
-tipLabel.Position = UDim2.fromScale(0.5, 0.85)
-tipLabel.AnchorPoint = Vector2.new(0.5, 0.5)
-tipLabel.BackgroundTransparency = 1
-tipLabel.Text = tips[rng:NextInteger(1, #tips)]
-tipLabel.TextColor3 = C.TextDim
-tipLabel.TextSize = 12
-tipLabel.Font = Enum.Font.GothamMedium
-tipLabel.TextXAlignment = Enum.TextXAlignment.Center
-tipLabel.TextTransparency = 1 -- starts hidden
-tipLabel.Parent = bg
-
--- ============================================================
--- VERSION / BRANDING
--- ============================================================
-local versionLabel = Instance.new("TextLabel")
-versionLabel.Name = "Version"
-versionLabel.Size = UDim2.new(0, 120, 0, 14)
-versionLabel.Position = UDim2.new(1, -130, 1, -24)
-versionLabel.BackgroundTransparency = 1
-versionLabel.Text = "v0.1.0-alpha"
-versionLabel.TextColor3 = Color3.fromRGB(60, 50, 80)
-versionLabel.TextSize = 10
-versionLabel.Font = Enum.Font.GothamMedium
-versionLabel.TextXAlignment = Enum.TextXAlignment.Right
-versionLabel.Parent = bg
-
--- ============================================================
--- ANIMATION ORCHESTRATION
--- ============================================================
-local function setProgress(pct: number, statusStr: string)
-	local clamped = math.clamp(pct, 0, 1)
-	TweenService:Create(barFill, TweenInfo.new(0.4, Enum.EasingStyle.Quint), {
-		Size = UDim2.fromScale(clamped, 1),
-	}):Play()
-	statusText.Text = statusStr
-	pctText.Text = string.format("%d%%", math.floor(clamped * 100))
-end
-
-task.spawn(function()
-	-- Phase 1: Constellation dots appear (0.0 - 0.8s)
-	for i, dot in constellationDots do
-		task.delay(i * 0.08, function()
-			TweenService:Create(dot, TweenInfo.new(0.4, Enum.EasingStyle.Quint), {
-				BackgroundTransparency = 0.3,
-			}):Play()
-		end)
-	end
-	task.wait(0.3)
-
-	-- Phase 2: Title gradient reveal (0.3 - 1.2s)
-	title.TextTransparency = 0
-	TweenService:Create(titleGrad, TweenInfo.new(0.9, Enum.EasingStyle.Quint), {
-		Offset = Vector2.new(1, 0),
-	}):Play()
-	task.wait(0.5)
-
-	-- Phase 3: Subtitle fade in
-	TweenService:Create(subtitle, TweenInfo.new(0.6, Enum.EasingStyle.Quint), {
-		TextTransparency = 0,
-	}):Play()
-	task.wait(0.3)
-
-	-- Phase 4: Tip text
-	TweenService:Create(tipLabel, TweenInfo.new(0.5, Enum.EasingStyle.Quint), {
-		TextTransparency = 0.3,
-	}):Play()
-
-	-- Phase 5: Progress stages
-	setProgress(0.15, "Connecting to the cosmos...")
-	task.wait(0.6)
-
-	setProgress(0.35, "Loading celestial assets...")
-	task.wait(0.4)
-
-	setProgress(0.55, "Preparing your sanctuary...")
-	task.wait(0.4)
-
-	setProgress(0.75, "Synchronizing garden state...")
-
-	-- Wait for player data
-	local ReplicatedStorage = game:GetService("ReplicatedStorage")
-	local dataReady = ReplicatedStorage:WaitForChild("DataReady", 15) :: RemoteEvent?
-
-	local received = false
-	if dataReady then
-		dataReady.OnClientEvent:Once(function()
-			received = true
-		end)
-	end
-
-	local getData = ReplicatedStorage:FindFirstChild("GetData") :: RemoteFunction?
-	if getData then
-		task.spawn(function()
-			local d = getData:InvokeServer()
-			if d then received = true end
-		end)
-	end
-
-	local waitStart = os.clock()
-	while not received and (os.clock() - waitStart) < 3.0 do
-		local elapsed = os.clock() - waitStart
-		local waitPct = 0.75 + math.min(elapsed / 3.0, 1) * 0.24
-		barFill.Size = UDim2.fromScale(math.clamp(waitPct, 0, 0.98), 1)
-		pctText.Text = string.format("%d%%", math.floor(waitPct * 100))
-		task.wait(0.15)
-	end
-
-	setProgress(1.0, "Welcome, Gardener")
-	task.wait(0.6)
-
-	-- ============================================================
-	-- FADE OUT SEQUENCE
-	-- ============================================================
-	-- Constellation fades
-	for _, dot in constellationDots do
-		TweenService:Create(dot, TweenInfo.new(0.3), {
-			BackgroundTransparency = 1,
-		}):Play()
-	end
-
-	-- Stars fade out
-	for _, star in starPool do
-		TweenService:Create(star, TweenInfo.new(0.4), {
-			BackgroundTransparency = 1,
-		}):Play()
-	end
-
-	-- Title slides up slightly and fades
-	TweenService:Create(title, TweenInfo.new(0.5, Enum.EasingStyle.Quint), {
-		TextTransparency = 1,
-		Position = UDim2.fromScale(0, -0.05),
-	}):Play()
-
-	TweenService:Create(subtitle, TweenInfo.new(0.4), {
-		TextTransparency = 1,
-	}):Play()
-
-	-- Progress bar fades
-	TweenService:Create(barBg, TweenInfo.new(0.3), {
-		BackgroundTransparency = 1,
-	}):Play()
-	TweenService:Create(barFill, TweenInfo.new(0.3), {
-		BackgroundTransparency = 1,
-	}):Play()
-	TweenService:Create(statusText, TweenInfo.new(0.3), {
-		TextTransparency = 1,
-	}):Play()
-	TweenService:Create(pctText, TweenInfo.new(0.3), {
-		TextTransparency = 1,
-	}):Play()
-	TweenService:Create(tipLabel, TweenInfo.new(0.3), {
-		TextTransparency = 1,
-	}):Play()
-
-	-- Nebula glow fades
-	TweenService:Create(nebulaGlow, TweenInfo.new(0.4), {
-		BackgroundTransparency = 1,
-	}):Play()
-
-	-- Final background fade
-	task.wait(0.2)
-	TweenService:Create(bg, TweenInfo.new(0.6, Enum.EasingStyle.Quint), {
-		BackgroundTransparency = 1,
-	}):Play()
-
-	task.wait(0.7)
-	screenGui:Destroy()
 end)

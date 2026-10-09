@@ -2,6 +2,8 @@
 node_modules/
 
 # Roblox Studio
+*.rbxl
+*.rbxlx
 *.rbxlx.lock
 *.rbxl.lock
 
