@@ -13,11 +13,11 @@ local Workspace = game:GetService("Workspace")
 
 local player = Players.LocalPlayer
 
--- Disable default backpack so custom HUD is clean
+-- Ensure default backpack is enabled so player can select Stun Baton [1] and EMP Jammer [2]
 task.spawn(function()
 	for _ = 1, 30 do
 		local ok = pcall(function()
-			StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, false)
+			StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, true)
 		end)
 		if ok then break end
 		task.wait(0.3)
@@ -28,8 +28,8 @@ print("========================================")
 print("  ⚡ VAULT WARS Client Starting...")
 print("========================================")
 
-local controllersFolder = script:WaitForChild("Controllers", 10) :: Folder?
-local uiFolder = script:WaitForChild("UI", 10) :: Folder?
+local controllersFolder = (script:FindFirstChild("Controllers") or script:WaitForChild("Controllers", 5)) :: Folder?
+local uiFolder = (script:FindFirstChild("UI") or script:WaitForChild("UI", 5)) :: Folder?
 
 local function safeRequire(parent: Folder?, name: string): any?
 	if not parent then return nil end
@@ -214,7 +214,7 @@ task.spawn(function()
 	if openFusion then
 		openFusion.OnClientEvent:Connect(function()
 			if FusionModal then FusionModal.Open() end
-		end
+		end)
 	end
 
 	local carryEvt = ReplicatedStorage:WaitForChild("CarryingStateChanged", 15) :: RemoteEvent?

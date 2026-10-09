@@ -63,18 +63,19 @@ local function setupAtmosphericLighting()
 		Lighting.Technology = Enum.Technology.Future
 	end)
 
-	Lighting.ClockTime = 0.0
-	Lighting.TimeOfDay = "00:00:00"
-	Lighting.Brightness = 0.0 -- Zero sunlight: purely artificial fixture illumination
-	Lighting.Ambient = Color3.fromRGB(38, 44, 58) -- Balanced ambient fill for crisp visibility
-	Lighting.OutdoorAmbient = Color3.fromRGB(16, 20, 28)
+	-- 2026 High-Tech Subterranean Facility Illumination
+	Lighting.ClockTime = 14.0
+	Lighting.TimeOfDay = "14:00:00"
+	Lighting.Brightness = 1.25 -- Balanced specular bounce and depth
+	Lighting.Ambient = Color3.fromRGB(128, 142, 168) -- Clean, visible ambient fill so all textures are readable
+	Lighting.OutdoorAmbient = Color3.fromRGB(108, 122, 146)
 	Lighting.GeographicLatitude = 25
 	Lighting.GlobalShadows = true
-	Lighting.EnvironmentDiffuseScale = 0.5
-	Lighting.EnvironmentSpecularScale = 0.5
-	Lighting.FogStart = 65
-	Lighting.FogEnd = 260
-	Lighting.FogColor = Color3.fromRGB(12, 15, 22)
+	Lighting.EnvironmentDiffuseScale = 1.0
+	Lighting.EnvironmentSpecularScale = 1.0
+	Lighting.FogStart = 450
+	Lighting.FogEnd = 2500
+	Lighting.FogColor = Color3.fromRGB(38, 46, 62)
 
 	-- Purge any default daylight skybox from Studio template
 	for _, child in Lighting:GetChildren() do
@@ -83,9 +84,9 @@ local function setupAtmosphericLighting()
 		end
 	end
 
-	-- Insert pitch-black subterranean void skybox
+	-- Insert high-tech facility deep navy atmosphere skybox
 	local voidSky = Instance.new("Sky")
-	voidSky.Name = "SubterraneanVoidSky"
+	voidSky.Name = "SubterraneanAtmosphereSky"
 	voidSky.SkyboxBk = ""
 	voidSky.SkyboxDn = ""
 	voidSky.SkyboxFt = ""
@@ -97,41 +98,41 @@ local function setupAtmosphericLighting()
 	voidSky.StarCount = 0
 	voidSky.Parent = Lighting
 
-	-- Subterranean Industrial Dust & Atmosphere
+	-- Subterranean Industrial Cyber Atmosphere
 	local atmosphere = Lighting:FindFirstChildOfClass("Atmosphere")
 	if not atmosphere then
 		atmosphere = Instance.new("Atmosphere")
 		atmosphere.Parent = Lighting
 	end
-	atmosphere.Density = 0.35
+	atmosphere.Density = 0.12
 	atmosphere.Offset = 0.0
-	atmosphere.Color = Color3.fromRGB(18, 22, 32)
-	atmosphere.Decay = Color3.fromRGB(10, 12, 18)
+	atmosphere.Color = Color3.fromRGB(135, 155, 190)
+	atmosphere.Decay = Color3.fromRGB(95, 115, 150)
 	atmosphere.Glare = 0.0
-	atmosphere.Haze = 0.12
+	atmosphere.Haze = 0.25
 
-	-- High-Threshold Bloom (Neon glows brightly, normal materials never blow out)
+	-- High-Threshold Bloom (Neon strips glow with crisp halo, zero blinding blowout)
 	local bloom = Lighting:FindFirstChild("VaultWarsBloom") :: BloomEffect?
 	if not bloom then
 		bloom = Instance.new("BloomEffect")
 		bloom.Name = "VaultWarsBloom"
 		bloom.Parent = Lighting
 	end
-	bloom.Intensity = 0.55
-	bloom.Size = 24
-	bloom.Threshold = 2.05
+	bloom.Intensity = 0.40
+	bloom.Size = 20
+	bloom.Threshold = 1.70
 
-	-- Filmic ColorCorrection (Rich contrast & depth)
+	-- Filmic ColorCorrection (Vibrant sci-fi contrast, rich metallic saturation)
 	local cc = Lighting:FindFirstChild("VaultWarsCC") :: ColorCorrectionEffect?
 	if not cc then
 		cc = Instance.new("ColorCorrectionEffect")
 		cc.Name = "VaultWarsCC"
 		cc.Parent = Lighting
 	end
-	cc.TintColor = Color3.fromRGB(245, 250, 255)
-	cc.Brightness = 0.01
-	cc.Contrast = 0.16
-	cc.Saturation = 0.16
+	cc.TintColor = Color3.fromRGB(248, 252, 255)
+	cc.Brightness = 0.02
+	cc.Contrast = 0.14
+	cc.Saturation = 0.22
 
 	-- Depth of Field (Cinematic camera bokeh on distant cavern geometry)
 	local dof = Lighting:FindFirstChild("VaultWarsDOF") :: DepthOfFieldEffect?
@@ -140,9 +141,9 @@ local function setupAtmosphericLighting()
 		dof.Name = "VaultWarsDOF"
 		dof.Parent = Lighting
 	end
-	dof.FarIntensity = 0.16
-	dof.FocusDistance = 45
-	dof.InFocusRadius = 65
+	dof.FarIntensity = 0.12
+	dof.FocusDistance = 55
+	dof.InFocusRadius = 80
 	dof.NearIntensity = 0.0
 end
 
@@ -375,11 +376,21 @@ local function buildOverheadCraneGantries(parent: Folder)
 			)
 			local point = Instance.new("PointLight")
 			point.Name = "ArenaHighBayIllumination"
-			point.Color = Color3.fromRGB(255, 244, 224)
-			point.Range = 65
-			point.Brightness = 2.4
+			point.Color = Color3.fromRGB(255, 248, 235)
+			point.Range = 100
+			point.Brightness = 4.0
 			point.Shadows = true
 			point.Parent = bayLightPart
+
+			local spot = Instance.new("SpotLight")
+			spot.Name = "ArenaHighBaySpot"
+			spot.Face = Enum.NormalId.Bottom
+			spot.Angle = 130
+			spot.Range = 85
+			spot.Brightness = 4.8
+			spot.Color = Color3.fromRGB(255, 248, 230)
+			spot.Shadows = true
+			spot.Parent = bayLightPart
 
 			-- Semi-Transparent Volumetric Beam Cone
 			local beamCone = Instance.new("Part")

@@ -210,6 +210,28 @@ function PlotService.Init()
 	mBeaconLight.Brightness = 2.4
 	mBeaconLight.Parent = topBeacon
 
+	-- 4 Perimeter Monolith High-Bay Downlights (Illuminates central plaza, spawn, altar, and broker)
+	for _, dir in { Vector3.new(1, 0, 0), Vector3.new(-1, 0, 0), Vector3.new(0, 0, 1), Vector3.new(0, 0, -1) } do
+		local mDownFixture = createPart(
+			"MonolithFloodFixture",
+			Vector3.new(2.4, 0.8, 2.4),
+			CFrame.new(dir * 7.5 + Vector3.new(0, FLOOR_Y + 27.5, 0)),
+			Color3.fromRGB(254, 240, 138),
+			Enum.Material.Neon,
+			monolith,
+			false
+		)
+		local mDownSpot = Instance.new("SpotLight")
+		mDownSpot.Name = "MonolithPlazaSpot"
+		mDownSpot.Face = Enum.NormalId.Bottom
+		mDownSpot.Angle = 125
+		mDownSpot.Range = 75
+		mDownSpot.Brightness = 4.2
+		mDownSpot.Color = Color3.fromRGB(255, 248, 235)
+		mDownSpot.Shadows = true
+		mDownSpot.Parent = mDownFixture
+	end
+
 	-- Leaderboard Surface GUI (Front Face Recessed Screen)
 	local sGui = Instance.new("SurfaceGui")
 	sGui.Name = "LeaderboardGui"
@@ -395,8 +417,7 @@ function PlotService.Init()
 			pFolder,
 			true
 		)
-		-- Glowing Cyan Edge Guides on Bridge
-		createPart(
+		local curbL = createPart(
 			`BridgeCurbL_{i}`,
 			Vector3.new(0.4, 0.6, 18),
 			bridgeCF * CFrame.new(-6.8, 0.3, 0),
@@ -405,7 +426,13 @@ function PlotService.Init()
 			pFolder,
 			false
 		)
-		createPart(
+		local bLightL = Instance.new("PointLight")
+		bLightL.Color = Color3.fromRGB(56, 189, 248)
+		bLightL.Range = 22
+		bLightL.Brightness = 2.2
+		bLightL.Parent = curbL
+
+		local curbR = createPart(
 			`BridgeCurbR_{i}`,
 			Vector3.new(0.4, 0.6, 18),
 			bridgeCF * CFrame.new(6.8, 0.3, 0),
@@ -414,6 +441,11 @@ function PlotService.Init()
 			pFolder,
 			false
 		)
+		local bLightR = Instance.new("PointLight")
+		bLightR.Color = Color3.fromRGB(56, 189, 248)
+		bLightR.Range = 22
+		bLightR.Brightness = 2.2
+		bLightR.Parent = curbR
 
 		-- ── 3.2. ELEVATED BUNKER FOUNDATION FLOOR ──
 		local floor = createPart(

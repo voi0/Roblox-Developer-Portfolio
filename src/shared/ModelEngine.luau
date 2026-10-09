@@ -1083,11 +1083,21 @@ function ModelEngine.CreateBunkerShell(
 		)
 		local intPoint = Instance.new("PointLight")
 		intPoint.Name = "BunkerInteriorIllumination"
-		intPoint.Color = Color3.fromRGB(255, 245, 225)
-		intPoint.Range = 36
-		intPoint.Brightness = 2.0
+		intPoint.Color = Color3.fromRGB(255, 248, 235)
+		intPoint.Range = 55
+		intPoint.Brightness = 3.5
 		intPoint.Shadows = true
 		intPoint.Parent = interiorLightPart
+
+		local intSpot = Instance.new("SpotLight")
+		intSpot.Name = "BunkerInteriorSpot"
+		intSpot.Face = Enum.NormalId.Bottom
+		intSpot.Angle = 135
+		intSpot.Range = 45
+		intSpot.Brightness = 4.2
+		intSpot.Color = Color3.fromRGB(255, 248, 230)
+		intSpot.Shadows = true
+		intSpot.Parent = interiorLightPart
 	end
 
 	return model

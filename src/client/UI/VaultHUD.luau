@@ -115,6 +115,7 @@ function VaultHUD.Create()
 	gui.DisplayOrder = 10
 	gui.ResetOnSpawn = false
 	gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+	gui.Enabled = true
 	gui.Parent = pGui
 	VaultHUD._gui = gui
 	print("  [VaultHUD] Mounted Tactical Bento HUD into PlayerGui successfully!")
