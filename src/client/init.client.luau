@@ -55,6 +55,7 @@ local Types = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Typ
 local VaultHUD = safeRequire(uiFolder, "VaultHUD")
 local UpgradesModal = safeRequire(uiFolder, "UpgradesModal")
 local FusionModal = safeRequire(uiFolder, "FusionModal")
+local DailyModal = safeRequire(uiFolder, "DailyModal")
 local NotificationUI = safeRequire(uiFolder, "NotificationUI")
 local HeistController = safeRequire(controllersFolder, "HeistController")
 local SoundController = safeRequire(controllersFolder, "SoundController")
@@ -91,6 +92,13 @@ if VaultHUD then
 		FusionModal.Create(VaultHUD._gui)
 		VaultHUD.SetFusionCallback(function()
 			FusionModal.Toggle()
+		end)
+	end
+
+	if DailyModal and VaultHUD._gui then
+		DailyModal.Create(VaultHUD._gui)
+		VaultHUD.SetDailyCallback(function()
+			DailyModal.Toggle()
 		end)
 	end
 end
@@ -140,6 +148,7 @@ local function onDataReceived(data: any)
 	if VaultHUD then VaultHUD.Update(data) end
 	if UpgradesModal then UpgradesModal.Update(data) end
 	if FusionModal then FusionModal.Update(data) end
+	if DailyModal and DailyModal._isOpen then DailyModal.Refresh() end
 end
 
 task.spawn(function()
@@ -185,7 +194,7 @@ task.spawn(function()
 end)
 
 -- ============================================================
--- 4. KEYBOARD HOTKEYS: [U] UPGRADES, [B] FUSION, [F] TACKLE, [ESC] CLOSE
+-- 4. KEYBOARD HOTKEYS: [U] UPGRADES, [B] FUSION, [Y] DAILY, [F] TACKLE, [ESC] CLOSE
 -- ============================================================
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
 	if gameProcessed then return end
@@ -195,6 +204,9 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
 
 	elseif input.KeyCode == Enum.KeyCode.B then
 		if FusionModal then FusionModal.Toggle() end
+
+	elseif input.KeyCode == Enum.KeyCode.Y then
+		if DailyModal then DailyModal.Toggle() end
 
 	-- ⚡ [F] SECURITY TACKLE / ZAP INTRUDER
 	elseif input.KeyCode == Enum.KeyCode.F then
@@ -211,6 +223,9 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
 		end
 		if FusionModal and FusionModal._isOpen then
 			FusionModal.Close()
+		end
+		if DailyModal and DailyModal._isOpen then
+			DailyModal.Close()
 		end
 	end
 end)

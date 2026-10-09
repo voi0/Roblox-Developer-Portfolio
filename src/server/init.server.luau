@@ -24,10 +24,14 @@ local serviceNames = {
 	"MintService",
 	"HeistService",
 	"FusionService",
+	"ToolService",
+	"AirdropService",
+	"DailyRewardService",
 	"EconomyService",
 	"LeaderboardService",
 	"CodeService",
 	"PlaytimeService",
+	"AdminService",
 }
 
 local loadedServices: { [string]: any } = {}

@@ -8,11 +8,13 @@
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local Workspace = game:GetService("Workspace")
 
 local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
 local Types = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Types"))
+local RelicData = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("RelicData"))
 
 local PlotService = {}
 PlotService._folder = nil :: Folder?
@@ -408,6 +410,51 @@ function PlotService.Init()
 		obText.Font = Enum.Font.GothamBold
 		obText.Parent = ownerGui
 
+		-- ── 8.5. BASE RELIC SHOWCASE PEDESTAL (FRONT PLAZA ENTRANCE) ──
+		local pedCF = faceCenterCF * CFrame.new(-9, 1.4, -pLen / 2 + 5)
+		local pedBase = createPart(
+			"ShowcasePedestal",
+			Vector3.new(3.5, 2.8, 3.5),
+			pedCF,
+			Color3.fromRGB(24, 24, 32),
+			Enum.Material.Metal,
+			pFolder
+		)
+		local pedRing = createPart(
+			"ShowcasePedestalRing",
+			Vector3.new(3.8, 0.4, 3.8),
+			pedCF * CFrame.new(0, 1.4, 0),
+			Color3.fromRGB(56, 189, 248),
+			Enum.Material.Neon,
+			pFolder,
+			false
+		)
+		local showcaseGem = createPart(
+			"ShowcaseGem",
+			Vector3.new(1.8, 1.8, 1.8),
+			pedCF * CFrame.new(0, 3.2, 0),
+			Color3.fromRGB(148, 163, 184),
+			Enum.Material.Neon,
+			pFolder,
+			false
+		)
+
+		local showGui = Instance.new("BillboardGui")
+		showGui.Name = "ShowcaseBillboard"
+		showGui.Size = UDim2.new(0, 200, 0, 48)
+		showGui.StudsOffset = Vector3.new(0, 2.2, 0)
+		showGui.AlwaysOnTop = true
+		showGui.Parent = showcaseGem
+
+		local sLabel = Instance.new("TextLabel")
+		sLabel.Size = UDim2.new(1, 0, 1, 0)
+		sLabel.BackgroundTransparency = 1
+		sLabel.Text = "👑 PRIZED RELIC\n[EMPTY]"
+		sLabel.TextColor3 = Color3.fromRGB(148, 163, 184)
+		sLabel.TextSize = 11
+		sLabel.Font = Enum.Font.GothamBlack
+		sLabel.Parent = showGui
+
 		PlotService._plots[i] = {
 			Index = i,
 			Folder = pFolder,
@@ -423,6 +470,10 @@ function PlotService.Init()
 			CF = faceCenterCF,
 			IsBreached = false,
 			BreachExpiry = 0,
+			ShowcaseGem = showcaseGem,
+			ShowcaseRing = pedRing,
+			ShowcaseLabel = sLabel,
+			ShowcaseBaseCF = pedCF * CFrame.new(0, 3.2, 0),
 		}
 
 		-- Connect Touch on SafePad to automatically bank for owner or deposit stolen loot
@@ -450,6 +501,17 @@ function PlotService.Init()
 	end
 	Players.PlayerAdded:Connect(PlotService.AssignPlot)
 	Players.PlayerRemoving:Connect(PlotService.ReleasePlot)
+
+	-- Floating rotation animation for pedestal showcase gems
+	RunService.Heartbeat:Connect(function()
+		local t = os.clock()
+		for _, plot in PlotService._plots do
+			if plot.ShowcaseGem and plot.ShowcaseBaseCF then
+				local bob = math.sin(t * 3) * 0.35
+				plot.ShowcaseGem.CFrame = plot.ShowcaseBaseCF * CFrame.new(0, bob, 0) * CFrame.Angles(0, t * 1.5, 0)
+			end
+		end
+	end)
 
 	print("  [PlotService] 6 Modular Vault Bases ready ✓")
 end
@@ -490,6 +552,7 @@ function PlotService.AssignPlot(player: Player)
 		end
 	end)
 
+	PlotService.UpdateShowcase(assignedIndex)
 	print(`  [PlotService] Assigned Vault #{assignedIndex} to {player.Name}`)
 end
 
@@ -506,6 +569,7 @@ function PlotService.ReleasePlot(player: Player)
 	end
 
 	PlotService._playerPlots[player] = nil
+	PlotService.UpdateShowcase(plotIndex)
 	print(`  [PlotService] Released Vault #{plotIndex} from {player.Name}`)
 end
 
@@ -516,6 +580,67 @@ end
 
 function PlotService.GetPlotByIndex(index: number): any?
 	return PlotService._plots[index]
+end
+
+function PlotService.UpdateShowcase(plotIndex: number)
+	local plot = PlotService._plots[plotIndex]
+	if not plot or not plot.ShowcaseGem or not plot.ShowcaseLabel then return end
+
+	local owner = plot.Owner
+	if not owner then
+		plot.ShowcaseGem.Transparency = 0.8
+		plot.ShowcaseGem.Color = Color3.fromRGB(100, 116, 139)
+		plot.ShowcaseLabel.Text = "👑 PRIZED RELIC\n[VACANT]"
+		plot.ShowcaseLabel.TextColor3 = Color3.fromRGB(148, 163, 184)
+		if plot.ShowcaseRing then plot.ShowcaseRing.Color = Color3.fromRGB(71, 85, 105) end
+		return
+	end
+
+	local dataSvc = getDataService()
+	local data = dataSvc and dataSvc.GetData(owner)
+	local inventory = data and data.RelicInventory
+
+	local priority = {
+		"CelestialCrown",
+		"VoidChronometer",
+		"DiamondSkull",
+		"RubyArtifact",
+		"EmeraldMatrix",
+		"GoldStack",
+	}
+
+	local bestId: string? = nil
+	if inventory then
+		for _, id in priority do
+			if (inventory[id] or 0) > 0 then
+				bestId = id
+				break
+			end
+		end
+	end
+
+	if bestId and RelicData.Catalog[bestId] then
+		local def = RelicData.Catalog[bestId]
+		plot.ShowcaseGem.Transparency = 0
+		plot.ShowcaseGem.Color = def.Color
+		plot.ShowcaseGem.Material = def.Material
+		plot.ShowcaseLabel.Text = `👑 PRIZED RELIC\n{def.Name}`
+		plot.ShowcaseLabel.TextColor3 = def.Color
+		if plot.ShowcaseRing then plot.ShowcaseRing.Color = def.Color end
+	else
+		plot.ShowcaseGem.Transparency = 0.6
+		plot.ShowcaseGem.Color = Color3.fromRGB(148, 163, 184)
+		plot.ShowcaseLabel.Text = "👑 PRIZED RELIC\n[NO RELICS]"
+		plot.ShowcaseLabel.TextColor3 = Color3.fromRGB(148, 163, 184)
+		if plot.ShowcaseRing then plot.ShowcaseRing.Color = Color3.fromRGB(56, 189, 248) end
+	end
+end
+
+function PlotService.UpdateShowcaseForPlayer(player: Player)
+	local idx = PlotService._playerPlots[player]
+	if idx then
+		PlotService.UpdateShowcase(idx)
+	end
 end
 
 return PlotService

@@ -24,6 +24,10 @@ local TYPE_COLORS: { [string]: Color3 } = {
 	Defense  = Color3.fromRGB(56, 189, 248),
 	Success  = Color3.fromRGB(16, 185, 129),
 	Info     = Color3.fromRGB(148, 163, 184),
+	Airdrop  = Color3.fromRGB(250, 204, 21),
+	Jackpot  = Color3.fromRGB(244, 114, 182),
+	Daily    = Color3.fromRGB(34, 197, 94),
+	System   = Color3.fromRGB(99, 102, 241),
 }
 
 function NotificationUI.Create()
@@ -54,6 +58,40 @@ function NotificationUI.Create()
 	layout.Padding = UDim.new(0, 8)
 	layout.SortOrder = Enum.SortOrder.LayoutOrder
 	layout.Parent = container
+
+	-- Listen for Server Broadcasts
+	task.spawn(function()
+		local ReplicatedStorage = game:GetService("ReplicatedStorage")
+		local notifEvt = ReplicatedStorage:WaitForChild("NotificationBroadcast", 15) :: RemoteEvent?
+		if notifEvt then
+			notifEvt.OnClientEvent:Connect(function(payload: any)
+				if payload and type(payload) == "table" then
+					NotificationUI.ShowToast(payload.Type or "Info", payload.Title or "ALERT", payload.Message or "", payload.Duration or 4)
+				end
+			end)
+		end
+
+		local toolEvt = ReplicatedStorage:WaitForChild("ToolFeedback", 15) :: RemoteEvent?
+		if toolEvt then
+			toolEvt.OnClientEvent:Connect(function(action: string, arg1: any)
+				if action == "BatonHitLoot" then
+					NotificationUI.ShowToast("Defense", "⚡ BATON SMASH!", `Hit {arg1} and forced loot drop!`, 3.5)
+				elseif action == "BatonDropVictim" then
+					NotificationUI.ShowToast("Heist", "⚡ STUNNED!", `{arg1} struck you with a Baton! Loot dropped!`, 4)
+				elseif action == "BatonHit" then
+					NotificationUI.ShowToast("Defense", "⚡ BATON HIT", `Stunned {arg1}!`, 2.5)
+				elseif action == "JamSuccess" then
+					NotificationUI.ShowToast("Success", "📡 EMP ACTIVE", `Enemy lasers disabled for {arg1}s! Breach now!`, 4)
+				elseif action == "JamAlert" then
+					NotificationUI.ShowToast("Heist", "🚨 LASERS JAMMED!", `{arg1} disabled your lasers with an EMP!`, 4)
+				elseif action == "Cooldown" then
+					NotificationUI.ShowToast("Info", "⏳ COOLDOWN", `Device recharging ({arg1}s remaining)`, 2)
+				elseif action == "JamNoTarget" then
+					NotificationUI.ShowToast("Info", "📡 NO TARGET", "No enemy lasers within 22 studs", 2.5)
+				end
+			end)
+		end
+	end)
 
 	print("  [NotificationUI] Tactical Toast Notifications mounted ✓")
 end

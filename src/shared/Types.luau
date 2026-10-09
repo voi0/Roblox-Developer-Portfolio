@@ -56,6 +56,8 @@ export type PlayerData = {
 	HighestSingleHeist: number,
 	PlayTimeSeconds: number,
 	LastInterestTimestamp: number,
+	DailyStreak: number,
+	LastDailyClaimTimestamp: number,
 	RedeemedCodes: { [string]: boolean },
 }
 

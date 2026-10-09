@@ -27,6 +27,7 @@ VaultHUD._breachVignette = nil :: Frame?
 VaultHUD._breachMsg = nil :: TextLabel?
 VaultHUD._onUpgradesToggle = nil :: (() -> ())?
 VaultHUD._onFusionToggle = nil :: (() -> ())?
+VaultHUD._onDailyToggle = nil :: (() -> ())?
 
 -- ============================================================
 -- NUMBER FORMATTER (K / M / B / T / Qa)
@@ -115,10 +116,10 @@ function VaultHUD.Create()
 	incomeLabel.Parent = topBanner
 	VaultHUD._incomeLabel = incomeLabel
 
-	-- ── 2. TOP RIGHT: ACTION BUTTONS (UPGRADES & FUSION) ──
+	-- ── 2. TOP RIGHT: ACTION BUTTONS (DAILY, UPGRADES & FUSION) ──
 	local topRight = Instance.new("Frame")
 	topRight.Name = "TopRight"
-	topRight.Size = UDim2.new(0, 290, 0, 48)
+	topRight.Size = UDim2.new(0, 410, 0, 48)
 	topRight.Position = UDim2.new(1, -20, 0, 16)
 	topRight.AnchorPoint = Vector2.new(1, 0)
 	topRight.BackgroundTransparency = 1
@@ -130,9 +131,29 @@ function VaultHUD.Create()
 	trLayout.Padding = UDim.new(0, 10)
 	trLayout.Parent = topRight
 
+	local dailyBtn = Instance.new("TextButton")
+	dailyBtn.Name = "DailyButton"
+	dailyBtn.Size = UDim2.new(0, 110, 0, 42)
+	dailyBtn.BackgroundColor3 = Color3.fromRGB(24, 24, 27)
+	dailyBtn.Text = "📅 DAILY"
+	dailyBtn.TextColor3 = Color3.fromRGB(245, 158, 11)
+	dailyBtn.TextSize = 13
+	dailyBtn.Font = Enum.Font.GothamBlack
+	dailyBtn.Parent = topRight
+	Instance.new("UICorner", dailyBtn).CornerRadius = UDim.new(0, 12)
+	local dStroke = Instance.new("UIStroke", dailyBtn)
+	dStroke.Color = Color3.fromRGB(245, 158, 11)
+	dStroke.Thickness = 2
+
+	dailyBtn.MouseButton1Click:Connect(function()
+		if VaultHUD._onDailyToggle then
+			VaultHUD._onDailyToggle()
+		end
+	end)
+
 	local fusionBtn = Instance.new("TextButton")
 	fusionBtn.Name = "FusionButton"
-	fusionBtn.Size = UDim2.new(0, 120, 0, 42)
+	fusionBtn.Size = UDim2.new(0, 110, 0, 42)
 	fusionBtn.BackgroundColor3 = Color3.fromRGB(24, 24, 27)
 	fusionBtn.Text = "🔮 FUSION"
 	fusionBtn.TextColor3 = Color3.fromRGB(168, 85, 247)
@@ -152,7 +173,7 @@ function VaultHUD.Create()
 
 	local upBtn = Instance.new("TextButton")
 	upBtn.Name = "UpgradesButton"
-	upBtn.Size = UDim2.new(0, 130, 0, 42)
+	upBtn.Size = UDim2.new(0, 120, 0, 42)
 	upBtn.BackgroundColor3 = Color3.fromRGB(24, 24, 27)
 	upBtn.Text = "⚡ UPGRADES"
 	upBtn.TextColor3 = Color3.fromRGB(56, 189, 248)
@@ -268,7 +289,7 @@ function VaultHUD.Create()
 	local tbLabel = Instance.new("TextLabel")
 	tbLabel.Size = UDim2.new(1, 0, 1, 0)
 	tbLabel.BackgroundTransparency = 1
-	tbLabel.Text = "⚡ [U] Upgrades  •  🔮 [B] Fusion  •  🥊 [F] Tackle  •  📥 [Step Safe] Bank"
+	tbLabel.Text = "⚡ [U] Upgrades  •  🔮 [B] Fusion  •  📅 [Y] Daily  •  🥊 [F] Tackle  •  📥 [Step Safe] Bank"
 	tbLabel.TextColor3 = Color3.fromRGB(203, 213, 225)
 	tbLabel.TextSize = 11
 	tbLabel.Font = Enum.Font.GothamMedium
@@ -364,6 +385,10 @@ end
 
 function VaultHUD.SetFusionCallback(callback: () -> ())
 	VaultHUD._onFusionToggle = callback
+end
+
+function VaultHUD.SetDailyCallback(callback: () -> ())
+	VaultHUD._onDailyToggle = callback
 end
 
 function VaultHUD.SetCarryingState(isCarrying: boolean, payload: any?)

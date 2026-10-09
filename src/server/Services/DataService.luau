@@ -45,6 +45,8 @@ local DATA_TEMPLATE: Types.PlayerData = {
 	HighestSingleHeist = 0,
 	PlayTimeSeconds = 0,
 	LastInterestTimestamp = os.time(),
+	DailyStreak = 0,
+	LastDailyClaimTimestamp = 0,
 	RedeemedCodes = {},
 	RelicInventory = {},
 }
@@ -159,6 +161,12 @@ function DataService.GetData(player: Player): Types.PlayerData?
 	return profile and profile.Data or nil
 end
 
+local function getPlotService(): any?
+	local svc = script.Parent:FindFirstChild("PlotService")
+	if svc then return require(svc :: ModuleScript) end
+	return nil
+end
+
 function DataService.SyncClient(player: Player)
 	local data = DataService.GetData(player)
 	if not data then return end
@@ -166,6 +174,13 @@ function DataService.SyncClient(player: Player)
 	local updateEvt = ReplicatedStorage:FindFirstChild("DataUpdate") :: RemoteEvent?
 	if updateEvt then
 		updateEvt:FireClient(player, data)
+	end
+
+	local plotSvc = getPlotService()
+	if plotSvc and type(plotSvc.UpdateShowcaseForPlayer) == "function" then
+		task.spawn(function()
+			plotSvc.UpdateShowcaseForPlayer(player)
+		end)
 	end
 end
 
@@ -220,6 +235,18 @@ function DataService.AddBanked(player: Player, amount: number): number
 	data.BankedCash = (data.BankedCash or 0) + math.floor(amount)
 	DataService.SyncClient(player)
 	return data.BankedCash
+end
+
+function DataService.AddBankedCash(player: Player, amount: number): number
+	return DataService.AddBanked(player, amount)
+end
+
+function DataService.AddPrestigeTokens(player: Player, count: number): number
+	local data = DataService.GetData(player)
+	if not data then return 0 end
+	data.PrestigeTokens = (data.PrestigeTokens or 0) + (count or 0)
+	DataService.SyncClient(player)
+	return data.PrestigeTokens
 end
 
 function DataService.SpendBanked(player: Player, amount: number): boolean

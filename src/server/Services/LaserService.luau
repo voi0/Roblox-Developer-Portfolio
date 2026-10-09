@@ -16,6 +16,7 @@ local Types = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Typ
 local LaserService = {}
 LaserService._lasers = {} :: { [number]: { Beam: Part, LeftPost: Part, RightPost: Part, Tier: number } }
 LaserService._lastDamage = {} :: { [Player]: number }
+LaserService._disabledUntil = {} :: { [number]: number }
 
 local function getDataService(): any?
 	local svc = script.Parent:FindFirstChild("DataService")
@@ -91,7 +92,31 @@ function LaserService.BuildLaserBeam(plot: any)
 	end)
 end
 
+function LaserService.IsDisabled(plotIndex: number): boolean
+	local untilTime = LaserService._disabledUntil[plotIndex]
+	if untilTime and os.clock() < untilTime then
+		return true
+	end
+	return false
+end
+
+function LaserService.DisableLasers(plotIndex: number, duration: number)
+	LaserService._disabledUntil[plotIndex] = os.clock() + duration
+
+	local lInfo = LaserService._lasers[plotIndex]
+	if lInfo and lInfo.Beam then
+		lInfo.Beam.Color = Color3.fromRGB(75, 85, 99) -- Jammed / Dim gray
+		lInfo.Beam.Transparency = 0.85
+	end
+
+	print(`  [LaserService] Plot #{plotIndex} lasers jammed for {duration}s!`)
+end
+
 function LaserService.HandleTrespasserHit(intruder: Player, plot: any)
+	if LaserService.IsDisabled(plot.Index) then
+		return -- Lasers currently disabled by EMP jammer
+	end
+
 	local now = os.clock()
 	local lastHit = LaserService._lastDamage[intruder] or 0
 	if now - lastHit < 0.65 then return end -- Damage cooldown
@@ -124,12 +149,32 @@ function LaserService.HandleTrespasserHit(intruder: Player, plot: any)
 end
 
 function LaserService._onHeartbeat(dt: number)
-	-- Animate laser color/pulsing for higher tiers
+	-- Animate laser color/pulsing for higher tiers unless disabled
 	local pulse = (math.sin(os.clock() * 6) + 1) / 2
-	for _, lInfo in LaserService._lasers do
+	for plotIdx, lInfo in LaserService._lasers do
 		if lInfo.Beam and lInfo.Beam.Parent then
-			lInfo.Beam.Transparency = 0.15 + (pulse * 0.15)
+			if LaserService.IsDisabled(plotIdx) then
+				lInfo.Beam.Transparency = 0.85
+				lInfo.Beam.Color = Color3.fromRGB(75, 85, 99)
+			else
+				lInfo.Beam.Transparency = 0.15 + (pulse * 0.15)
+				-- Ensure proper color is restored
+				LaserService._applyTierColor(lInfo)
+			end
 		end
+	end
+end
+
+function LaserService._applyTierColor(lInfo: any)
+	local tier = lInfo.Tier or 1
+	if tier == 1 then
+		lInfo.Beam.Color = Color3.fromRGB(239, 68, 68)
+	elseif tier == 2 then
+		lInfo.Beam.Color = Color3.fromRGB(249, 115, 22)
+	elseif tier == 3 then
+		lInfo.Beam.Color = Color3.fromRGB(168, 85, 247)
+	elseif tier >= 4 then
+		lInfo.Beam.Color = Color3.fromRGB(56, 189, 248)
 	end
 end
 
