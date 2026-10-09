@@ -62,9 +62,26 @@ Click object → Buy upgrades → Numbers go to trillions → Rebirth for perman
 ### Framework 3: The Auto-Battler / Gacha (The Whale Engine)
 Wait in lobby for gems (AFK) → Summon units → Auto-fight waves.
 
+### Framework 4: The High-Tension Asymmetrical Arena (The 125K+ CCU Viral Engine)
+*Inspired by the Huss Valley (Escape Huss Valley) phenomenon.*
+- **The Loop:** Simple round timer → 1 Chaser vs N Runners in a clean, obstacle-light arena → Runners cross start-to-finish lines or survive timed waves → Dynamic acceleration, sliding, and ankle-breaking juking mechanics → Tagged runners convert to chasers (infection style) → Survivors earn Coins/Gems.
+- **Why it works:**
+  - **Zero Complex 3D Models:** The map is a simple, clean rectangular arena / obstacle field. No 14-mesh composite headaches.
+  - **Native Short-Form Virality:** Every round generates 10-second TikTok/Shorts moments (insane last-second jukes, clutch 1v10 escapes, buzzer beaters).
+  - **Low Friction, High Replayability:** Instant respawn / spectate loop, AFK coin rewards in lobby, ability shop (Cloak, Speed Dashes, Pocket Door, Stun Traps).
+  - **Easy for Solo AI Studio to Code:** Round state machine, server-authoritative tag detection, client-side dash physics, ProfileService stats and shop.
+
 ---
 
-## 5. USER ACQUISITION
+## 5. THE 80% RULE & IDEA SELECTION DIRECTIVE
+Finding the right game idea and execution is **80% of the project**.
+- **No Overcomplicated 3D Art:** Never choose a game idea that requires photorealistic, multi-model glTF environments that AI cannot easily generate or split. Simple, clean, stylized geometry (like *Huss Valley*, *Evade*, *Fisch*, *Steal a Brainrot*) allows 100% of focus to be spent on responsive mechanics, fluid movement, and viral social hooks.
+- **Trend-Aligned & Clip-Worthy:** If a game cannot be summarized in a 5-second TikTok with high tension, do not build it.
+- **Execution Over Polish:** A game with basic UI and simple models that feels incredible to play and stream will beat a gorgeous, complicated game with no active players every single time.
+
+---
+
+## 6. USER ACQUISITION
 
 ### Strategy A: Organic Short-Form (TikTok & Clip It)
 - "Devlog" hooks: "I challenged an AI to build a Roblox game in 7 days..."
@@ -78,16 +95,16 @@ Wait in lobby for gems (AFK) → Summon units → Auto-fight waves.
 
 ---
 
-## 6. EXECUTION TIMELINE
+## 7. EXECUTION TIMELINE
 
-- **Week 1:** Infrastructure + Research Sprint
+- **Week 1:** Infrastructure + Trend & Concept Selection Sprint
 - **Week 2:** Core Logic & Datastores (zero art)
-- **Week 3:** 3D Asset & UI Pipeline
+- **Week 3:** 3D Asset & UI Pipeline (minimal, clean assets)
 - **Week 4:** Monetization & Launch Drop
 
 ---
 
-## 7. HARDWARE: Mac Mini M2 Pro/M4
+## 8. HARDWARE: Mac Mini M2 Pro/M4
 
 - **RAM:** 16GB or 24GB minimum
 - **Storage:** 512GB SSD minimum
