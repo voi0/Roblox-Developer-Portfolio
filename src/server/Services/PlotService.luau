@@ -310,7 +310,7 @@ function PlotService.Init()
 			`CatwalkBridge_{i}`,
 			Vector3.new(14, 0.4, 18),
 			bridgeCF,
-			Color3.fromRGB(24, 28, 40),
+			Color3.fromRGB(51, 65, 85),
 			Enum.Material.DiamondPlate,
 			pFolder,
 			true
@@ -340,7 +340,7 @@ function PlotService.Init()
 			"PlotFloor",
 			Vector3.new(pWidth, 4, pLen),
 			faceCenterCF * CFrame.new(0, 0, 0),
-			Color3.fromRGB(24, 28, 40),
+			Color3.fromRGB(51, 65, 85),
 			Enum.Material.Slate,
 			pFolder
 		)

@@ -87,7 +87,10 @@ end
 -- ============================================================
 function VaultHUD.Create()
 	local pGui = player:FindFirstChildOfClass("PlayerGui") or player:WaitForChild("PlayerGui", 10)
-	if not pGui then return end
+	if not pGui then
+		warn("[VaultHUD] Error: PlayerGui not found after 10s!")
+		return
+	end
 
 	local existing = pGui:FindFirstChild("VaultWarsHUD")
 	if existing then existing:Destroy() end
@@ -100,6 +103,7 @@ function VaultHUD.Create()
 	gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 	gui.Parent = pGui
 	VaultHUD._gui = gui
+	print("  [VaultHUD] Mounted Tactical Bento HUD into PlayerGui successfully!")
 
 	-- ── 1. TOP CENTER: BENTO STATUS CAPSULE ──
 	local topCapsule = Instance.new("Frame")

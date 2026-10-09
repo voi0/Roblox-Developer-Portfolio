@@ -12,7 +12,19 @@ local TweenService = game:GetService("TweenService")
 
 local localPlayer = Players.LocalPlayer
 local UILib = require(script.Parent:WaitForChild("UILib"))
-local SoundController = require(script.Parent.Parent:WaitForChild("Controllers"):WaitForChild("SoundController"))
+
+local function playSound(action: string)
+	local controllers = script.Parent.Parent:FindFirstChild("Controllers")
+	local sc = controllers and controllers:FindFirstChild("SoundController")
+	if sc then
+		local mod = require(sc :: ModuleScript)
+		if action == "click" and mod.PlayButtonClick then
+			mod.PlayButtonClick()
+		elseif action == "success" and mod.PlayPurchaseSuccess then
+			mod.PlayPurchaseSuccess()
+		end
+	end
+end
 
 local ContractModal = {}
 ContractModal._gui = nil :: ScreenGui?
@@ -125,7 +137,7 @@ function ContractModal.Create(parentGui: ScreenGui)
 	cbCorner.Parent = closeBtn
 
 	closeBtn.MouseButton1Click:Connect(function()
-		SoundController.PlayButtonClick()
+		playSound("click")
 		ContractModal.Close()
 	end)
 
@@ -347,7 +359,7 @@ function ContractModal.Refresh()
 			actionBtn.TextSize = 11
 
 			actionBtn.MouseButton1Click:Connect(function()
-				SoundController.PlayPurchaseSuccess()
+				playSound("success")
 				local claimRF = ReplicatedStorage:FindFirstChild("ClaimContractReward") :: RemoteFunction?
 				if claimRF then
 					task.spawn(function()

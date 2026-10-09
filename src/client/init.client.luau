@@ -28,12 +28,12 @@ print("========================================")
 print("  ⚡ VAULT WARS Client Starting...")
 print("========================================")
 
-local controllersFolder = script:WaitForChild("Controllers", 15) :: Folder
-local uiFolder = script:WaitForChild("UI", 15) :: Folder
+local controllersFolder = script:WaitForChild("Controllers", 10) :: Folder?
+local uiFolder = script:WaitForChild("UI", 10) :: Folder?
 
 local function safeRequire(parent: Folder?, name: string): any?
 	if not parent then return nil end
-	local child = parent:WaitForChild(name, 10) :: ModuleScript?
+	local child = parent:FindFirstChild(name) or parent:WaitForChild(name, 3) :: ModuleScript?
 	if not child then
 		warn(`[Client] Missing module: {name}`)
 		return nil
@@ -52,82 +52,101 @@ end
 local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
 local Types = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Types"))
 
+-- ── 1. MOUNT PRIMARY HUD IMMEDIATELY (Zero delay) ──
 local VaultHUD = safeRequire(uiFolder, "VaultHUD")
+if VaultHUD then
+	local ok, err = pcall(function()
+		VaultHUD.Create()
+	end)
+	if ok then
+		print("  [Client] Tactical Bento HUD Mounted Instantly ✓")
+	else
+		warn("  [Client] Failed to mount VaultHUD:", tostring(err))
+	end
+else
+	warn("  [Client] Critical: VaultHUD module could not be loaded!")
+end
+
+-- ── 2. INITIALIZE AUDIO & VISUAL ENGINES ──
+local SoundController = safeRequire(controllersFolder, "SoundController")
+if SoundController then
+	pcall(function() SoundController.Init() end)
+end
+
+local VFXController = safeRequire(controllersFolder, "VFXController")
+if VFXController then
+	pcall(function() VFXController.Init() end)
+end
+
+local AnimationEngine = safeRequire(controllersFolder, "AnimationEngine")
+if AnimationEngine then
+	pcall(function() AnimationEngine.Init() end)
+end
+
+local NotificationUI = safeRequire(uiFolder, "NotificationUI")
+if NotificationUI then
+	pcall(function() NotificationUI.Create() end)
+end
+
+-- ── 3. LOAD & ATTACH MODALS TO HUD ──
 local UpgradesModal = safeRequire(uiFolder, "UpgradesModal")
 local FusionModal = safeRequire(uiFolder, "FusionModal")
 local DailyModal = safeRequire(uiFolder, "DailyModal")
 local ProgressionModal = safeRequire(uiFolder, "ProgressionModal")
 local ContractModal = safeRequire(uiFolder, "ContractModal")
-local NotificationUI = safeRequire(uiFolder, "NotificationUI")
+
+if VaultHUD and VaultHUD._gui then
+	if UpgradesModal then
+		pcall(function()
+			UpgradesModal.Create(VaultHUD._gui)
+			VaultHUD.SetUpgradesCallback(function()
+				UpgradesModal.Toggle()
+			end)
+		end)
+	end
+
+	if FusionModal then
+		pcall(function()
+			FusionModal.Create(VaultHUD._gui)
+			VaultHUD.SetFusionCallback(function()
+				FusionModal.Toggle()
+			end)
+		end)
+	end
+
+	if DailyModal then
+		pcall(function()
+			DailyModal.Create(VaultHUD._gui)
+			VaultHUD.SetDailyCallback(function()
+				DailyModal.Toggle()
+			end)
+		end)
+	end
+
+	if ProgressionModal then
+		pcall(function()
+			ProgressionModal.Create(VaultHUD._gui)
+			VaultHUD.SetProgressCallback(function()
+				ProgressionModal.Toggle()
+			end)
+		end)
+	end
+
+	if ContractModal then
+		pcall(function()
+			ContractModal.Create(VaultHUD._gui)
+			VaultHUD.SetContractsCallback(function()
+				if ContractModal.IsOpen() then
+					ContractModal.Close()
+				else
+					ContractModal.Open()
+				end
+			end)
+		end)
+	end
+end
+
 local HeistController = safeRequire(controllersFolder, "HeistController")
-local SoundController = safeRequire(controllersFolder, "SoundController")
-local VFXController = safeRequire(controllersFolder, "VFXController")
-local AnimationEngine = safeRequire(controllersFolder, "AnimationEngine")
-
-local localPlayerData: any = nil
-
--- ============================================================
--- 1. INITIALIZE UI & CONTROLLERS
--- ============================================================
-if NotificationUI then
-	pcall(function() NotificationUI.Create() end)
-end
-
-if SoundController then
-	pcall(function() SoundController.Init() end)
-end
-
-if VFXController then
-	pcall(function() VFXController.Init() end)
-end
-
-if AnimationEngine then
-	pcall(function() AnimationEngine.Init() end)
-end
-
-if VaultHUD then
-	VaultHUD.Create()
-
-	if UpgradesModal and VaultHUD._gui then
-		UpgradesModal.Create(VaultHUD._gui)
-		VaultHUD.SetUpgradesCallback(function()
-			UpgradesModal.Toggle()
-		end)
-	end
-
-	if FusionModal and VaultHUD._gui then
-		FusionModal.Create(VaultHUD._gui)
-		VaultHUD.SetFusionCallback(function()
-			FusionModal.Toggle()
-		end)
-	end
-
-	if DailyModal and VaultHUD._gui then
-		DailyModal.Create(VaultHUD._gui)
-		VaultHUD.SetDailyCallback(function()
-			DailyModal.Toggle()
-		end)
-	end
-
-	if ProgressionModal and VaultHUD._gui then
-		ProgressionModal.Create(VaultHUD._gui)
-		VaultHUD.SetProgressCallback(function()
-			ProgressionModal.Toggle()
-		end)
-	end
-
-	if ContractModal and VaultHUD._gui then
-		ContractModal.Create(VaultHUD._gui)
-		VaultHUD.SetContractsCallback(function()
-			if ContractModal.IsOpen() then
-				ContractModal.Close()
-			else
-				ContractModal.Open()
-			end
-		end)
-	end
-end
-
 if HeistController then
 	pcall(function() HeistController.Init() end)
 end

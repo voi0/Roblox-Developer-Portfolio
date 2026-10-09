@@ -73,7 +73,7 @@ Config.Arena = {
 	PlotLength = 46,           -- Plot Z dimension
 	WallHeight = 16,
 	MonolithPosition = Vector3.new(0, 0, 0),
-	LobbyFloorColor = Color3.fromRGB(15, 17, 26),
+	LobbyFloorColor = Color3.fromRGB(51, 65, 85),
 }
 
 -- ============================================================

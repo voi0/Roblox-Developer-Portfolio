@@ -11,7 +11,6 @@ local TweenService = game:GetService("TweenService")
 local Debris = game:GetService("Debris")
 
 local player = Players.LocalPlayer
-local playerGui = player:WaitForChild("PlayerGui")
 
 local NotificationUI = {}
 NotificationUI._gui = nil :: ScreenGui?
@@ -31,6 +30,9 @@ local TYPE_COLORS: { [string]: Color3 } = {
 }
 
 function NotificationUI.Create()
+	local playerGui = player:FindFirstChildOfClass("PlayerGui") or player:WaitForChild("PlayerGui", 5)
+	if not playerGui then return end
+
 	local existing = playerGui:FindFirstChild("VaultWarsNotifications")
 	if existing then existing:Destroy() end
 

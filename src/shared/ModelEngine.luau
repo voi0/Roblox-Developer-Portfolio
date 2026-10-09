@@ -725,7 +725,7 @@ function ModelEngine.CreateBunkerShell(
 		"LeftWallCore",
 		Vector3.new(2.4, wallHeight, plotLength),
 		baseCF * CFrame.new(-plotWidth / 2, wallHeight / 2, 0),
-		Color3.fromRGB(28, 33, 46),
+		Color3.fromRGB(71, 85, 105),
 		Enum.Material.Slate,
 		model,
 		true
@@ -737,7 +737,7 @@ function ModelEngine.CreateBunkerShell(
 		"LeftWallSkirt",
 		Vector3.new(3.2, 2.2, plotLength),
 		baseCF * CFrame.new(-plotWidth / 2, 1.1, 0),
-		Color3.fromRGB(15, 23, 42),
+		Color3.fromRGB(47, 55, 70),
 		Enum.Material.DiamondPlate,
 		model,
 		true
@@ -749,7 +749,7 @@ function ModelEngine.CreateBunkerShell(
 			"LeftRib",
 			Vector3.new(1.4, wallHeight + 1.2, 4.5),
 			baseCF * CFrame.new(-plotWidth / 2 - 1.2, (wallHeight + 1.2) / 2, zRel),
-			Color3.fromRGB(20, 24, 34),
+			Color3.fromRGB(38, 46, 60),
 			Enum.Material.Metal,
 			model,
 			true
@@ -782,7 +782,7 @@ function ModelEngine.CreateBunkerShell(
 		"RightWallCore",
 		Vector3.new(2.4, wallHeight, plotLength),
 		baseCF * CFrame.new(plotWidth / 2, wallHeight / 2, 0),
-		Color3.fromRGB(28, 33, 46),
+		Color3.fromRGB(71, 85, 105),
 		Enum.Material.Slate,
 		model,
 		true
@@ -792,7 +792,7 @@ function ModelEngine.CreateBunkerShell(
 		"RightWallSkirt",
 		Vector3.new(3.2, 2.2, plotLength),
 		baseCF * CFrame.new(plotWidth / 2, 1.1, 0),
-		Color3.fromRGB(15, 23, 42),
+		Color3.fromRGB(47, 55, 70),
 		Enum.Material.DiamondPlate,
 		model,
 		true
@@ -803,7 +803,7 @@ function ModelEngine.CreateBunkerShell(
 			"RightRib",
 			Vector3.new(1.4, wallHeight + 1.2, 4.5),
 			baseCF * CFrame.new(plotWidth / 2 + 1.2, (wallHeight + 1.2) / 2, zRel),
-			Color3.fromRGB(20, 24, 34),
+			Color3.fromRGB(38, 46, 60),
 			Enum.Material.Metal,
 			model,
 			true
@@ -834,7 +834,7 @@ function ModelEngine.CreateBunkerShell(
 		"BackWallCore",
 		Vector3.new(plotWidth + 4, wallHeight, 3.2),
 		baseCF * CFrame.new(0, wallHeight / 2, plotLength / 2),
-		Color3.fromRGB(20, 24, 34),
+		Color3.fromRGB(64, 75, 95),
 		Enum.Material.Concrete,
 		model,
 		true
@@ -843,7 +843,7 @@ function ModelEngine.CreateBunkerShell(
 		"BackWallUpperTrim",
 		Vector3.new(plotWidth + 4.8, 2.2, 4.2),
 		baseCF * CFrame.new(0, wallHeight + 0.6, plotLength / 2),
-		Color3.fromRGB(15, 23, 42),
+		Color3.fromRGB(38, 46, 60),
 		Enum.Material.DiamondPlate,
 		model,
 		true
@@ -856,7 +856,7 @@ function ModelEngine.CreateBunkerShell(
 		"BlastRoofDeck",
 		Vector3.new(plotWidth + 4, 1.8, roofLen),
 		baseCF * CFrame.new(0, wallHeight + 0.9, roofZ),
-		Color3.fromRGB(24, 28, 40),
+		Color3.fromRGB(50, 60, 78),
 		Enum.Material.Metal,
 		model,
 		true

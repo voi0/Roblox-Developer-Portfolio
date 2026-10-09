@@ -63,15 +63,15 @@ local function setupAtmosphericLighting()
 		Lighting.Technology = Enum.Technology.Future
 	end)
 
-	Lighting.Ambient = Color3.fromRGB(18, 24, 38)
-	Lighting.OutdoorAmbient = Color3.fromRGB(12, 16, 26)
-	Lighting.Brightness = 1.6
-	Lighting.ClockTime = 0 -- Midnight subterranean bunker aesthetic
-	Lighting.GeographicLatitude = 0
+	Lighting.ClockTime = 14.5 -- High-visibility daylight providing sharp architectural definition
+	Lighting.Brightness = 2.4
+	Lighting.Ambient = Color3.fromRGB(120, 135, 160) -- Crisp ambient bounce light so all structures are visible
+	Lighting.OutdoorAmbient = Color3.fromRGB(105, 120, 145)
+	Lighting.GeographicLatitude = 25
 	Lighting.GlobalShadows = true
-	Lighting.FogEnd = 450
-	Lighting.FogStart = 60
-	Lighting.FogColor = Color3.fromRGB(10, 14, 24)
+	Lighting.FogStart = 800
+	Lighting.FogEnd = 3000
+	Lighting.FogColor = Color3.fromRGB(140, 160, 190)
 
 	-- Atmosphere Object
 	local atmosphere = Lighting:FindFirstChildOfClass("Atmosphere")
@@ -79,12 +79,12 @@ local function setupAtmosphericLighting()
 		atmosphere = Instance.new("Atmosphere")
 		atmosphere.Parent = Lighting
 	end
-	atmosphere.Density = 0.34
-	atmosphere.Offset = 0.22
-	atmosphere.Color = Color3.fromRGB(24, 38, 62)
-	atmosphere.Decay = Color3.fromRGB(14, 18, 30)
-	atmosphere.Glare = 0.12
-	atmosphere.Haze = 1.35
+	atmosphere.Density = 0.18
+	atmosphere.Offset = 0.25
+	atmosphere.Color = Color3.fromRGB(140, 165, 195)
+	atmosphere.Decay = Color3.fromRGB(85, 100, 125)
+	atmosphere.Glare = 0.2
+	atmosphere.Haze = 0.5
 
 	-- Bloom
 	local bloom = Lighting:FindFirstChild("VaultWarsBloom") :: BloomEffect?
@@ -141,7 +141,7 @@ local function buildCavernEnclosure(parent: Folder)
 			`BlastWallLower_{i}`,
 			Vector3.new(segmentWidth, 42, wallThickness),
 			lookCenterCF * CFrame.new(0, -25, 0),
-			Color3.fromRGB(20, 24, 34),
+			Color3.fromRGB(58, 66, 84),
 			Enum.Material.DiamondPlate,
 			wallsFolder,
 			true
@@ -152,7 +152,7 @@ local function buildCavernEnclosure(parent: Folder)
 			`BlastWallUpper_{i}`,
 			Vector3.new(segmentWidth, 50, wallThickness - 1),
 			lookCenterCF * CFrame.new(0, 21, 0.5),
-			Color3.fromRGB(28, 33, 46),
+			Color3.fromRGB(75, 86, 108),
 			Enum.Material.Corrugated,
 			wallsFolder,
 			true
@@ -203,7 +203,7 @@ local function buildCavernEnclosure(parent: Folder)
 			`StructuralIBeam_{i}`,
 			Vector3.new(4.5, wallHeight + 4, 4.5),
 			vertCF,
-			Color3.fromRGB(15, 20, 30),
+			Color3.fromRGB(42, 48, 64),
 			Enum.Material.Metal,
 			wallsFolder,
 			true
@@ -315,15 +315,25 @@ local function buildOverheadCraneGantries(parent: Folder)
 			girder,
 			false
 		)
-		createPart(
-			`CraneRailR_{idx}`,
-			Vector3.new(spanLen, 0.8, 0.8),
-			CFrame.new(0, beamHeight + 2.8, zOff + 2.2),
-			Color3.fromRGB(245, 158, 11),
-			Enum.Material.Metal,
-			girder,
-			false
-		)
+		-- 4.15 High-Bay Industrial Sodium Floodlights on Girder Underside
+		for _, xPos in { -80, -25, 25, 80 } do
+			local bayLightPart = createPart(
+				`HighBayLight_{idx}_{xPos}`,
+				Vector3.new(3.5, 0.6, 3.5),
+				CFrame.new(xPos, beamHeight - 2.8, zOff),
+				Color3.fromRGB(254, 240, 138),
+				Enum.Material.Neon,
+				girder,
+				false
+			)
+			local point = Instance.new("PointLight")
+			point.Name = "ArenaHighBayIllumination"
+			point.Color = Color3.fromRGB(255, 244, 224)
+			point.Range = 130
+			point.Brightness = 2.2
+			point.Shadows = true
+			point.Parent = bayLightPart
+		end
 
 		-- 4.2. Motorized Crane Hoist Trolley
 		local trolleyX = (idx == 1 and -45) or (idx == 2 and 35) or -10

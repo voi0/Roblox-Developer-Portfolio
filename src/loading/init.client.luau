@@ -10,6 +10,7 @@
 
 local Players = game:GetService("Players")
 local ReplicatedFirst = game:GetService("ReplicatedFirst")
+local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local ContentProvider = game:GetService("ContentProvider")
 local Workspace = game:GetService("Workspace")
@@ -190,6 +191,7 @@ pctLbl.Parent = consoleBox
 -- PROGRESSION & GRACEFUL EXIT
 -- ============================================================
 task.spawn(function()
+	local isStudio = RunService:IsStudio()
 	local logs = {
 		"> ESTABLISHING ENCRYPTED TUNNEL... [OK]",
 		"> LOADING SECTOR 07 CAVERN GEOMETRY... [OK]",
@@ -197,33 +199,37 @@ task.spawn(function()
 		"> SYSTEM ONLINE: WELCOME TO VAULT WARS.",
 	}
 
+	-- In Studio, execute instantly so developer Play Solo has 0 delay
+	local waitStep = if isStudio then 0.05 else 0.25
+
 	for i, log in logs do
-		task.wait(0.35)
+		task.wait(waitStep)
 		if isDestroyed then return end
 		logText.Text = logText.Text .. "\n" .. log
 		local targetPct = math.min(1.0, 0.25 * i)
-		TweenService:Create(barFill, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+		TweenService:Create(barFill, TweenInfo.new(waitStep, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
 			Size = UDim2.new(targetPct, 0, 1, 0),
 		}):Play()
 		pctLbl.Text = string.format("AUTHENTICATING... %d%%", math.floor(targetPct * 100))
 	end
 
-	-- Wait until VaultWarsArena is in Workspace or max 2.5s
+	-- Wait until VaultWarsArena is in Workspace or max 1.5s
 	local startTime = os.clock()
-	while not Workspace:FindFirstChild("VaultWarsArena") and (os.clock() - startTime < 2.5) do
+	while not Workspace:FindFirstChild("VaultWarsArena") and (os.clock() - startTime < (if isStudio then 0.5 else 1.5)) do
 		task.wait(0.1)
 	end
 
 	-- Complete progress
 	barFill.BackgroundColor3 = C.Emerald
-	TweenService:Create(barFill, TweenInfo.new(0.2, Enum.EasingStyle.Quad), { Size = UDim2.new(1, 0, 1, 0) }):Play()
+	TweenService:Create(barFill, TweenInfo.new(0.15, Enum.EasingStyle.Quad), { Size = UDim2.new(1, 0, 1, 0) }):Play()
 	pctLbl.Text = "ACCESS GRANTED. INITIALIZING..."
 	pctLbl.TextColor3 = C.Emerald
-	task.wait(0.35)
+	task.wait(if isStudio then 0.1 else 0.25)
 
 	-- Smooth Graceful Fade-Out (No pop-in or sudden flash!)
 	if screenGui and screenGui.Parent then
-		local fadeInfo = TweenInfo.new(0.45, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+		local fadeDuration = if isStudio then 0.2 else 0.4
+		local fadeInfo = TweenInfo.new(fadeDuration, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 		TweenService:Create(bg, fadeInfo, { BackgroundTransparency = 1 }):Play()
 		TweenService:Create(consoleBox, fadeInfo, { BackgroundTransparency = 1 }):Play()
 		for _, desc in consoleBox:GetDescendants() do
@@ -236,10 +242,17 @@ task.spawn(function()
 			end
 		end
 
-		task.wait(0.5)
+		task.wait(fadeDuration + 0.05)
 		isDestroyed = true
 		pcall(function()
 			screenGui:Destroy()
 		end)
+	end
+end)
+
+-- Emergency safety cleanup (Guarantees loading screen never lingers under any condition)
+task.delay(4, function()
+	if screenGui and screenGui.Parent then
+		pcall(function() screenGui:Destroy() end)
 	end
 end)
