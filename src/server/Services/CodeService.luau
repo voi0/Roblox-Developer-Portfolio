@@ -1,84 +1,70 @@
 --!strict
 --[[
-	CodeService.luau — Promo Code Redemption Engine for STARWEAVE
-	Enables players to redeem viral codes (e.g. from TikTok, update logs, Twitter/X).
-	Awards Stardust, Nebula Gems, and exclusive seeds while ensuring single-use per account.
+	CodeService.luau — Promo Code Redemption Engine for VAULT WARS: STEAL & DEFEND TYCOON
+	Allows players to redeem viral codes (TikTok / Discord) for Banked Cash.
 	Located in: ServerScriptService.Server.Services.CodeService
 ]]
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local ServerScriptService = game:GetService("ServerScriptService")
 
-local Config = require(ReplicatedStorage.Shared.Config)
-
-local DataService: any = nil
+local PROMO_CODES: { [string]: { CashReward: number } } = {
+	RELEASE = { CashReward = 2500 },
+	VAULT10K = { CashReward = 15000 },
+	HEIST = { CashReward = 5000 },
+}
 
 local CodeService = {}
-CodeService._initialized = false
 
-function CodeService.RedeemCode(player: Player, rawCode: string): (boolean, string, any?)
-	if not rawCode or type(rawCode) ~= "string" then
-		return false, "Please enter a valid code."
-	end
-
-	local cleanCode = string.upper(string.match(rawCode, "^%s*(.-)%s*$") or "")
-	if #cleanCode == 0 then
-		return false, "Please enter a code."
-	end
-
-	local codeDef = Config.PromoCodes[cleanCode]
-	if not codeDef then
-		return false, "Invalid code. Check for typos!"
-	end
-
-	if DataService.HasRedeemedCode(player, cleanCode) then
-		return false, "You have already redeemed this code!"
-	end
-
-	-- Mark as redeemed
-	DataService.MarkCodeRedeemed(player, cleanCode)
-
-	-- Award currencies
-	if codeDef.RewardStardust and codeDef.RewardStardust > 0 then
-		DataService.AddCurrency(player, "Stardust", codeDef.RewardStardust)
-	end
-	if codeDef.RewardGems and codeDef.RewardGems > 0 then
-		DataService.AddCurrency(player, "NebulaGems", codeDef.RewardGems)
-	end
-
-	-- Award seeds
-	if codeDef.RewardSeeds then
-		for seedId, count in codeDef.RewardSeeds do
-			DataService.AddSeeds(player, seedId, count)
-		end
-	end
-
-	print(`[CodeService] {player.Name} successfully redeemed code: {cleanCode}`)
-
-	return true, `Code redeemed! Enjoy your celestial gifts.`, codeDef
+local function getDataService(): any?
+	local svc = script.Parent:FindFirstChild("DataService")
+	if svc then return require(svc :: ModuleScript) end
+	return nil
 end
 
 function CodeService.Init()
-	if CodeService._initialized then return end
-	CodeService._initialized = true
+	print("  [CodeService] Initializing Promo Code Engine...")
 
-	DataService = require(ServerScriptService.Server.Services.DataService)
-
-	local codeRequest = Instance.new("RemoteFunction")
-	codeRequest.Name = "CodeRequest"
-	codeRequest.Parent = ReplicatedStorage
-
-	codeRequest.OnServerInvoke = function(player: Player, codeStr: string): any
-		local success, msg, reward = CodeService.RedeemCode(player, codeStr)
-		return {
-			Success = success,
-			Message = msg,
-			Reward = reward,
-		}
+	local codeRF = ReplicatedStorage:FindFirstChild("RedeemCode") :: RemoteFunction?
+	if not codeRF then
+		codeRF = Instance.new("RemoteFunction")
+		codeRF.Name = "RedeemCode"
+		codeRF.Parent = ReplicatedStorage
 	end
 
-	print("[CodeService] Initialized ✓")
+	codeRF.OnServerInvoke = function(player: Player, rawCode: string)
+		return CodeService.RedeemCode(player, rawCode)
+	end
+
+	print("  [CodeService] Promo Code Engine online ✓")
+end
+
+function CodeService.RedeemCode(player: Player, rawCode: string): (boolean, string)
+	if not rawCode or type(rawCode) ~= "string" then
+		return false, "Invalid code."
+	end
+
+	local cleanCode = string.upper(string.match(rawCode, "^%s*(.-)%s*$") or "")
+	local codeDef = PROMO_CODES[cleanCode]
+	if not codeDef then
+		return false, "Code does not exist!"
+	end
+
+	local dataSvc = getDataService()
+	if not dataSvc then return false, "Data service unavailable." end
+
+	local data = dataSvc.GetData(player)
+	if not data then return false, "Profile not loaded." end
+
+	if not data.RedeemedCodes then data.RedeemedCodes = {} end
+	if data.RedeemedCodes[cleanCode] then
+		return false, "Code already redeemed!"
+	end
+
+	data.RedeemedCodes[cleanCode] = true
+	dataSvc.AddBanked(player, codeDef.CashReward)
+
+	return true, `Redeemed ${codeDef.CashReward} Banked Cash!`
 end
 
 return CodeService

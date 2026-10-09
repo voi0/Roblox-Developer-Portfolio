@@ -1,8 +1,7 @@
 --!strict
 --[[
-	Client Boot Script — ESCAPE THE PACK
-	Orchestrates Movement Physics, Round State Listener, Tactical Survival HUD,
-	Tactical Locker Modal, and Chaser Tag Actions.
+	Client Boot Script — VAULT WARS: STEAL & DEFEND TYCOON
+	Orchestrates Tactical Glassmorphic HUD, Upgrades Center, and Heist Alerts.
 	Located in: StarterPlayerScripts.Client
 ]]
 
@@ -14,7 +13,7 @@ local Workspace = game:GetService("Workspace")
 
 local player = Players.LocalPlayer
 
--- Disable default backpack so custom survival HUD is clean
+-- Disable default backpack so custom HUD is clean
 task.spawn(function()
 	for _ = 1, 15 do
 		local ok = pcall(function()
@@ -26,7 +25,7 @@ task.spawn(function()
 end)
 
 print("========================================")
-print("  ⚡ ESCAPE THE PACK Client Starting...")
+print("  ⚡ VAULT WARS Client Starting...")
 print("========================================")
 
 local controllersFolder = script:WaitForChild("Controllers", 15) :: Folder
@@ -50,53 +49,31 @@ local function safeRequire(parent: Folder?, name: string): any?
 	end
 end
 
-local AbilityData = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("AbilityData"))
 local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
+local Types = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Types"))
 
-local MovementController = safeRequire(controllersFolder, "MovementController")
-local RoundController = safeRequire(controllersFolder, "RoundController")
-local SoundController = safeRequire(controllersFolder, "SoundController")
-local HUDController = safeRequire(uiFolder, "HUDController")
-local LockerModal = safeRequire(uiFolder, "LockerModal")
+local VaultHUD = safeRequire(uiFolder, "VaultHUD")
+local UpgradesModal = safeRequire(uiFolder, "UpgradesModal")
+local HeistController = safeRequire(controllersFolder, "HeistController")
 
-local playerData: any = {
-	Coins = Config.Economy.StartingCoins,
-	Gems = Config.Economy.StartingGems,
-	EquippedAbility = "Cloak",
-	UnlockedAbilities = { Cloak = true },
-}
+local localPlayerData: any = nil
 
 -- ============================================================
--- 1. INITIALIZE CLIENT SUBSYSTEMS
+-- 1. INITIALIZE UI & CONTROLLERS
 -- ============================================================
-if HUDController then
-	HUDController.Create()
-	HUDController.UpdateData(playerData)
+if VaultHUD then
+	VaultHUD.Create()
 
-	if LockerModal and HUDController._gui then
-		LockerModal.Create(HUDController._gui)
-		LockerModal.Update(playerData)
-		HUDController.SetLockerCallback(function()
-			LockerModal.Toggle()
+	if UpgradesModal and VaultHUD._gui then
+		UpgradesModal.Create(VaultHUD._gui)
+		VaultHUD.SetUpgradesCallback(function()
+			UpgradesModal.Toggle()
 		end)
 	end
 end
 
-if SoundController then
-	pcall(function() SoundController.Init() end)
-end
-
-if MovementController then
-	pcall(function() MovementController.Init() end)
-	if HUDController then
-		MovementController.OnDash = function(cooldownDuration: number)
-			HUDController.TriggerDashCooldown(cooldownDuration)
-		end
-	end
-end
-
-if RoundController then
-	pcall(function() RoundController.Init() end)
+if HeistController then
+	pcall(function() HeistController.Init() end)
 end
 
 -- ============================================================
@@ -110,8 +87,8 @@ local function setupCamera(char: Model)
 	camera.CameraType = Enum.CameraType.Custom
 	camera.CameraSubject = humanoid
 
-	player.CameraMinZoomDistance = 3
-	player.CameraMaxZoomDistance = 45
+	player.CameraMinZoomDistance = 4
+	player.CameraMaxZoomDistance = 50
 end
 
 if player.Character then
@@ -124,9 +101,9 @@ player.CharacterAdded:Connect(setupCamera)
 -- ============================================================
 local function onDataReceived(data: any)
 	if not data then return end
-	playerData = data
-	if HUDController then HUDController.UpdateData(data) end
-	if LockerModal then LockerModal.Update(data) end
+	localPlayerData = data
+	if VaultHUD then VaultHUD.Update(data) end
+	if UpgradesModal then UpgradesModal.Update(data) end
 end
 
 task.spawn(function()
@@ -156,89 +133,21 @@ task.spawn(function()
 end)
 
 -- ============================================================
--- 4. DOWNED & REVIVED EVENT LISTENERS
+-- 4. KEYBOARD HOTKEYS: [U] UPGRADES, [ESC] CLOSE
 -- ============================================================
-task.spawn(function()
-	local downedEvt = ReplicatedStorage:WaitForChild("PlayerDowned", 15) :: RemoteEvent?
-	if downedEvt then
-		downedEvt.OnClientEvent:Connect(function(downedPlayer: Player, attacker: Player?)
-			if downedPlayer == player then
-				if HUDController then HUDController.SetDownedState(true) end
-			end
-		end)
-	end
-
-	local revivedEvt = ReplicatedStorage:WaitForChild("PlayerRevived", 15) :: RemoteEvent?
-	if revivedEvt then
-		revivedEvt.OnClientEvent:Connect(function(revivedPlayer: Player, reviver: Player?)
-			if revivedPlayer == player then
-				if HUDController then HUDController.SetDownedState(false) end
-			end
-		end)
-	end
-end)
-
--- ============================================================
--- 5. INPUT HANDLING: [Q] ABILITY, [B] LOCKER, [LMB] CHASER ATTACK
--- ============================================================
-local lastAbilityUse = 0
-
-local function tryUseAbility()
-	local abilityId = playerData and playerData.EquippedAbility or "Cloak"
-	local def = AbilityData[abilityId]
-	if not def then return end
-
-	local now = os.clock()
-	if now - lastAbilityUse < def.Cooldown then return end
-
-	local useAbilityRF = ReplicatedStorage:FindFirstChild("UseAbility") :: RemoteFunction?
-	if useAbilityRF then
-		local success, err = useAbilityRF:InvokeServer(abilityId)
-		if success then
-			lastAbilityUse = os.clock()
-			if HUDController then
-				HUDController.TriggerAbilityCooldown(def.Cooldown)
-			end
-			if SoundController then
-				SoundController.Play("ButtonClick")
-			end
-		else
-			warn(`[Ability] Failed to use {abilityId}: {tostring(err)}`)
-		end
-	end
-end
-
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
 	if gameProcessed then return end
 
-	-- ⚡ USE EQUIPPED ABILITY [Q]
-	if input.KeyCode == Enum.KeyCode.Q then
-		tryUseAbility()
+	if input.KeyCode == Enum.KeyCode.U or input.KeyCode == Enum.KeyCode.E then
+		if UpgradesModal then UpgradesModal.Toggle() end
 
-	-- ⚡ TOGGLE LOCKER [B] / [L]
-	elseif input.KeyCode == Enum.KeyCode.B or input.KeyCode == Enum.KeyCode.L then
-		if LockerModal then LockerModal.Toggle() end
-
-	-- ✕ CLOSE MODAL ON ESCAPE
 	elseif input.KeyCode == Enum.KeyCode.Escape then
-		if LockerModal and LockerModal._isOpen then
-			LockerModal.Close()
-		end
-
-	-- 🔪 CHASER KNIFE SLICE ON LEFT CLICK
-	elseif input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-		if HUDController and HUDController._currentRole == "Chaser" then
-			local knifeEvt = ReplicatedStorage:FindFirstChild("KnifeSwing") :: RemoteEvent?
-			if knifeEvt then
-				knifeEvt:FireServer()
-				if SoundController then
-					SoundController.Play("ButtonClick")
-				end
-			end
+		if UpgradesModal and UpgradesModal._isOpen then
+			UpgradesModal.Close()
 		end
 	end
 end)
 
 print("========================================")
-print("  ✅ ESCAPE THE PACK Client Online!")
+print("  ✅ VAULT WARS Client Online!")
 print("========================================")

@@ -1,7 +1,8 @@
 --!strict
 --[[
-	Server Boot Script — STARWEAVE
-	Initializes all server services in the correct order with error protection.
+	Server Boot Script — VAULT WARS: STEAL & DEFEND TYCOON
+	Initializes all server services in strict dependency order:
+	Profile Data, Procedural Plots, Laser Grid, Conveyor Mint, and Physical Heists.
 	Located in: ServerScriptService.Server
 ]]
 
@@ -13,15 +14,15 @@ if not servicesFolder then
 end
 
 print("========================================")
-print("  ⚡ ESCAPE THE PACK Server Booting...")
+print("  ⚡ VAULT WARS Server Booting...")
 print("========================================")
 
 local serviceNames = {
 	"DataService",
-	"ArenaService",
-	"TagService",
-	"AbilityService",
-	"RoundService",
+	"PlotService",
+	"LaserService",
+	"MintService",
+	"HeistService",
 	"EconomyService",
 	"CodeService",
 	"PlaytimeService",
@@ -62,5 +63,5 @@ for _, name in serviceNames do
 end
 
 print("========================================")
-print("  ✅ ESCAPE THE PACK Server Online!")
+print("  ✅ VAULT WARS Server Online!")
 print("========================================")

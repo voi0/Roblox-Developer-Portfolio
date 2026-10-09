@@ -1,7 +1,8 @@
 --!strict
 --[[
-	DataService.luau — ProfileService wrapper for ESCAPE THE PACK
-	Handles all player data persistence with crash-safe locking.
+	DataService.luau — ProfileService wrapper for VAULT WARS: STEAL & DEFEND TYCOON
+	Provides crash-safe session-locked persistence for Banked Net Worth,
+	Unbanked Stash, Conveyor/Laser Tiers, and Prestige Multipliers.
 	Located in: ServerScriptService.Server.Services.DataService
 ]]
 
@@ -21,35 +22,34 @@ end
 local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
 local Types = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Types"))
 
--- ============================================================
--- DATA TEMPLATE (Default values for new players)
--- ============================================================
-local DATA_TEMPLATE = {
-	Coins = Config.Economy.StartingCoins,
-	Gems = Config.Economy.StartingGems,
-	Wins = 0,
-	Kills = 0,
-	HeroClutches = 0,
-	TotalCrossings = 0,
-	TotalRevives = 0,
+local DATA_TEMPLATE: Types.PlayerData = {
+	UnbankedCash = Config.Economy.StartingUnbankedCash,
+	BankedCash = Config.Economy.StartingBankedCash,
+	PrestigeTokens = 0,
+	PrestigeLevel = 0,
 
-	-- Loadout
-	EquippedAbility = "Cloak",
-	UnlockedAbilities = { Cloak = true },
-	EquippedKnife = "DefaultDagger",
-	UnlockedKnives = { DefaultDagger = true },
-	EquippedTrail = "Default",
-	UnlockedTrails = { Default = true },
+	ConveyorLevel = 1,
+	LaserTier = 1,
+	VaultInterestTier = 1,
+	EquippedVaultSkin = "DefaultIron",
+	UnlockedVaultSkins = { DefaultIron = true },
 
-	-- Meta
-	RedeemedCodes = {},
+	HasAutoCollector = false,
+	HasOfflineShield = false,
+	HasDoubleCapacity = false,
+	HasTitaniumLasers = false,
+
+	TotalHeistsWon = 0,
+	TotalHeistsLost = 0,
+	TotalCashStolen = 0,
+	HighestSingleHeist = 0,
 	PlayTimeSeconds = 0,
-	LoginStreak = 0,
-	LastLoginDate = "",
+	LastInterestTimestamp = os.time(),
+	RedeemedCodes = {},
 }
 
 local BaseProfileStore = ProfileService.GetProfileStore(
-	"EscapeThePack_v1",
+	"VaultWars_v1",
 	DATA_TEMPLATE
 )
 
@@ -58,10 +58,8 @@ local ProfileStore = (RunService:IsStudio() and BaseProfileStore.Mock) or BasePr
 local DataService = {}
 DataService._profiles = {} :: { [Player]: any }
 
--- ============================================================
--- INTERNAL HELPERS
--- ============================================================
-local function _reconcileData(data: any)
+-- Reconcile template keys
+local function reconcileData(data: any)
 	for key, defaultValue in DATA_TEMPLATE do
 		if data[key] == nil then
 			if type(defaultValue) == "table" then
@@ -71,38 +69,6 @@ local function _reconcileData(data: any)
 			end
 		end
 	end
-end
-
-local function _handleLoginStreak(data: any)
-	local today = os.date("!*t")
-	local dateStr = string.format("%d-%02d-%02d", today.year, today.month, today.day)
-
-	if data.LastLoginDate == "" then
-		data.LoginStreak = 1
-		data.LastLoginDate = dateStr
-		return
-	end
-
-	if data.LastLoginDate == dateStr then
-		return
-	end
-
-	local lastYear, lastMonth, lastDay = data.LastLoginDate:match("(%d+)-(%d+)-(%d+)")
-	if lastYear then
-		local lastTime = os.time({ year = tonumber(lastYear), month = tonumber(lastMonth), day = tonumber(lastDay), hour = 0, min = 0, sec = 0 })
-		local todayTime = os.time({ year = today.year, month = today.month, day = today.day, hour = 0, min = 0, sec = 0 })
-		local diffDays = math.floor((todayTime - lastTime) / 86400)
-
-		if diffDays == 1 then
-			data.LoginStreak = (data.LoginStreak or 0) + 1
-		else
-			data.LoginStreak = 1
-		end
-	else
-		data.LoginStreak = 1
-	end
-
-	data.LastLoginDate = dateStr
 end
 
 -- ============================================================
@@ -118,20 +84,18 @@ function DataService.OnPlayerAdded(player: Player)
 	end)
 
 	if not success or profile == nil then
-		warn(`[DataService] Could not load cloud ProfileStore for {player.Name}: {tostring(err)}. Falling back to Mock store.`)
+		warn(`[DataService] Using mock store for {player.Name}: {tostring(err)}`)
 		pcall(function()
 			profile = BaseProfileStore.Mock:LoadProfileAsync("Player_" .. player.UserId, "ForceLoad")
 		end)
 	end
 
 	if profile == nil then
-		warn(`[DataService] Using emergency session data for {player.Name}`)
+		warn(`[DataService] Emergency memory fallback for {player.Name}`)
 		local memData = table.clone(DATA_TEMPLATE)
 		DataService._profiles[player] = { Data = memData, Release = function() end }
-		local dataReadyEvent = ReplicatedStorage:FindFirstChild("DataReady")
-		if dataReadyEvent and dataReadyEvent:IsA("RemoteEvent") then
-			dataReadyEvent:FireClient(player, memData)
-		end
+		local readyEvt = ReplicatedStorage:FindFirstChild("DataReady") :: RemoteEvent?
+		if readyEvt then readyEvt:FireClient(player, memData) end
 		return
 	end
 
@@ -143,22 +107,21 @@ function DataService.OnPlayerAdded(player: Player)
 		return
 	end
 
-	_reconcileData(profile.Data)
-	_handleLoginStreak(profile.Data)
+	reconcileData(profile.Data)
 
 	profile:ListenToRelease(function()
 		DataService._profiles[player] = nil
-		player:Kick("Your session was loaded on another server. Please rejoin.")
+		player:Kick("Your Vault Wars profile was loaded in another server. Please rejoin.")
 	end)
 
 	DataService._profiles[player] = profile
 
-	local dataReadyEvent = ReplicatedStorage:FindFirstChild("DataReady")
-	if dataReadyEvent and dataReadyEvent:IsA("RemoteEvent") then
-		dataReadyEvent:FireClient(player, profile.Data)
+	local readyEvt = ReplicatedStorage:FindFirstChild("DataReady") :: RemoteEvent?
+	if readyEvt then
+		readyEvt:FireClient(player, profile.Data)
 	end
 
-	print(`  [DataService] Loaded profile for {player.Name} (Coins: {profile.Data.Coins}, Gems: {profile.Data.Gems})`)
+	print(`  [DataService] Profile active for {player.Name} (Banked: ${profile.Data.BankedCash}, Unbanked: ${profile.Data.UnbankedCash})`)
 end
 
 function DataService.OnPlayerRemoving(player: Player)
@@ -166,208 +129,225 @@ function DataService.OnPlayerRemoving(player: Player)
 	if profile then
 		profile:Release()
 		DataService._profiles[player] = nil
-		print(`  [DataService] Released session profile for {player.Name}`)
+		print(`  [DataService] Saved & released profile for {player.Name}`)
 	end
 end
 
 -- ============================================================
--- GETTERS & CLIENT SYNC
+-- GETTERS & SYNC
 -- ============================================================
-function DataService.GetData(player: Player): any?
+function DataService.GetData(player: Player): Types.PlayerData?
 	local profile = DataService._profiles[player]
-	if not profile then return nil end
-	return profile.Data
+	return profile and profile.Data or nil
 end
 
 function DataService.SyncClient(player: Player)
 	local data = DataService.GetData(player)
 	if not data then return end
 
-	local dataUpdate = ReplicatedStorage:FindFirstChild("DataUpdate")
-	if dataUpdate and dataUpdate:IsA("RemoteEvent") then
-		dataUpdate:FireClient(player, data)
+	local updateEvt = ReplicatedStorage:FindFirstChild("DataUpdate") :: RemoteEvent?
+	if updateEvt then
+		updateEvt:FireClient(player, data)
 	end
 end
 
 -- ============================================================
--- ECONOMY OPERATIONS
+-- VAULT & HEIST ECONOMY TRANSACTIONS
 -- ============================================================
-function DataService.AddCoins(player: Player, amount: number, reason: string?): number
+function DataService.AddUnbanked(player: Player, amount: number): number
 	if amount <= 0 then return 0 end
 	local data = DataService.GetData(player)
 	if not data then return 0 end
 
-	data.Coins = (data.Coins or 0) + math.floor(amount)
+	data.UnbankedCash = (data.UnbankedCash or 0) + math.floor(amount)
 	DataService.SyncClient(player)
-	return data.Coins
+	return data.UnbankedCash
 end
 
-function DataService.SpendCoins(player: Player, amount: number): boolean
-	if amount <= 0 then return true end
-	local data = DataService.GetData(player)
-	if not data then return false end
-	if (data.Coins or 0) < amount then return false end
-
-	data.Coins = data.Coins - math.floor(amount)
-	DataService.SyncClient(player)
-	return true
-end
-
-function DataService.AddGems(player: Player, amount: number, reason: string?): number
+function DataService.DeductUnbanked(player: Player, amount: number): number
 	if amount <= 0 then return 0 end
 	local data = DataService.GetData(player)
 	if not data then return 0 end
 
-	data.Gems = (data.Gems or 0) + math.floor(amount)
+	local actual = math.min(data.UnbankedCash, math.floor(amount))
+	data.UnbankedCash -= actual
+	data.TotalHeistsLost += 1
 	DataService.SyncClient(player)
-	return data.Gems
+	return actual
 end
 
-function DataService.SpendGems(player: Player, amount: number): boolean
+function DataService.BankAll(player: Player): number
+	local data = DataService.GetData(player)
+	if not data then return 0 end
+
+	local amount = data.UnbankedCash
+	if amount <= 0 then return 0 end
+
+	data.BankedCash = (data.BankedCash or 0) + amount
+	data.UnbankedCash = 0
+	DataService.SyncClient(player)
+	return amount
+end
+
+function DataService.AddBanked(player: Player, amount: number): number
+	if amount <= 0 then return 0 end
+	local data = DataService.GetData(player)
+	if not data then return 0 end
+
+	data.BankedCash = (data.BankedCash or 0) + math.floor(amount)
+	DataService.SyncClient(player)
+	return data.BankedCash
+end
+
+function DataService.SpendBanked(player: Player, amount: number): boolean
 	if amount <= 0 then return true end
 	local data = DataService.GetData(player)
 	if not data then return false end
-	if (data.Gems or 0) < amount then return false end
+	if (data.BankedCash or 0) < amount then return false end
 
-	data.Gems = data.Gems - math.floor(amount)
+	data.BankedCash -= math.floor(amount)
 	DataService.SyncClient(player)
 	return true
 end
 
--- ============================================================
--- STATS & ROUND MILESTONES
--- ============================================================
-function DataService.RecordWaveCrossing(player: Player)
-	local data = DataService.GetData(player)
+function DataService.RecordSuccessfulHeist(thief: Player, amount: number)
+	local data = DataService.GetData(thief)
 	if not data then return end
 
-	data.TotalCrossings = (data.TotalCrossings or 0) + 1
-	DataService.AddCoins(player, Config.Economy.WaveSurvivalCoins, "WaveCrossing")
-end
-
-function DataService.RecordMatchWin(player: Player, isHero: boolean)
-	local data = DataService.GetData(player)
-	if not data then return end
-
-	data.Wins = (data.Wins or 0) + 1
-	if isHero then
-		data.HeroClutches = (data.HeroClutches or 0) + 1
-		DataService.AddCoins(player, Config.Economy.HeroSurvivalCoins, "HeroWin")
-		DataService.AddGems(player, Config.Economy.HeroSurvivalGems, "HeroWinGems")
-	else
-		DataService.AddCoins(player, Config.Economy.MatchWinCoins, "MatchWin")
-		DataService.AddGems(player, Config.Economy.MatchWinGems, "MatchWinGems")
+	data.BankedCash = (data.BankedCash or 0) + math.floor(amount)
+	data.TotalHeistsWon += 1
+	data.TotalCashStolen = (data.TotalCashStolen or 0) + math.floor(amount)
+	if amount > (data.HighestSingleHeist or 0) then
+		data.HighestSingleHeist = math.floor(amount)
 	end
-end
-
-function DataService.RecordTag(player: Player)
-	local data = DataService.GetData(player)
-	if not data then return end
-
-	data.Kills = (data.Kills or 0) + 1
-	DataService.AddCoins(player, Config.Economy.ChaserTagCoins, "ChaserTag")
-end
-
-function DataService.RecordRevive(player: Player)
-	local data = DataService.GetData(player)
-	if not data then return end
-
-	data.TotalRevives = (data.TotalRevives or 0) + 1
-	DataService.AddCoins(player, Config.Economy.TeammateReviveCoins, "TeammateRevive")
+	DataService.SyncClient(thief)
 end
 
 -- ============================================================
--- LOADOUT & ABILITIES
+-- BASE UPGRADES
 -- ============================================================
-function DataService.UnlockAbility(player: Player, abilityId: string): boolean
+function DataService.Upgrade(player: Player, upgradeType: string): (boolean, string?)
 	local data = DataService.GetData(player)
-	if not data then return false end
+	if not data then return false, "No player data" end
 
-	if not data.UnlockedAbilities then data.UnlockedAbilities = {} end
-	data.UnlockedAbilities[abilityId] = true
-	data.EquippedAbility = abilityId
-	DataService.SyncClient(player)
-	return true
-end
+	if upgradeType == "Conveyor" then
+		if data.ConveyorLevel >= Config.Economy.MaxConveyorLevel then
+			return false, "Max Conveyor Level reached"
+		end
+		local cost = Config.Economy.GetConveyorCost(data.ConveyorLevel + 1)
+		if not DataService.SpendBanked(player, cost) then
+			return false, `Need ${cost} Banked Cash`
+		end
+		data.ConveyorLevel += 1
+		DataService.SyncClient(player)
+		return true, `Conveyor upgraded to Level {data.ConveyorLevel}!`
 
-function DataService.EquipAbility(player: Player, abilityId: string): boolean
-	local data = DataService.GetData(player)
-	if not data then return false end
-	if not data.UnlockedAbilities or not data.UnlockedAbilities[abilityId] then return false end
+	elseif upgradeType == "Laser" then
+		if data.LaserTier >= Config.Economy.MaxLaserTier then
+			return false, "Max Laser Tier reached"
+		end
+		local cost = Config.Economy.GetLaserCost(data.LaserTier + 1)
+		if not DataService.SpendBanked(player, cost) then
+			return false, `Need ${cost} Banked Cash`
+		end
+		data.LaserTier += 1
+		DataService.SyncClient(player)
+		return true, `Laser Security upgraded to Tier {data.LaserTier}!`
 
-	data.EquippedAbility = abilityId
-	DataService.SyncClient(player)
-	return true
-end
+	elseif upgradeType == "VaultInterest" then
+		if data.VaultInterestTier >= Config.Economy.MaxInterestTier then
+			return false, "Max Interest Tier reached"
+		end
+		local cost = Config.Economy.GetInterestCost(data.VaultInterestTier + 1)
+		if not DataService.SpendBanked(player, cost) then
+			return false, `Need ${cost} Banked Cash`
+		end
+		data.VaultInterestTier += 1
+		DataService.SyncClient(player)
+		return true, `Vault Interest upgraded to Tier {data.VaultInterestTier}!`
+	end
 
-function DataService.UnlockKnife(player: Player, knifeId: string): boolean
-	local data = DataService.GetData(player)
-	if not data then return false end
-
-	if not data.UnlockedKnives then data.UnlockedKnives = {} end
-	data.UnlockedKnives[knifeId] = true
-	data.EquippedKnife = knifeId
-	DataService.SyncClient(player)
-	return true
-end
-
-function DataService.EquipKnife(player: Player, knifeId: string): boolean
-	local data = DataService.GetData(player)
-	if not data then return false end
-	if not data.UnlockedKnives or not data.UnlockedKnives[knifeId] then return false end
-
-	data.EquippedKnife = knifeId
-	DataService.SyncClient(player)
-	return true
+	return false, "Unknown upgrade type"
 end
 
 -- ============================================================
--- SERVICE INITIALIZATION
+-- PRESTIGE (VAULT LIQUIDATION)
+-- ============================================================
+function DataService.LiquidateVault(player: Player): (boolean, number)
+	local data = DataService.GetData(player)
+	if not data then return false, 0 end
+
+	if data.BankedCash < Config.Economy.PrestigeMinBanked then
+		return false, 0
+	end
+
+	local tokensEarned = math.floor(Config.Economy.PrestigeTokenBase * ((data.BankedCash / Config.Economy.PrestigeMinBanked) ^ Config.Economy.PrestigeExponent))
+	if tokensEarned < 1 then tokensEarned = 1 end
+
+	data.PrestigeTokens = (data.PrestigeTokens or 0) + tokensEarned
+	data.PrestigeLevel = (data.PrestigeLevel or 0) + 1
+
+	-- Reset base
+	data.BankedCash = 0
+	data.UnbankedCash = 0
+	data.ConveyorLevel = 1
+	data.LaserTier = 1
+	data.VaultInterestTier = 1
+
+	DataService.SyncClient(player)
+	return true, tokensEarned
+end
+
+-- ============================================================
+-- INITIALIZE REMOTES & HOOKS
 -- ============================================================
 function DataService.Init()
-	print("  [DataService] Initializing ProfileService for ESCAPE THE PACK...")
+	print("  [DataService] Initializing ProfileService for VAULT WARS...")
 
-	local remotes = { "DataReady", "DataUpdate", "GetData", "ShopRequest" }
-	for _, name in remotes do
+	local events = { "DataReady", "DataUpdate", "BreachAlert", "RelicMinted", "HeistBroadcast" }
+	for _, name in events do
 		if not ReplicatedStorage:FindFirstChild(name) then
-			local inst = (name == "GetData" or name == "ShopRequest") and Instance.new("RemoteFunction") or Instance.new("RemoteEvent")
-			inst.Name = name
-			inst.Parent = ReplicatedStorage
+			local evt = Instance.new("RemoteEvent")
+			evt.Name = name
+			evt.Parent = ReplicatedStorage
 		end
 	end
 
+	local functions = { "GetData", "UpgradeRequest", "BankCashRequest", "PrestigeRequest" }
+	for _, name in functions do
+		if not ReplicatedStorage:FindFirstChild(name) then
+			local rf = Instance.new("RemoteFunction")
+			rf.Name = name
+			rf.Parent = ReplicatedStorage
+		end
+	end
+
+	-- Connect RemoteFunctions
 	local getDataRF = ReplicatedStorage:FindFirstChild("GetData") :: RemoteFunction?
 	if getDataRF then
-		getDataRF.OnServerInvoke = function(player: Player)
-			return DataService.GetData(player)
+		getDataRF.OnServerInvoke = function(p: Player)
+			return DataService.GetData(p)
 		end
 	end
 
-	local shopRequestRF = ReplicatedStorage:FindFirstChild("ShopRequest") :: RemoteFunction?
-	if shopRequestRF then
-		local AbilityData = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("AbilityData"))
-		shopRequestRF.OnServerInvoke = function(player: Player, action: string, itemId: string)
-			if action == "BuyAbility" then
-				local def = AbilityData[itemId]
-				if not def then return false, "Unknown ability" end
-				local data = DataService.GetData(player)
-				if data and data.UnlockedAbilities and data.UnlockedAbilities[itemId] then
-					return false, "Already unlocked"
-				end
-				if DataService.SpendGems(player, def.GemCost) then
-					DataService.UnlockAbility(player, itemId)
-					return true, `Unlocked {def.Name}!`
-				else
-					return false, "Not enough Gems!"
-				end
-			elseif action == "EquipAbility" then
-				if DataService.EquipAbility(player, itemId) then
-					return true, "Equipped!"
-				else
-					return false, "Ability is locked"
-				end
-			end
-			return false, "Invalid action"
+	local upgradeRF = ReplicatedStorage:FindFirstChild("UpgradeRequest") :: RemoteFunction?
+	if upgradeRF then
+		upgradeRF.OnServerInvoke = function(p: Player, upType: string)
+			return DataService.Upgrade(p, upType)
+		end
+	end
+
+	local bankRF = ReplicatedStorage:FindFirstChild("BankCashRequest") :: RemoteFunction?
+	if bankRF then
+		bankRF.OnServerInvoke = function(p: Player)
+			return DataService.BankAll(p)
+		end
+	end
+
+	local prestigeRF = ReplicatedStorage:FindFirstChild("PrestigeRequest") :: RemoteFunction?
+	if prestigeRF then
+		prestigeRF.OnServerInvoke = function(p: Player)
+			return DataService.LiquidateVault(p)
 		end
 	end
 
@@ -377,7 +357,7 @@ function DataService.Init()
 	Players.PlayerAdded:Connect(DataService.OnPlayerAdded)
 	Players.PlayerRemoving:Connect(DataService.OnPlayerRemoving)
 
-	print("  [DataService] ProfileService session store ready ✓")
+	print("  [DataService] Vault Wars Session Store online ✓")
 end
 
 return DataService
