@@ -422,24 +422,65 @@ function ModelEngine.CreateSecurityTurret(parent: Instance, baseCF: CFrame): Mod
 	model.Parent = parent
 
 	-- Ceiling/Wall Mount Base Plate
-	local mount = createPart("MountPlate", Vector3.new(2.2, 0.4, 2.2), baseCF, Color3.fromRGB(30, 41, 59), Enum.Material.Metal, model, true)
+	local mount = createPart("MountPlate", Vector3.new(2.4, 0.4, 2.4), baseCF, Color3.fromRGB(30, 41, 59), Enum.Material.Metal, model, true)
 	model.PrimaryPart = mount
 
-	-- Swivel Gimbal Joint (Cylinder)
-	local gimbal = createCylinder("GimbalJoint", Vector3.new(0.8, 1.2, 1.2), baseCF * CFrame.new(0, -0.6, 0), Color3.fromRGB(51, 65, 85), Enum.Material.Metal, model)
+	-- Swivel Gimbal Joint (Base Pivot)
+	createCylinder("GimbalJoint", Vector3.new(0.8, 1.2, 1.2), baseCF * CFrame.new(0, -0.6, 0), Color3.fromRGB(51, 65, 85), Enum.Material.Metal, model, true)
 
-	-- Minigun Weapon Pod Body
-	local pod = createPart("WeaponPod", Vector3.new(1.6, 1.2, 2.4), baseCF * CFrame.new(0, -1.3, 0), Color3.fromRGB(15, 23, 42), Enum.Material.Metal, model, true)
+	-- Articulated Turret Head (Sub-model that swivels)
+	local headModel = Instance.new("Model")
+	headModel.Name = "TurretHead"
+	headModel.Parent = model
 
-	-- Dual Motorized Barrels
-	createCylinder("BarrelLeft", Vector3.new(1.8, 0.35, 0.35), pod.CFrame * CFrame.new(-0.45, 0, -1.8) * CFrame.Angles(math.rad(90), 0, 0), Color3.fromRGB(71, 85, 105), Enum.Material.Metal, model)
-	createCylinder("BarrelRight", Vector3.new(1.8, 0.35, 0.35), pod.CFrame * CFrame.new(0.45, 0, -1.8) * CFrame.Angles(math.rad(90), 0, 0), Color3.fromRGB(71, 85, 105), Enum.Material.Metal, model)
+	local podCF = baseCF * CFrame.new(0, -1.3, 0)
+	local pod = createPart("WeaponPod", Vector3.new(1.6, 1.2, 2.4), podCF, Color3.fromRGB(15, 23, 42), Enum.Material.Metal, headModel, false)
+	pod.Anchored = true
+	headModel.PrimaryPart = pod
+	headModel:SetAttribute("RestCF", podCF)
 
-	-- Ammo Drum Feed
-	createCylinder("AmmoDrum", Vector3.new(0.8, 1.4, 1.4), pod.CFrame * CFrame.new(0, 0.4, 0.6) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(245, 158, 11), Enum.Material.Metal, model)
+	-- Dual Motorized Barrels (Welded to Pod)
+	local bLeft = createCylinder("BarrelLeft", Vector3.new(1.8, 0.35, 0.35), podCF * CFrame.new(-0.45, 0, -1.8) * CFrame.Angles(math.rad(90), 0, 0), Color3.fromRGB(71, 85, 105), Enum.Material.Metal, headModel, false)
+	bLeft.Anchored = false
+	local wLeft = Instance.new("WeldConstraint")
+	wLeft.Part0 = pod
+	wLeft.Part1 = bLeft
+	wLeft.Parent = pod
+
+	local bRight = createCylinder("BarrelRight", Vector3.new(1.8, 0.35, 0.35), podCF * CFrame.new(0.45, 0, -1.8) * CFrame.Angles(math.rad(90), 0, 0), Color3.fromRGB(71, 85, 105), Enum.Material.Metal, headModel, false)
+	bRight.Anchored = false
+	local wRight = Instance.new("WeldConstraint")
+	wRight.Part0 = pod
+	wRight.Part1 = bRight
+	wRight.Parent = pod
+
+	-- Ammo Drum Feed (Welded to Pod)
+	local drum = createCylinder("AmmoDrum", Vector3.new(0.8, 1.4, 1.4), podCF * CFrame.new(0, 0.4, 0.6) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(245, 158, 11), Enum.Material.Metal, headModel, false)
+	drum.Anchored = false
+	local wDrum = Instance.new("WeldConstraint")
+	wDrum.Part0 = pod
+	wDrum.Part1 = drum
+	wDrum.Parent = pod
 
 	-- Red Targeting Laser Beam emitter
-	local laserSight = createPart("LaserSight", Vector3.new(0.2, 0.2, 0.3), pod.CFrame * CFrame.new(0, -0.4, -1.2), Color3.fromRGB(239, 68, 68), Enum.Material.Neon, model, false)
+	local laserSight = createPart("LaserSight", Vector3.new(0.25, 0.25, 0.35), podCF * CFrame.new(0, -0.4, -1.2), Color3.fromRGB(239, 68, 68), Enum.Material.Neon, headModel, false)
+	laserSight.Anchored = false
+	local wSight = Instance.new("WeldConstraint")
+	wSight.Part0 = pod
+	wSight.Part1 = laserSight
+	wSight.Parent = pod
+
+	-- Laser Sight Attachment
+	local laserAtt = Instance.new("Attachment")
+	laserAtt.Name = "LaserAttachment"
+	laserAtt.Position = Vector3.new(0, 0, -0.2)
+	laserAtt.Parent = laserSight
+
+	-- Muzzle Flash Attachment
+	local muzzleAtt = Instance.new("Attachment")
+	muzzleAtt.Name = "MuzzleAttachment"
+	muzzleAtt.Position = Vector3.new(0, 0, -1.0)
+	muzzleAtt.Parent = bLeft
 
 	return model
 end
@@ -486,6 +527,183 @@ function ModelEngine.CreateSyndicateKiosk(parent: Instance, baseCF: CFrame): Mod
 	lbl.Parent = sGui
 
 	return model
+end
+
+-- ============================================================
+-- 10. IN-WORLD PHYSICAL TYCOON UPGRADE CONSOLE
+-- ============================================================
+function ModelEngine.CreateUpgradeConsole(
+	parent: Instance,
+	baseCF: CFrame,
+	upgradeType: string,
+	title: string,
+	accentColor: Color3
+): (Model, Part, BillboardGui)
+	local model = Instance.new("Model")
+	model.Name = `UpgradeConsole_{upgradeType}`
+	model.Parent = parent
+
+	-- 10.1. Heavy Diamond-Plate Base Plinth
+	local basePlinth = createPart("ConsoleBase", Vector3.new(3.8, 0.4, 3.4), baseCF * CFrame.new(0, 0.2, 0), Color3.fromRGB(30, 41, 59), Enum.Material.DiamondPlate, model, true)
+	model.PrimaryPart = basePlinth
+
+	-- Corner Fasteners
+	for _, xOff in { -1.6, 1.6 } do
+		for _, zOff in { -1.4, 1.4 } do
+			createCylinder(`Fastener_{xOff}_{zOff}`, Vector3.new(0.2, 0.3, 0.3), baseCF * CFrame.new(xOff, 0.45, zOff) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(100, 116, 139), Enum.Material.Metal, model)
+		end
+	end
+
+	-- 10.2. Angled Steel Pedestal Column
+	createPart("PedestalColumn", Vector3.new(1.4, 2.8, 1.4), baseCF * CFrame.new(0, 1.6, 0.2), Color3.fromRGB(15, 23, 42), Enum.Material.Metal, model, true)
+
+	-- 10.3. Angled Control Dashboard Head
+	local dashHead = createPart("ControlDash", Vector3.new(2.8, 0.4, 2.2), baseCF * CFrame.new(0, 3.1, -0.1) * CFrame.Angles(math.rad(-22), 0, 0), Color3.fromRGB(24, 24, 32), Enum.Material.Metal, model, true)
+
+	-- Trim Accent Line
+	createPart("DashTrim", Vector3.new(2.9, 0.1, 0.1), dashHead.CFrame * CFrame.new(0, 0.22, 1.0), accentColor, Enum.Material.Neon, model, false)
+
+	-- 10.4. Clickable Mechanical Spring-Loaded Push Button
+	local btnPlate = createPart("PlungerButton", Vector3.new(1.6, 0.35, 1.2), dashHead.CFrame * CFrame.new(0, 0.25, 0), Color3.fromRGB(15, 17, 26), Enum.Material.SmoothPlastic, model, true)
+	btnPlate:SetAttribute("RestCF", btnPlate.CFrame)
+	btnPlate:SetAttribute("DownCF", btnPlate.CFrame * CFrame.new(0, -0.22, 0))
+	btnPlate:SetAttribute("UpgradeType", upgradeType)
+
+	createPart("PlungerNeonCore", Vector3.new(1.3, 0.08, 0.9), btnPlate.CFrame * CFrame.new(0, 0.18, 0), accentColor, Enum.Material.Neon, model, false)
+
+	-- ClickDetector for direct mouse/tap clicks from a distance
+	local cd = Instance.new("ClickDetector")
+	cd.MaxActivationDistance = 16
+	cd.Parent = btnPlate
+
+	-- 10.5. Floating 3D Holographic Stats Billboard
+	local bGui = Instance.new("BillboardGui")
+	bGui.Name = "ConsoleBillboard"
+	bGui.Size = UDim2.new(0, 240, 0, 110)
+	bGui.StudsOffset = Vector3.new(0, 2.8, 0)
+	bGui.AlwaysOnTop = true
+	bGui.Parent = dashHead
+
+	local card = Instance.new("Frame")
+	card.Name = "HoloCard"
+	card.Size = UDim2.new(1, 0, 1, 0)
+	card.BackgroundColor3 = Color3.fromRGB(11, 13, 20)
+	card.BackgroundTransparency = 0.15
+	card.Parent = bGui
+
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 8)
+	corner.Parent = card
+
+	local stroke = Instance.new("UIStroke")
+	stroke.Color = accentColor
+	stroke.Thickness = 1.5
+	stroke.Parent = card
+
+	local titleLbl = Instance.new("TextLabel")
+	titleLbl.Name = "TitleLabel"
+	titleLbl.Size = UDim2.new(1, -12, 0, 24)
+	titleLbl.Position = UDim2.new(0, 6, 0, 6)
+	titleLbl.BackgroundTransparency = 1
+	titleLbl.Text = title
+	titleLbl.TextColor3 = accentColor
+	titleLbl.TextSize = 13
+	titleLbl.Font = Enum.Font.GothamBlack
+	titleLbl.TextXAlignment = Enum.TextXAlignment.Center
+	titleLbl.Parent = card
+
+	local statLbl = Instance.new("TextLabel")
+	statLbl.Name = "StatLabel"
+	statLbl.Size = UDim2.new(1, -12, 0, 22)
+	statLbl.Position = UDim2.new(0, 6, 0, 32)
+	statLbl.BackgroundTransparency = 1
+	statLbl.Text = "Level 1"
+	statLbl.TextColor3 = Color3.fromRGB(226, 232, 240)
+	statLbl.TextSize = 12
+	statLbl.Font = Enum.Font.GothamBold
+	statLbl.TextXAlignment = Enum.TextXAlignment.Center
+	statLbl.Parent = card
+
+	local costLbl = Instance.new("TextLabel")
+	costLbl.Name = "CostLabel"
+	costLbl.Size = UDim2.new(1, -12, 0, 22)
+	costLbl.Position = UDim2.new(0, 6, 0, 56)
+	costLbl.BackgroundTransparency = 1
+	costLbl.Text = "Cost: $50"
+	costLbl.TextColor3 = Color3.fromRGB(250, 204, 21)
+	costLbl.TextSize = 13
+	costLbl.Font = Enum.Font.GothamBlack
+	costLbl.TextXAlignment = Enum.TextXAlignment.Center
+	costLbl.Parent = card
+
+	local promptLbl = Instance.new("TextLabel")
+	promptLbl.Name = "PromptLabel"
+	promptLbl.Size = UDim2.new(1, -12, 0, 20)
+	promptLbl.Position = UDim2.new(0, 6, 0, 82)
+	promptLbl.BackgroundTransparency = 1
+	promptLbl.Text = "[CLICK / STEP TO UPGRADE]"
+	promptLbl.TextColor3 = Color3.fromRGB(148, 163, 184)
+	promptLbl.TextSize = 10
+	promptLbl.Font = Enum.Font.Gotham
+	promptLbl.TextXAlignment = Enum.TextXAlignment.Center
+	promptLbl.Parent = card
+
+	return model, btnPlate, bGui
+end
+
+-- ============================================================
+-- 11. CYBERNETIC SYNDICATE BROKER NPC
+-- ============================================================
+function ModelEngine.CreateSyndicateBrokerNPC(parent: Instance, baseCF: CFrame): Model
+	local npc = Instance.new("Model")
+	npc.Name = "SyndicateBrokerNPC"
+	npc.Parent = parent
+
+	-- Torso (Armored Syndicate Vest)
+	local torso = createPart("Torso", Vector3.new(2.0, 2.2, 1.0), baseCF * CFrame.new(0, 3.2, 0), Color3.fromRGB(24, 24, 32), Enum.Material.Metal, npc, true)
+	npc.PrimaryPart = torso
+
+	-- Cybernetic Spine Conduit
+	createPart("SpineConduit", Vector3.new(0.4, 2.0, 0.3), torso.CFrame * CFrame.new(0, 0, 0.55), Color3.fromRGB(245, 158, 11), Enum.Material.Neon, npc, false)
+
+	-- Head with Glowing Cyber Visor
+	local head = createPart("Head", Vector3.new(1.2, 1.2, 1.2), torso.CFrame * CFrame.new(0, 1.7, 0), Color3.fromRGB(39, 39, 42), Enum.Material.SmoothPlastic, npc, true)
+	-- Glowing Amber Visor Lens
+	createPart("VisorLens", Vector3.new(1.0, 0.35, 0.3), head.CFrame * CFrame.new(0, 0.15, -0.55), Color3.fromRGB(245, 158, 11), Enum.Material.Neon, npc, false)
+
+	-- Left Arm (Tactile cyber prosthetic)
+	createPart("ArmL", Vector3.new(0.8, 2.0, 0.8), torso.CFrame * CFrame.new(-1.45, 0, 0), Color3.fromRGB(51, 65, 85), Enum.Material.Metal, npc, true)
+	-- Right Arm (Black coat sleeve)
+	createPart("ArmR", Vector3.new(0.8, 2.0, 0.8), torso.CFrame * CFrame.new(1.45, 0, 0), Color3.fromRGB(15, 23, 42), Enum.Material.Fabric, npc, true)
+
+	-- Overhead Holographic Billboard
+	local bGui = Instance.new("BillboardGui")
+	bGui.Name = "BrokerBillboard"
+	bGui.Size = UDim2.new(0, 220, 0, 52)
+	bGui.StudsOffset = Vector3.new(0, 2.6, 0)
+	bGui.AlwaysOnTop = true
+	bGui.Parent = head
+
+	local lbl = Instance.new("TextLabel")
+	lbl.Size = UDim2.new(1, 0, 1, 0)
+	lbl.BackgroundTransparency = 1
+	lbl.Text = "⚡ SYNDICATE BROKER ⚡\n[DAILY HEIST CONTRACTS]"
+	lbl.TextColor3 = Color3.fromRGB(250, 204, 21)
+	lbl.TextSize = 13
+	lbl.Font = Enum.Font.GothamBlack
+	lbl.Parent = bGui
+
+	-- Proximity Prompt for interaction
+	local prompt = Instance.new("ProximityPrompt")
+	prompt.ObjectText = "Syndicate Broker"
+	prompt.ActionText = "View Daily Contracts"
+	prompt.KeyboardKeyCode = Enum.KeyCode.E
+	prompt.HoldDuration = 0
+	prompt.MaxActivationDistance = 14
+	prompt.RequiresLineOfSight = false
+	prompt.Parent = torso
+
+	return npc
 end
 
 return ModelEngine

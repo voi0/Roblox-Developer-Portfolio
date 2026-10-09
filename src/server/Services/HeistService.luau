@@ -30,6 +30,12 @@ local function getProgressionService(): any?
 	return nil
 end
 
+local function getContractService(): any?
+	local svc = script.Parent:FindFirstChild("ContractService")
+	if svc then return require(svc :: ModuleScript) end
+	return nil
+end
+
 local function getPlotService(): any?
 	local svc = script.Parent:FindFirstChild("PlotService")
 	if svc then return require(svc :: ModuleScript) end
@@ -122,6 +128,12 @@ function HeistService.StartHeist(thief: Player, itemPart: Part, sourcePlot: any)
 	-- Award XP for successful snatch
 	if progSvc then
 		progSvc.AwardXP(thief, Config.Progression.XPAwards.SnatchLoot, "Loot Snatched")
+	end
+
+	-- Report contract action
+	local contractSvc = getContractService()
+	if contractSvc then
+		contractSvc.ReportAction(thief, "StealRelics", 1)
 	end
 
 	-- Listen for death
@@ -248,6 +260,12 @@ function HeistService.DepositStolenLoot(thief: Player): boolean
 		progSvc.AwardXP(thief, Config.Progression.XPAwards.DepositStolenLoot, "Loot Secured")
 	end
 
+	-- Report contract action
+	local contractSvc = getContractService()
+	if contractSvc then
+		contractSvc.ReportAction(thief, "BankBullion", payload.Value)
+	end
+
 	-- Server-wide chat celebration
 	local victimPlot = plotSvc and plotSvc.GetPlotByIndex(payload.SourcePlotIndex)
 	local victimName = (victimPlot and victimPlot.Owner) and victimPlot.Owner.DisplayName or "Vault"
@@ -361,6 +379,12 @@ function HeistService.TackleThief(defender: Player, targetPlayer: Player?): (boo
 
 	if progSvc then
 		progSvc.AwardXP(defender, bountyXP, isBountyHunter and "Bounty Hunter Intercept" or "Thief Neutralized")
+	end
+
+	-- Report contract action
+	local contractSvc = getContractService()
+	if contractSvc then
+		contractSvc.ReportAction(defender, "TackleThieves", 1)
 	end
 
 	local bcast = ReplicatedStorage:FindFirstChild("HeistBroadcast") :: RemoteEvent?

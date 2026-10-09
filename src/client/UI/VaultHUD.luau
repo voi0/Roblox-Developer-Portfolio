@@ -30,6 +30,11 @@ VaultHUD._onUpgradesToggle = nil :: (() -> ())?
 VaultHUD._onFusionToggle = nil :: (() -> ())?
 VaultHUD._onDailyToggle = nil :: (() -> ())?
 VaultHUD._onProgressToggle = nil :: (() -> ())?
+VaultHUD._onContractsToggle = nil :: (() -> ())?
+
+function VaultHUD.SetContractsCallback(cb: () -> ())
+	VaultHUD._onContractsToggle = cb
+end
 
 -- ============================================================
 -- NUMBER FORMATTER (K / M / B / T / Qa)
@@ -150,6 +155,26 @@ function VaultHUD.Create()
 	progressBtn.MouseButton1Click:Connect(function()
 		if VaultHUD._onProgressToggle then
 			VaultHUD._onProgressToggle()
+		end
+	end)
+
+	local contractsBtn = Instance.new("TextButton")
+	contractsBtn.Name = "ContractsButton"
+	contractsBtn.Size = UDim2.new(0, 130, 0, 42)
+	contractsBtn.BackgroundColor3 = Color3.fromRGB(24, 24, 27)
+	contractsBtn.Text = "📜 CONTRACTS"
+	contractsBtn.TextColor3 = Color3.fromRGB(250, 204, 21)
+	contractsBtn.TextSize = 13
+	contractsBtn.Font = Enum.Font.GothamBlack
+	contractsBtn.Parent = topRight
+	Instance.new("UICorner", contractsBtn).CornerRadius = UDim.new(0, 12)
+	local cStroke = Instance.new("UIStroke", contractsBtn)
+	cStroke.Color = Color3.fromRGB(250, 204, 21)
+	cStroke.Thickness = 2
+
+	contractsBtn.MouseButton1Click:Connect(function()
+		if VaultHUD._onContractsToggle then
+			VaultHUD._onContractsToggle()
 		end
 	end)
 

@@ -154,6 +154,14 @@ function SoundController.Play(name: string, customPitch: number?)
 	end)
 end
 
+function SoundController.PlayButtonClick()
+	SoundController.Play("ButtonClick")
+end
+
+function SoundController.PlayPurchaseSuccess()
+	SoundController.Play("VaultBank")
+end
+
 function SoundController.ToggleMute(): boolean
 	SoundController._isMuted = not SoundController._isMuted
 	if SoundController._soundGroup then

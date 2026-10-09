@@ -237,6 +237,16 @@ function PlotService.Init()
 
 	-- ── 2.6. CENTRAL PLAZA SYNDICATE BLACK MARKET KIOSK ──
 	ModelEngine.CreateSyndicateKiosk(rootFolder, CFrame.new(0, 0, -50))
+	local brokerNpc = ModelEngine.CreateSyndicateBrokerNPC(rootFolder, CFrame.new(0, 0, -50) * CFrame.new(0, 0, 1.2))
+	local brokerPrompt = brokerNpc:FindFirstChildWhichIsA("ProximityPrompt", true)
+	if brokerPrompt then
+		brokerPrompt.Triggered:Connect(function(player: Player)
+			local openContractEvt = ReplicatedStorage:FindFirstChild("OpenContractModal") :: RemoteEvent?
+			if openContractEvt then
+				openContractEvt:FireClient(player)
+			end
+		end)
+	end
 
 	-- ── 3. BUILD 6 MODULAR PLOTS CIRCULARLY ──
 	local plotsFolder = Instance.new("Folder")
@@ -333,6 +343,74 @@ function PlotService.Init()
 		-- ── 7.5. BIOMETRIC SECURITY TERMINAL & AUTOMATED DEFENSE TURRET ──
 		ModelEngine.CreateBiometricTerminal(pFolder, faceCenterCF * CFrame.new(-pWidth / 2 + 4.5, 0, -pLen / 2 + 3.5))
 		ModelEngine.CreateSecurityTurret(pFolder, faceCenterCF * CFrame.new(0, 10.4, -pLen / 2 + 1))
+
+		-- ── 7.6. IN-WORLD PHYSICAL TYCOON UPGRADE CONSOLES ──
+		local consoles = {}
+		local cModel1, cBtn1, cGui1 = ModelEngine.CreateUpgradeConsole(
+			pFolder,
+			faceCenterCF * CFrame.new(-pWidth / 2 + 4.5, 0, 7),
+			"Conveyor",
+			"MINT PRESS OVERCLOCK",
+			Color3.fromRGB(56, 189, 248)
+		)
+		local cModel2, cBtn2, cGui2 = ModelEngine.CreateUpgradeConsole(
+			pFolder,
+			faceCenterCF * CFrame.new(-pWidth / 2 + 4.5, 0, -2),
+			"Laser",
+			"LASER SECURITY MATRIX",
+			Color3.fromRGB(245, 158, 11)
+		)
+		local cModel3, cBtn3, cGui3 = ModelEngine.CreateUpgradeConsole(
+			pFolder,
+			faceCenterCF * CFrame.new(pWidth / 2 - 4.5, 0, -2),
+			"Turret",
+			"AUTOMATED BASE TURRET",
+			Color3.fromRGB(239, 68, 68)
+		)
+		consoles["Conveyor"] = { Model = cModel1, Button = cBtn1, Gui = cGui1 }
+		consoles["Laser"] = { Model = cModel2, Button = cBtn2, Gui = cGui2 }
+		consoles["Turret"] = { Model = cModel3, Button = cBtn3, Gui = cGui3 }
+
+		local function handleConsolePress(player: Player, upType: string, btnPart: Part)
+			local plot = PlotService._plots[i]
+			if not plot or plot.Owner ~= player then return end
+
+			-- Animate tactile button depression
+			local downCF = btnPart:GetAttribute("DownCF") :: CFrame?
+			local restCF = btnPart:GetAttribute("RestCF") :: CFrame?
+			if downCF and restCF then
+				TweenService:Create(btnPart, TweenInfo.new(0.08, Enum.EasingStyle.Quad), { CFrame = downCF }):Play()
+				task.delay(0.35, function()
+					if btnPart and btnPart.Parent then
+						TweenService:Create(btnPart, TweenInfo.new(0.25, Enum.EasingStyle.Back), { CFrame = restCF }):Play()
+					end
+				end)
+			end
+
+			local dataSvc = getDataService()
+			if dataSvc then
+				local success, msg = dataSvc.Upgrade(player, upType)
+				if success then
+					PlotService.UpdateConsolesForPlot(i)
+				end
+			end
+		end
+
+		for upType, info in consoles do
+			info.Button.Touched:Connect(function(hit)
+				local char = hit.Parent
+				local p = char and Players:GetPlayerFromCharacter(char)
+				if p then
+					handleConsolePress(p, upType, info.Button)
+				end
+			end)
+			local cd = info.Button:FindFirstChildOfClass("ClickDetector")
+			if cd then
+				cd.MouseClick:Connect(function(player)
+					handleConsolePress(player, upType, info.Button)
+				end)
+			end
+		end
 
 		-- ── 8. SIREN BEACON ON FRONT ARCHWAY ──
 		local frontArch = createPart(
@@ -439,6 +517,7 @@ function PlotService.Init()
 			StampingHead = stampingHead,
 			CurrentShowcaseModel = nil :: Model?,
 			_isDoorOpening = false,
+			Consoles = consoles,
 		}
 
 		-- Connect Touch on SafePad to automatically bank for owner or deposit stolen loot
@@ -537,6 +616,7 @@ function PlotService.AssignPlot(player: Player)
 	end)
 
 	PlotService.UpdateShowcase(assignedIndex)
+	PlotService.UpdateConsolesForPlot(assignedIndex)
 	print(`  [PlotService] Assigned Vault #{assignedIndex} to {player.Name}`)
 end
 
@@ -554,6 +634,7 @@ function PlotService.ReleasePlot(player: Player)
 
 	PlotService._playerPlots[player] = nil
 	PlotService.UpdateShowcase(plotIndex)
+	PlotService.UpdateConsolesForPlot(plotIndex)
 	print(`  [PlotService] Released Vault #{plotIndex} from {player.Name}`)
 end
 
@@ -685,6 +766,78 @@ function PlotService.UpdateShowcaseForPlayer(player: Player)
 	local idx = PlotService._playerPlots[player]
 	if idx then
 		PlotService.UpdateShowcase(idx)
+	end
+end
+
+function PlotService.UpdateConsolesForPlot(plotIndex: number)
+	local plot = PlotService._plots[plotIndex]
+	if not plot or not plot.Consoles then return end
+
+	local owner = plot.Owner
+	local dataSvc = getDataService()
+	local data = owner and dataSvc and dataSvc.GetData(owner)
+
+	-- 1. Conveyor Console
+	local convInfo = plot.Consoles["Conveyor"]
+	if convInfo and convInfo.Gui then
+		local card = convInfo.Gui:FindFirstChild("HoloCard")
+		if card then
+			local statLbl = card:FindFirstChild("StatLabel") :: TextLabel?
+			local costLbl = card:FindFirstChild("CostLabel") :: TextLabel?
+			if not owner or not data then
+				if statLbl then statLbl.Text = "Level 1" end
+				if costLbl then costLbl.Text = "Cost: $50" end
+			else
+				local lv = data.ConveyorLevel or 1
+				local maxLv = Config.Economy.MaxConveyorLevel
+				local income = Config.Economy.GetConveyorIncome(lv, data.PrestigeTokens or 0)
+				local cost = Config.Economy.GetConveyorCost(lv + 1)
+				if statLbl then statLbl.Text = `Lv {lv}/{maxLv} (${income}/sec)` end
+				if costLbl then costLbl.Text = (lv >= maxLv) and "MAX LEVEL" or `Cost: ${cost}` end
+			end
+		end
+	end
+
+	-- 2. Laser Console
+	local laserInfo = plot.Consoles["Laser"]
+	if laserInfo and laserInfo.Gui then
+		local card = laserInfo.Gui:FindFirstChild("HoloCard")
+		if card then
+			local statLbl = card:FindFirstChild("StatLabel") :: TextLabel?
+			local costLbl = card:FindFirstChild("CostLabel") :: TextLabel?
+			if not owner or not data then
+				if statLbl then statLbl.Text = "Tier 1" end
+				if costLbl then costLbl.Text = "Cost: $250" end
+			else
+				local tier = data.LaserTier or 1
+				local maxTier = Config.Economy.MaxLaserTier
+				local dmg = Config.Heist.LaserDamageByTier[tier] or 20
+				local cost = Config.Economy.GetLaserCost(tier + 1)
+				if statLbl then statLbl.Text = `Tier {tier}/{maxTier} ({dmg} DPS)` end
+				if costLbl then costLbl.Text = (tier >= maxTier) and "MAX TIER" or `Cost: ${cost}` end
+			end
+		end
+	end
+
+	-- 3. Turret Console
+	local turretInfo = plot.Consoles["Turret"]
+	if turretInfo and turretInfo.Gui then
+		local card = turretInfo.Gui:FindFirstChild("HoloCard")
+		if card then
+			local statLbl = card:FindFirstChild("StatLabel") :: TextLabel?
+			local costLbl = card:FindFirstChild("CostLabel") :: TextLabel?
+			if not owner or not data then
+				if statLbl then statLbl.Text = "Tier 1: Sentry Minigun" end
+				if costLbl then costLbl.Text = "Cost: $500" end
+			else
+				local tier = data.TurretTier or 1
+				local maxTier = Config.Turret.MaxTier or 4
+				local spec = Config.Turret.TierSpecs[tier] or Config.Turret.TierSpecs[1]
+				local cost = Config.Economy.GetTurretCost(tier + 1)
+				if statLbl then statLbl.Text = `Tier {tier}/{maxTier}: {spec.Name}` end
+				if costLbl then costLbl.Text = (tier >= maxTier) and "MAX TIER" or `Cost: ${cost}` end
+			end
+		end
 	end
 end
 

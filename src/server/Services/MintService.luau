@@ -43,6 +43,12 @@ local function getProgressionService(): any?
 	return nil
 end
 
+local function getContractService(): any?
+	local svc = script.Parent:FindFirstChild("ContractService")
+	if svc then return require(svc :: ModuleScript) end
+	return nil
+end
+
 function MintService.Init()
 	print("  [MintService] Initializing Conveyor Mint & RNG Relic Engine...")
 
@@ -148,6 +154,10 @@ function MintService._mintLoop()
 				if relicDef then
 					dataSvc.AddRelic(owner, relicDef.Id, 1)
 				end
+				local contractSvc = getContractService()
+				if contractSvc then
+					contractSvc.ReportAction(owner, "BankBullion", finalValue)
+				end
 			else
 				dataSvc.AddUnbanked(owner, finalValue)
 				-- Spawn physical visual item on conveyor
@@ -161,12 +171,36 @@ function MintService.SpawnConveyorItem(plot: any, value: number, relicDef: Types
 	local conveyor = plot.Conveyor :: Part?
 	if not conveyor then return end
 
-	-- Animate hydraulic stamping press if present
+	-- Animate hydraulic stamping press with steam puff particles
 	if plot.StampingHead then
 		local origHeadCF = plot.StampingHead.CFrame
 		TweenService:Create(plot.StampingHead, TweenInfo.new(0.09, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
 			CFrame = origHeadCF * CFrame.new(0, -3.2, 0)
 		}):Play()
+
+		-- Steam particle puffs from vents
+		for _, ventName in { "SteamVentL", "SteamVentR" } do
+			local vent = plot.StampingHead:FindFirstChild(ventName) :: Attachment?
+			if vent then
+				local p = Instance.new("ParticleEmitter")
+				p.Rate = 0
+				p.Speed = NumberRange.new(5, 10)
+				p.Lifetime = NumberRange.new(0.25, 0.45)
+				p.Size = NumberSequence.new({
+					NumberSequenceKeypoint.new(0, 0.4),
+					NumberSequenceKeypoint.new(1, 2.0),
+				})
+				p.Transparency = NumberSequence.new({
+					NumberSequenceKeypoint.new(0, 0.2),
+					NumberSequenceKeypoint.new(1, 1.0),
+				})
+				p.Color = ColorSequence.new(Color3.fromRGB(241, 245, 249))
+				p.Parent = vent
+				p:Emit(12)
+				Debris:AddItem(p, 0.6)
+			end
+		end
+
 		task.delay(0.12, function()
 			TweenService:Create(plot.StampingHead, TweenInfo.new(0.28, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
 				CFrame = origHeadCF

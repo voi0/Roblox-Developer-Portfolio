@@ -382,4 +382,71 @@ function VFXController.PlayShockwaveSlam(worldPos: Vector3, hitCount: number)
 	Debris:AddItem(ring, 0.8)
 end
 
+-- ============================================================
+-- BASE TURRET SUPPRESSION TRACER FIRE VFX
+-- ============================================================
+function VFXController.PlayTurretFire(origin: Vector3, targetPos: Vector3)
+	-- Muzzle Flash
+	local flash = Instance.new("Part")
+	flash.Name = "TurretMuzzleFlash"
+	flash.Size = Vector3.new(0.8, 0.8, 0.8)
+	flash.CFrame = CFrame.new(origin)
+	flash.Anchored = true
+	flash.CanCollide = false
+	flash.Color = Color3.fromRGB(250, 204, 21)
+	flash.Material = Enum.Material.Neon
+	flash.Parent = Workspace
+
+	local fMesh = Instance.new("SpecialMesh")
+	fMesh.MeshType = Enum.MeshType.Sphere
+	fMesh.Parent = flash
+
+	TweenService:Create(flash, TweenInfo.new(0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+		Size = Vector3.new(1.8, 1.8, 1.8),
+		Transparency = 1,
+	}):Play()
+	Debris:AddItem(flash, 0.1)
+
+	-- High-Speed Tracer Beam Part
+	local dist = (targetPos - origin).Magnitude
+	local tracer = Instance.new("Part")
+	tracer.Name = "TurretTracer"
+	tracer.Size = Vector3.new(0.2, 0.2, dist)
+	tracer.CFrame = CFrame.lookAt(origin, targetPos) * CFrame.new(0, 0, -dist / 2)
+	tracer.Anchored = true
+	tracer.CanCollide = false
+	tracer.Color = Color3.fromRGB(239, 68, 68)
+	tracer.Material = Enum.Material.Neon
+	tracer.Transparency = 0.15
+	tracer.Parent = Workspace
+
+	TweenService:Create(tracer, TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+		Transparency = 1,
+		Size = Vector3.new(0.05, 0.05, dist),
+	}):Play()
+	Debris:AddItem(tracer, 0.15)
+end
+
+function VFXController.PlayTurretDisabled(worldPos: Vector3)
+	local spark = Instance.new("Part")
+	spark.Name = "TurretEMPStun"
+	spark.Size = Vector3.new(2, 2, 2)
+	spark.CFrame = CFrame.new(worldPos)
+	spark.Anchored = true
+	spark.CanCollide = false
+	spark.Color = Color3.fromRGB(56, 189, 248)
+	spark.Material = Enum.Material.Neon
+	spark.Parent = Workspace
+
+	local mesh = Instance.new("SpecialMesh")
+	mesh.MeshType = Enum.MeshType.Sphere
+	mesh.Parent = spark
+
+	TweenService:Create(spark, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+		Size = Vector3.new(8, 8, 8),
+		Transparency = 1,
+	}):Play()
+	Debris:AddItem(spark, 0.55)
+end
+
 return VFXController

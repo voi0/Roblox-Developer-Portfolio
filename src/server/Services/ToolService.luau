@@ -239,6 +239,12 @@ function ToolService.UseEMPJammer(infiltrator: Player)
 		local dur = hasOverclock and 8.5 or Config.Tools.EMPJammer.DisableDurationSeconds
 		laserSvc.DisableLasers(targetPlotIndex, dur)
 
+		local turretSvcMod = script.Parent:FindFirstChild("TurretService") :: ModuleScript?
+		local turretSvc = turretSvcMod and require(turretSvcMod)
+		if turretSvc and turretSvc.DisableTurret then
+			turretSvc.DisableTurret(targetPlotIndex, dur)
+		end
+
 		local targetPlot = plotSvc.GetPlotByIndex(targetPlotIndex)
 		if toolEvt then
 			toolEvt:FireClient(infiltrator, "JamSuccess", dur)
@@ -246,7 +252,7 @@ function ToolService.UseEMPJammer(infiltrator: Player)
 				toolEvt:FireClient(targetPlot.Owner, "JamAlert", infiltrator.DisplayName)
 			end
 		end
-		print(`  [ToolService] {infiltrator.Name} EMP-jammed Vault #{targetPlotIndex} for {dur}s!`)
+		print(`  [ToolService] {infiltrator.Name} EMP-jammed Vault #{targetPlotIndex} (Lasers & Turret) for {dur}s!`)
 	else
 		if toolEvt then
 			toolEvt:FireClient(infiltrator, "JamNoTarget")

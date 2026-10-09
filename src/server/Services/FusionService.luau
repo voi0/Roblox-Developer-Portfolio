@@ -37,6 +37,12 @@ local function getProgressionService(): any?
 	return nil
 end
 
+local function getContractService(): any?
+	local svc = script.Parent:FindFirstChild("ContractService")
+	if svc then return require(svc :: ModuleScript) end
+	return nil
+end
+
 function FusionService.Init()
 	print("  [FusionService] Initializing Relic Synthesis & Radiant Mutation Altar...")
 
@@ -135,6 +141,12 @@ function FusionService.FuseRelics(player: Player, relicId: string): (boolean, st
 	local fusionEvt = ReplicatedStorage:FindFirstChild("RelicFused") :: RemoteEvent?
 	if fusionEvt then
 		fusionEvt:FireAllClients(player.DisplayName, nextDef.Name, isRadiant, bonusCash)
+	end
+
+	-- Report contract action
+	local contractSvc = getContractService()
+	if contractSvc then
+		contractSvc.ReportAction(player, "SynthesizeRelic", 1)
 	end
 
 	local msg = isRadiant 

@@ -24,7 +24,20 @@ export type RelicDefinition = {
 	Broadcast: boolean,
 }
 
-export type PlotUpgradeType = "Conveyor" | "Laser" | "VaultInterest"
+export type PlotUpgradeType = "Conveyor" | "Laser" | "Turret" | "VaultInterest"
+
+export type SyndicateContract = {
+	Id: string,
+	Title: string,
+	Description: string,
+	TargetCount: number,
+	CurrentCount: number,
+	RewardCash: number,
+	RewardXP: number,
+	RewardTokens: number,
+	IsCompleted: boolean,
+	IsClaimed: boolean,
+}
 
 export type PerkBranch = "Infiltrator" | "Enforcer" | "Tycoon"
 
@@ -55,6 +68,7 @@ export type PlayerData = {
 	-- Base Upgrades
 	ConveyorLevel: number,
 	LaserTier: number,
+	TurretTier: number,
 	VaultInterestTier: number,
 	EquippedVaultSkin: string,
 	UnlockedVaultSkins: { [string]: boolean },
@@ -67,6 +81,11 @@ export type PlayerData = {
 
 	-- Relic Stash & Synthesis
 	RelicInventory: { [string]: number },
+
+	-- Syndicate Black Market & Contracts
+	SyndicateTokens: number,
+	Contracts: { [string]: SyndicateContract },
+	LastContractsRefresh: number,
 
 	-- Lifetime Stats
 	TotalHeistsWon: number,

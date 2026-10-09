@@ -29,6 +29,10 @@ Config.Economy = {
 	InterestBaseCost = 1000,
 	InterestCostExponent = 2.20,
 
+	MaxTurretTier = 4,
+	TurretBaseCost = 500,
+	TurretCostExponent = 2.50,
+
 	-- Prestige (Vault Liquidation)
 	PrestigeMinBanked = 10_000_000, -- $10 Million to unlock first liquidation
 	PrestigeTokenBase = 10,
@@ -53,6 +57,10 @@ end
 
 function Config.Economy.GetInterestCost(tier: number): number
 	return math.floor(Config.Economy.InterestBaseCost * (Config.Economy.InterestCostExponent ^ (tier - 1)))
+end
+
+function Config.Economy.GetTurretCost(tier: number): number
+	return math.floor(Config.Economy.TurretBaseCost * (Config.Economy.TurretCostExponent ^ (tier - 1)))
 end
 
 -- ============================================================
@@ -155,6 +163,69 @@ Config.DailyRewards = {
 	[5] = { Cash = 250000,  RelicId = "DiamondSkull",    Tokens = 8,  Label = "Day 5: 1x Legendary Diamond Skull" },
 	[6] = { Cash = 500000,  RelicId = nil,               Tokens = 15, Label = "Day 6: $500K + 15 Prestige Tokens" },
 	[7] = { Cash = 1000000, RelicId = "VoidChronometer", Tokens = 25, Label = "Day 7: $1M + 1x Mythic Void Eye!" },
+}
+
+-- ============================================================
+-- 8.5. BASE DEFENSE TURRETS & AI TARGETING
+-- ============================================================
+Config.Turret = {
+	ScanRadius = 38.0,
+	FireInterval = 0.25, -- Seconds between burst shots
+	DamagePerHit = 3.0,  -- 12 damage/sec base
+	LockOnDuration = 1.0, -- Seconds required to lock on before opening fire
+	MaxTier = 4,
+	TierSpecs = {
+		[1] = { Damage = 2.5, FireInterval = 0.35, Range = 32.0, Name = "Sentry Minigun" },
+		[2] = { Damage = 3.5, FireInterval = 0.25, Range = 38.0, Name = "Twin Vulcan" },
+		[3] = { Damage = 5.0, FireInterval = 0.20, Range = 44.0, Name = "Laser Gatling" },
+		[4] = { Damage = 7.5, FireInterval = 0.15, Range = 50.0, Name = "Plasma Rail-Turret" },
+	},
+	EMPDisableDuration = 8.0, -- Seconds deactivated when hit by EMP Jammer
+}
+
+-- ============================================================
+-- 8.6. SYNDICATE BLACK MARKET DAILY CONTRACTS
+-- ============================================================
+Config.Contracts = {
+	RefreshIntervalSeconds = 86400, -- 24 hours
+	Templates = {
+		{
+			Id = "StealRelics",
+			Title = "Operation Ghost Infiltration",
+			Description = "Infiltrate rival vaults and snatch 3 relics or bullion.",
+			TargetCount = 3,
+			RewardCash = 15000,
+			RewardXP = 200,
+			RewardTokens = 3,
+		},
+		{
+			Id = "TackleThieves",
+			Title = "Operation Grid Enforcer",
+			Description = "Neutralize 2 intruder thieves using the Stun Baton.",
+			TargetCount = 2,
+			RewardCash = 20000,
+			RewardXP = 250,
+			RewardTokens = 4,
+		},
+		{
+			Id = "BankBullion",
+			Title = "Operation Bullion Rush",
+			Description = "Deposit $25,000 worth of minted or stolen loot.",
+			TargetCount = 25000,
+			RewardCash = 25000,
+			RewardXP = 300,
+			RewardTokens = 5,
+		},
+		{
+			Id = "SynthesizeRelic",
+			Title = "Operation Alchemical Matrix",
+			Description = "Synthesize 1 relic at the Central Plaza Fusion Altar.",
+			TargetCount = 1,
+			RewardCash = 30000,
+			RewardXP = 350,
+			RewardTokens = 5,
+		},
+	},
 }
 
 -- ============================================================

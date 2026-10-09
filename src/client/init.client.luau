@@ -57,6 +57,7 @@ local UpgradesModal = safeRequire(uiFolder, "UpgradesModal")
 local FusionModal = safeRequire(uiFolder, "FusionModal")
 local DailyModal = safeRequire(uiFolder, "DailyModal")
 local ProgressionModal = safeRequire(uiFolder, "ProgressionModal")
+local ContractModal = safeRequire(uiFolder, "ContractModal")
 local NotificationUI = safeRequire(uiFolder, "NotificationUI")
 local HeistController = safeRequire(controllersFolder, "HeistController")
 local SoundController = safeRequire(controllersFolder, "SoundController")
@@ -114,6 +115,17 @@ if VaultHUD then
 			ProgressionModal.Toggle()
 		end)
 	end
+
+	if ContractModal and VaultHUD._gui then
+		ContractModal.Create(VaultHUD._gui)
+		VaultHUD.SetContractsCallback(function()
+			if ContractModal.IsOpen() then
+				ContractModal.Close()
+			else
+				ContractModal.Open()
+			end
+		end)
+	end
 end
 
 if HeistController then
@@ -163,6 +175,7 @@ local function onDataReceived(data: any)
 	if FusionModal then FusionModal.Update(data) end
 	if DailyModal and DailyModal._isOpen then DailyModal.Refresh() end
 	if ProgressionModal then ProgressionModal.Update(data) end
+	if ContractModal and ContractModal.IsOpen() then ContractModal.Refresh() end
 end
 
 task.spawn(function()
@@ -227,6 +240,29 @@ task.spawn(function()
 		end)
 	end
 
+	-- Base Defense Turret Suppression Fire & Stun listeners
+	local turretFire = ReplicatedStorage:WaitForChild("TurretFire", 15) :: RemoteEvent?
+	if turretFire then
+		turretFire.OnClientEvent:Connect(function(origin: Vector3, targetPos: Vector3, plotIdx: number)
+			if SoundController then SoundController.Play("BatonHit") end
+			if VFXController then VFXController.PlayTurretFire(origin, targetPos) end
+		end)
+	end
+
+	local turretDisabled = ReplicatedStorage:WaitForChild("TurretDisabled", 15) :: RemoteEvent?
+	if turretDisabled then
+		turretDisabled.OnClientEvent:Connect(function(plotIdx: number, dur: number)
+			if NotificationUI then
+				NotificationUI.Show({
+					Title = "📡 EMP DISRUPTION!",
+					Message = `Base Turret #{plotIdx} offline for {dur}s!`,
+					Type = "Heist",
+					Duration = 3,
+				})
+			end
+		end)
+	end
+
 	local getData = ReplicatedStorage:WaitForChild("GetData", 15) :: RemoteFunction?
 	if getData then
 		for _ = 1, 10 do
@@ -243,7 +279,7 @@ task.spawn(function()
 end)
 
 -- ============================================================
--- 4. KEYBOARD HOTKEYS: [U] UPGRADES, [B] FUSION, [Y] DAILY, [P] PROGRESS, [F] TACKLE, [ESC] CLOSE
+-- 4. KEYBOARD HOTKEYS: [U] UPGRADES, [B] FUSION, [Y] DAILY, [P] PROGRESS, [C] CONTRACTS, [F] TACKLE, [ESC] CLOSE
 -- ============================================================
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
 	if gameProcessed then return end
@@ -259,6 +295,15 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
 
 	elseif input.KeyCode == Enum.KeyCode.P then
 		if ProgressionModal then ProgressionModal.Toggle() end
+
+	elseif input.KeyCode == Enum.KeyCode.C then
+		if ContractModal then
+			if ContractModal.IsOpen() then
+				ContractModal.Close()
+			else
+				ContractModal.Open()
+			end
+		end
 
 	-- ⚡ [F] SECURITY TACKLE / ZAP INTRUDER
 	elseif input.KeyCode == Enum.KeyCode.F then
@@ -281,6 +326,9 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
 		end
 		if ProgressionModal and ProgressionModal._isOpen then
 			ProgressionModal.Close()
+		end
+		if ContractModal and ContractModal.IsOpen() then
+			ContractModal.Close()
 		end
 	end
 end)

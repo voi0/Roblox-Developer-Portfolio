@@ -155,8 +155,10 @@ function AdminService.ProcessCommand(player: Player, msg: string)
 				data.BankedCash += 100000000
 				data.ConveyorLevel = 25
 				data.LaserTier = 4
+				data.TurretTier = 4
 				data.VaultInterestTier = 10
 				data.PrestigeTokens = (data.PrestigeTokens or 0) + 50
+				data.SyndicateTokens = (data.SyndicateTokens or 0) + 50
 				data.Level = 50
 				data.SkillPoints = (data.SkillPoints or 0) + 30
 				dataSvc.SyncClient(player)
@@ -164,11 +166,12 @@ function AdminService.ProcessCommand(player: Player, msg: string)
 				local plotSvc = getPlotService()
 				local laserSvc = getLaserService()
 				local plot = plotSvc and plotSvc.GetPlotForPlayer(player)
-				if plot and laserSvc then
-					laserSvc.UpdateTier(plot.Index, 4)
+				if plot then
+					if laserSvc then laserSvc.UpdateTier(plot.Index, 4) end
+					plotSvc.UpdateConsolesForPlot(plot.Index)
 				end
 
-				notify(player, "Max Stats", "Conveyor Lv25, Laser T4, Interest T10, Level 50, +30 SP, +$100M, +50 Tokens!")
+				notify(player, "Max Stats", "Conveyor Lv25, Laser T4, Turret T4, Interest T10, Level 50, +30 SP, +$100M, +50 Tokens!")
 			end
 		end
 
@@ -206,7 +209,32 @@ function AdminService.ProcessCommand(player: Player, msg: string)
 			end
 		end
 
-	-- 10. /reset
+	-- 10. /tokens <amount>
+	elseif cmd == "/tokens" or cmd == ":tokens" then
+		local amt = tonumber(parts[2]) or 10
+		if dataSvc then
+			dataSvc.AddSyndicateTokens(player, amt)
+			notify(player, "Tokens Granted", `Awarded +{amt} Syndicate Tokens!`)
+		end
+
+	-- 11. /turret <tier>
+	elseif cmd == "/turret" or cmd == ":turret" then
+		local tier = tonumber(parts[2]) or 4
+		if dataSvc then
+			local data = dataSvc.GetData(player)
+			if data then
+				data.TurretTier = math.clamp(tier, 1, Config.Turret.MaxTier)
+				dataSvc.SyncClient(player)
+				local plotSvc = getPlotService()
+				local plot = plotSvc and plotSvc.GetPlotForPlayer(player)
+				if plot then
+					plotSvc.UpdateConsolesForPlot(plot.Index)
+				end
+				notify(player, "Turret Tier Set", `Base Turret set to Tier {data.TurretTier}!`)
+			end
+		end
+
+	-- 12. /reset
 	elseif cmd == "/reset" or cmd == ":reset" then
 		if dataSvc then
 			local data = dataSvc.GetData(player)
@@ -215,15 +243,23 @@ function AdminService.ProcessCommand(player: Player, msg: string)
 				data.UnbankedCash = 0
 				data.ConveyorLevel = 1
 				data.LaserTier = 1
+				data.TurretTier = 1
 				data.VaultInterestTier = 1
 				data.PrestigeTokens = 0
 				data.PrestigeLevel = 0
+				data.SyndicateTokens = 0
+				data.Contracts = {}
 				data.RelicInventory = {}
 				data.XP = 0
 				data.Level = 1
 				data.SkillPoints = 0
 				data.UnlockedPerks = {}
 				dataSvc.SyncClient(player)
+				local plotSvc = getPlotService()
+				local plot = plotSvc and plotSvc.GetPlotForPlayer(player)
+				if plot then
+					plotSvc.UpdateConsolesForPlot(plot.Index)
+				end
 				notify(player, "Profile Reset", "Reset data back to baseline level 1.")
 			end
 		end

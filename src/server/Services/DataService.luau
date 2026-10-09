@@ -37,6 +37,7 @@ local DATA_TEMPLATE: Types.PlayerData = {
 
 	ConveyorLevel = 1,
 	LaserTier = 1,
+	TurretTier = 1,
 	VaultInterestTier = 1,
 	EquippedVaultSkin = "DefaultIron",
 	UnlockedVaultSkins = { DefaultIron = true },
@@ -45,6 +46,11 @@ local DATA_TEMPLATE: Types.PlayerData = {
 	HasOfflineShield = false,
 	HasDoubleCapacity = false,
 	HasTitaniumLasers = false,
+
+	-- Syndicate Black Market & Contracts
+	SyndicateTokens = 0,
+	Contracts = {},
+	LastContractsRefresh = 0,
 
 	TotalHeistsWon = 0,
 	TotalHeistsLost = 0,
@@ -341,6 +347,19 @@ function DataService.Upgrade(player: Player, upgradeType: string): (boolean, str
 		DataService.SyncClient(player)
 		return true, `Laser Security upgraded to Tier {data.LaserTier}!`
 
+	elseif upgradeType == "Turret" then
+		local currentTier = data.TurretTier or 1
+		if currentTier >= Config.Economy.MaxTurretTier then
+			return false, "Max Turret Tier reached"
+		end
+		local cost = Config.Economy.GetTurretCost(currentTier + 1)
+		if not DataService.SpendBanked(player, cost) then
+			return false, `Need ${cost} Banked Cash`
+		end
+		data.TurretTier = currentTier + 1
+		DataService.SyncClient(player)
+		return true, `Base Turret upgraded to Tier {data.TurretTier}!`
+
 	elseif upgradeType == "VaultInterest" then
 		if data.VaultInterestTier >= Config.Economy.MaxInterestTier then
 			return false, "Max Interest Tier reached"
@@ -466,6 +485,32 @@ function DataService.SpendSkillPoints(player: Player, perkId: string): (boolean,
 	DataService.SyncClient(player)
 	print(`  [Progression] {player.Name} unlocked perk {perkDef.Name}!`)
 	return true, `Unlocked {perkDef.Name}!`
+end
+
+-- ============================================================
+-- SYNDICATE TOKENS & CONTRACTS
+-- ============================================================
+function DataService.AddSyndicateTokens(player: Player, amount: number): number
+	local data = DataService.GetData(player)
+	if not data then return 0 end
+	data.SyndicateTokens = (data.SyndicateTokens or 0) + math.max(0, math.floor(amount))
+	DataService.SyncClient(player)
+	return data.SyndicateTokens
+end
+
+function DataService.GetContracts(player: Player): { [string]: Types.SyndicateContract }
+	local data = DataService.GetData(player)
+	if not data then return {} end
+	if not data.Contracts then data.Contracts = {} end
+	return data.Contracts
+end
+
+function DataService.SetContracts(player: Player, contracts: { [string]: Types.SyndicateContract })
+	local data = DataService.GetData(player)
+	if not data then return end
+	data.Contracts = contracts
+	data.LastContractsRefresh = os.time()
+	DataService.SyncClient(player)
 end
 
 -- ============================================================
