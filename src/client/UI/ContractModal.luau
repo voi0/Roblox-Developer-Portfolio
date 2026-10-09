@@ -467,13 +467,7 @@ function ContractModal.Open()
 	end
 
 	if ContractModal._mainFrame then
-		ContractModal._mainFrame.Visible = true
-		ContractModal._mainFrame.Position = UDim2.new(0.5, 0, 0.55, 0)
-		ContractModal._mainFrame.BackgroundTransparency = 0.5
-		TweenService:Create(ContractModal._mainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-			Position = UDim2.new(0.5, 0, 0.5, 0),
-			BackgroundTransparency = 0.05,
-		}):Play()
+		UILib.OpenModal(ContractModal._mainFrame)
 	end
 end
 
@@ -482,16 +476,15 @@ function ContractModal.Close()
 	ContractModal._isOpen = false
 
 	if ContractModal._mainFrame then
-		local tw = TweenService:Create(ContractModal._mainFrame, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-			Position = UDim2.new(0.5, 0, 0.55, 0),
-			BackgroundTransparency = 1,
-		})
-		tw:Play()
-		tw.Completed:Connect(function()
-			if not ContractModal._isOpen and ContractModal._mainFrame then
-				ContractModal._mainFrame.Visible = false
-			end
-		end)
+		UILib.CloseModal(ContractModal._mainFrame)
+	end
+end
+
+function ContractModal.Toggle()
+	if ContractModal._isOpen then
+		ContractModal.Close()
+	else
+		ContractModal.Open()
 	end
 end
 

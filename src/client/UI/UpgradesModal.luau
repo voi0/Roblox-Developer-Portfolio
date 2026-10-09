@@ -387,28 +387,16 @@ end
 
 function UpgradesModal.Open()
 	if not UpgradesModal._frame then return end
+	if UpgradesModal._isOpen then return end
 	UpgradesModal._isOpen = true
-	UpgradesModal._frame.Visible = true
-	UpgradesModal._frame.Size = UDim2.new(0, 500, 0, 410)
-
-	TweenService:Create(UpgradesModal._frame, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-		Size = UDim2.new(0, 560, 0, 460)
-	}):Play()
+	UILib.OpenModal(UpgradesModal._frame)
 end
 
 function UpgradesModal.Close()
 	if not UpgradesModal._frame then return end
+	if not UpgradesModal._isOpen then return end
 	UpgradesModal._isOpen = false
-
-	local tween = TweenService:Create(UpgradesModal._frame, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-		Size = UDim2.new(0, 480, 0, 390)
-	})
-	tween:Play()
-	tween.Completed:Connect(function()
-		if not UpgradesModal._isOpen and UpgradesModal._frame then
-			UpgradesModal._frame.Visible = false
-		end
-	end)
+	UILib.CloseModal(UpgradesModal._frame)
 end
 
 function UpgradesModal.Toggle()
@@ -417,6 +405,10 @@ function UpgradesModal.Toggle()
 	else
 		UpgradesModal.Open()
 	end
+end
+
+function UpgradesModal.IsOpen(): boolean
+	return UpgradesModal._isOpen
 end
 
 return UpgradesModal

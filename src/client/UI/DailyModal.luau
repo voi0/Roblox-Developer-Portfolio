@@ -332,15 +332,17 @@ end
 
 function DailyModal.Open()
 	if not DailyModal._frame then return end
-	DailyModal._frame.Visible = true
+	if DailyModal._isOpen then return end
 	DailyModal._isOpen = true
 	DailyModal.Refresh()
+	UILib.OpenModal(DailyModal._frame)
 end
 
 function DailyModal.Close()
 	if not DailyModal._frame then return end
-	DailyModal._frame.Visible = false
+	if not DailyModal._isOpen then return end
 	DailyModal._isOpen = false
+	UILib.CloseModal(DailyModal._frame)
 end
 
 function DailyModal.Toggle()
@@ -349,6 +351,10 @@ function DailyModal.Toggle()
 	else
 		DailyModal.Open()
 	end
+end
+
+function DailyModal.IsOpen(): boolean
+	return DailyModal._isOpen
 end
 
 return DailyModal

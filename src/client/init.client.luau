@@ -67,7 +67,12 @@ else
 	warn("  [Client] Critical: VaultHUD module could not be loaded!")
 end
 
--- ── 2. INITIALIZE AUDIO & VISUAL ENGINES ──
+-- ── 2. INITIALIZE AUDIO, CAMERA & VISUAL ENGINES ──
+local CameraController = safeRequire(controllersFolder, "CameraController")
+if CameraController then
+	pcall(function() CameraController.Init() end)
+end
+
 local SoundController = safeRequire(controllersFolder, "SoundController")
 if SoundController then
 	pcall(function() SoundController.Init() end)
@@ -95,12 +100,35 @@ local DailyModal = safeRequire(uiFolder, "DailyModal")
 local ProgressionModal = safeRequire(uiFolder, "ProgressionModal")
 local ContractModal = safeRequire(uiFolder, "ContractModal")
 
+local function closeOtherModals(activeModal: any?)
+	if UpgradesModal and UpgradesModal ~= activeModal and UpgradesModal.IsOpen and UpgradesModal.IsOpen() then
+		UpgradesModal.Close()
+	end
+	if FusionModal and FusionModal ~= activeModal and FusionModal.IsOpen and FusionModal.IsOpen() then
+		FusionModal.Close()
+	end
+	if DailyModal and DailyModal ~= activeModal and DailyModal.IsOpen and DailyModal.IsOpen() then
+		DailyModal.Close()
+	end
+	if ProgressionModal and ProgressionModal ~= activeModal and ProgressionModal.IsOpen and ProgressionModal.IsOpen() then
+		ProgressionModal.Close()
+	end
+	if ContractModal and ContractModal ~= activeModal and ContractModal.IsOpen and ContractModal.IsOpen() then
+		ContractModal.Close()
+	end
+end
+
 if VaultHUD and VaultHUD._gui then
 	if UpgradesModal then
 		pcall(function()
 			UpgradesModal.Create(VaultHUD._gui)
 			VaultHUD.SetUpgradesCallback(function()
-				UpgradesModal.Toggle()
+				if UpgradesModal.IsOpen() then
+					UpgradesModal.Close()
+				else
+					closeOtherModals(UpgradesModal)
+					UpgradesModal.Open()
+				end
 			end)
 		end)
 	end
@@ -109,7 +137,12 @@ if VaultHUD and VaultHUD._gui then
 		pcall(function()
 			FusionModal.Create(VaultHUD._gui)
 			VaultHUD.SetFusionCallback(function()
-				FusionModal.Toggle()
+				if FusionModal.IsOpen() then
+					FusionModal.Close()
+				else
+					closeOtherModals(FusionModal)
+					FusionModal.Open()
+				end
 			end)
 		end)
 	end
@@ -118,7 +151,12 @@ if VaultHUD and VaultHUD._gui then
 		pcall(function()
 			DailyModal.Create(VaultHUD._gui)
 			VaultHUD.SetDailyCallback(function()
-				DailyModal.Toggle()
+				if DailyModal.IsOpen() then
+					DailyModal.Close()
+				else
+					closeOtherModals(DailyModal)
+					DailyModal.Open()
+				end
 			end)
 		end)
 	end
@@ -127,7 +165,12 @@ if VaultHUD and VaultHUD._gui then
 		pcall(function()
 			ProgressionModal.Create(VaultHUD._gui)
 			VaultHUD.SetProgressCallback(function()
-				ProgressionModal.Toggle()
+				if ProgressionModal.IsOpen() then
+					ProgressionModal.Close()
+				else
+					closeOtherModals(ProgressionModal)
+					ProgressionModal.Open()
+				end
 			end)
 		end)
 	end
@@ -139,6 +182,7 @@ if VaultHUD and VaultHUD._gui then
 				if ContractModal.IsOpen() then
 					ContractModal.Close()
 				else
+					closeOtherModals(ContractModal)
 					ContractModal.Open()
 				end
 			end)
@@ -150,26 +194,6 @@ local HeistController = safeRequire(controllersFolder, "HeistController")
 if HeistController then
 	pcall(function() HeistController.Init() end)
 end
-
--- ============================================================
--- 2. CAMERA SETUP (Third person dynamic tracking)
--- ============================================================
-local function setupCamera(char: Model)
-	local humanoid = char:WaitForChild("Humanoid", 10) :: Humanoid?
-	if not humanoid then return end
-
-	local camera = Workspace.CurrentCamera or Workspace:WaitForChild("Camera") :: Camera
-	camera.CameraType = Enum.CameraType.Custom
-	camera.CameraSubject = humanoid
-
-	player.CameraMinZoomDistance = 4
-	player.CameraMaxZoomDistance = 50
-end
-
-if player.Character then
-	task.spawn(setupCamera, player.Character)
-end
-player.CharacterAdded:Connect(setupCamera)
 
 -- ============================================================
 -- 3. DATA REPLICATION LISTENERS
@@ -213,7 +237,10 @@ task.spawn(function()
 	local openFusion = ReplicatedStorage:WaitForChild("OpenFusionModal", 15) :: RemoteEvent?
 	if openFusion then
 		openFusion.OnClientEvent:Connect(function()
-			if FusionModal then FusionModal.Open() end
+			if FusionModal then
+				closeOtherModals(FusionModal)
+				FusionModal.Open()
+			end
 		end)
 	end
 
@@ -231,6 +258,7 @@ task.spawn(function()
 	if levelUpEvt then
 		levelUpEvt.OnClientEvent:Connect(function(level: number, rankTitle: string, newSP: number)
 			if SoundController then SoundController.Play("Prestige") end
+			if CameraController then CameraController.Shake(0.65, 0.45) end
 			if VFXController and player.Character then
 				local root = player.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
 				if root then
@@ -266,6 +294,7 @@ task.spawn(function()
 	if turretFire then
 		turretFire.OnClientEvent:Connect(function(origin: Vector3, targetPos: Vector3, plotIdx: number)
 			if SoundController then SoundController.Play("BatonHit") end
+			if CameraController then CameraController.Shake(0.35, 0.2) end
 			if VFXController then VFXController.PlayTurretFire(origin, targetPos) end
 		end)
 	end
@@ -273,6 +302,7 @@ task.spawn(function()
 	local turretDisabled = ReplicatedStorage:WaitForChild("TurretDisabled", 15) :: RemoteEvent?
 	if turretDisabled then
 		turretDisabled.OnClientEvent:Connect(function(plotIdx: number, dur: number)
+			if CameraController then CameraController.Shake(0.7, 0.4) end
 			if NotificationUI then
 				NotificationUI.Show({
 					Title = "📡 EMP DISRUPTION!",
@@ -306,22 +336,51 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
 	if gameProcessed then return end
 
 	if input.KeyCode == Enum.KeyCode.U then
-		if UpgradesModal then UpgradesModal.Toggle() end
+		if UpgradesModal then
+			if UpgradesModal.IsOpen() then
+				UpgradesModal.Close()
+			else
+				closeOtherModals(UpgradesModal)
+				UpgradesModal.Open()
+			end
+		end
 
 	elseif input.KeyCode == Enum.KeyCode.B then
-		if FusionModal then FusionModal.Toggle() end
+		if FusionModal then
+			if FusionModal.IsOpen() then
+				FusionModal.Close()
+			else
+				closeOtherModals(FusionModal)
+				FusionModal.Open()
+			end
+		end
 
 	elseif input.KeyCode == Enum.KeyCode.Y then
-		if DailyModal then DailyModal.Toggle() end
+		if DailyModal then
+			if DailyModal.IsOpen() then
+				DailyModal.Close()
+			else
+				closeOtherModals(DailyModal)
+				DailyModal.Open()
+			end
+		end
 
 	elseif input.KeyCode == Enum.KeyCode.P then
-		if ProgressionModal then ProgressionModal.Toggle() end
+		if ProgressionModal then
+			if ProgressionModal.IsOpen() then
+				ProgressionModal.Close()
+			else
+				closeOtherModals(ProgressionModal)
+				ProgressionModal.Open()
+			end
+		end
 
 	elseif input.KeyCode == Enum.KeyCode.C then
 		if ContractModal then
 			if ContractModal.IsOpen() then
 				ContractModal.Close()
 			else
+				closeOtherModals(ContractModal)
 				ContractModal.Open()
 			end
 		end
@@ -336,21 +395,7 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
 		end
 
 	elseif input.KeyCode == Enum.KeyCode.Escape then
-		if UpgradesModal and UpgradesModal._isOpen then
-			UpgradesModal.Close()
-		end
-		if FusionModal and FusionModal._isOpen then
-			FusionModal.Close()
-		end
-		if DailyModal and DailyModal._isOpen then
-			DailyModal.Close()
-		end
-		if ProgressionModal and ProgressionModal._isOpen then
-			ProgressionModal.Close()
-		end
-		if ContractModal and ContractModal.IsOpen() then
-			ContractModal.Close()
-		end
+		closeOtherModals(nil)
 	end
 end)
 

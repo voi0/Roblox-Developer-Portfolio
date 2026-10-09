@@ -601,28 +601,17 @@ end
 -- ============================================================
 function ProgressionModal.Open()
 	if not ProgressionModal._frame then return end
+	if ProgressionModal._isOpen then return end
 	ProgressionModal._isOpen = true
-	ProgressionModal._frame.Visible = true
-
-	ProgressionModal._frame.Size = UDim2.new(0, 700, 0, 480)
-	TweenService:Create(ProgressionModal._frame, TweenInfo.new(0.22, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-		Size = UDim2.new(0, 780, 0, 540)
-	}):Play()
+	ProgressionModal._frame.Size = UDim2.new(0, 780, 0, 540)
+	UILib.OpenModal(ProgressionModal._frame)
 end
 
 function ProgressionModal.Close()
 	if not ProgressionModal._frame then return end
+	if not ProgressionModal._isOpen then return end
 	ProgressionModal._isOpen = false
-
-	local tw = TweenService:Create(ProgressionModal._frame, TweenInfo.new(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-		Size = UDim2.new(0, 680, 0, 460)
-	})
-	tw:Play()
-	tw.Completed:Connect(function()
-		if not ProgressionModal._isOpen and ProgressionModal._frame then
-			ProgressionModal._frame.Visible = false
-		end
-	end)
+	UILib.CloseModal(ProgressionModal._frame)
 end
 
 function ProgressionModal.Toggle()
@@ -631,6 +620,10 @@ function ProgressionModal.Toggle()
 	else
 		ProgressionModal.Open()
 	end
+end
+
+function ProgressionModal.IsOpen(): boolean
+	return ProgressionModal._isOpen
 end
 
 return ProgressionModal

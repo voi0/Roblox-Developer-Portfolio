@@ -266,18 +266,20 @@ end
 -- ============================================================
 function FusionModal.Open()
 	if not FusionModal._frame then return end
+	if FusionModal._isOpen then return end
 	FusionModal._isOpen = true
-	FusionModal._frame.Visible = true
 
 	if FusionModal._currentData then
 		FusionModal.Update(FusionModal._currentData)
 	end
+	UILib.OpenModal(FusionModal._frame)
 end
 
 function FusionModal.Close()
 	if not FusionModal._frame then return end
+	if not FusionModal._isOpen then return end
 	FusionModal._isOpen = false
-	FusionModal._frame.Visible = false
+	UILib.CloseModal(FusionModal._frame)
 end
 
 function FusionModal.Toggle()
@@ -286,6 +288,10 @@ function FusionModal.Toggle()
 	else
 		FusionModal.Open()
 	end
+end
+
+function FusionModal.IsOpen(): boolean
+	return FusionModal._isOpen
 end
 
 -- ============================================================

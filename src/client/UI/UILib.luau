@@ -10,6 +10,24 @@ local TweenService = game:GetService("TweenService")
 
 local UILib = {}
 
+local function getCameraController(): any?
+	local controllers = script.Parent.Parent:FindFirstChild("Controllers")
+	local mod = controllers and controllers:FindFirstChild("CameraController")
+	if mod then
+		return require(mod :: ModuleScript)
+	end
+	return nil
+end
+
+local function getSoundController(): any?
+	local controllers = script.Parent.Parent:FindFirstChild("Controllers")
+	local mod = controllers and controllers:FindFirstChild("SoundController")
+	if mod then
+		return require(mod :: ModuleScript)
+	end
+	return nil
+end
+
 -- ============================================================
 -- DESIGN TOKENS (Vibrant, Kid-Friendly Roblox Simulator Style)
 -- ============================================================
@@ -647,10 +665,31 @@ end
 -- MODAL OPEN / CLOSE ANIMATIONS
 -- ============================================================
 function UILib.OpenModal(modal: Frame)
-	modal.Visible = true
-	modal.BackgroundTransparency = 0.3
-	modal.Position = UDim2.fromScale(0.5, 0.54)
+	local currentCloseId = (modal:GetAttribute("ModalSeqId") or 0) + 1
+	modal:SetAttribute("ModalSeqId", currentCloseId)
 
+	local camCtrl = getCameraController()
+	if camCtrl and camCtrl.SetUIFocus then
+		camCtrl.SetUIFocus(true)
+	end
+
+	local sndCtrl = getSoundController()
+	if sndCtrl and sndCtrl.Play then
+		sndCtrl.Play("ButtonClick")
+	end
+
+	modal.Visible = true
+	modal.Position = UDim2.fromScale(0.5, 0.54)
+	modal.BackgroundTransparency = 0.3
+
+	local scale = modal:FindFirstChildOfClass("UIScale")
+	if not scale then
+		scale = Instance.new("UIScale")
+		scale.Parent = modal
+	end
+	scale.Scale = 0.92
+
+	TweenService:Create(scale, UILib.Timing.ModalIn, { Scale = 1.0 }):Play()
 	TweenService:Create(modal, UILib.Timing.ModalIn, {
 		Position = UDim2.fromScale(0.5, 0.5),
 		BackgroundTransparency = 0.04,
@@ -658,13 +697,34 @@ function UILib.OpenModal(modal: Frame)
 end
 
 function UILib.CloseModal(modal: Frame)
+	local currentCloseId = (modal:GetAttribute("ModalSeqId") or 0) + 1
+	modal:SetAttribute("ModalSeqId", currentCloseId)
+
+	local camCtrl = getCameraController()
+	if camCtrl and camCtrl.SetUIFocus then
+		camCtrl.SetUIFocus(false)
+	end
+
+	local sndCtrl = getSoundController()
+	if sndCtrl and sndCtrl.Play then
+		sndCtrl.Play("ButtonClick")
+	end
+
+	local scale = modal:FindFirstChildOfClass("UIScale")
+	if scale then
+		TweenService:Create(scale, UILib.Timing.ModalOut, { Scale = 0.92 }):Play()
+	end
+
 	local tween = TweenService:Create(modal, UILib.Timing.ModalOut, {
 		Position = UDim2.fromScale(0.5, 0.54),
 		BackgroundTransparency = 0.3,
 	})
 	tween:Play()
 	tween.Completed:Once(function()
-		modal.Visible = false
+		if modal:GetAttribute("ModalSeqId") == currentCloseId then
+			modal.Visible = false
+			if scale then scale.Scale = 1.0 end
+		end
 	end)
 end
 
