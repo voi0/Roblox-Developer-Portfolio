@@ -849,15 +849,25 @@ function ModelEngine.CreateBunkerShell(
 		true
 	)
 
-	-- 12.4. Armored Blast Roof (Covers Rear 65% of the bunker)
-	local roofLen = plotLength * 0.65
-	local roofZ = plotLength * 0.175
+	-- 12.4. Armored Blast Roof (Fully Encloses 100% of the bunker)
+	local fullRoofLen = plotLength + 4
 	createPart(
 		"BlastRoofDeck",
-		Vector3.new(plotWidth + 4, 1.8, roofLen),
-		baseCF * CFrame.new(0, wallHeight + 0.9, roofZ),
-		Color3.fromRGB(50, 60, 78),
+		Vector3.new(plotWidth + 6, 2.2, fullRoofLen),
+		baseCF * CFrame.new(0, wallHeight + 1.1, 0),
+		Color3.fromRGB(42, 50, 66),
 		Enum.Material.Metal,
+		model,
+		true
+	)
+
+	-- Front Airlock Entrance Cantilever Canopy (Extends forward over entrance)
+	createPart(
+		"EntranceCanopyOverhang",
+		Vector3.new(plotWidth + 4, 1.6, 6.0),
+		baseCF * CFrame.new(0, wallHeight + 0.8, -plotLength / 2 - 2),
+		Color3.fromRGB(30, 36, 48),
+		Enum.Material.DiamondPlate,
 		model,
 		true
 	)
@@ -865,8 +875,8 @@ function ModelEngine.CreateBunkerShell(
 	-- Roof HVAC Industrial Fan & Duct
 	local hvac = createPart(
 		"RoofHVAC",
-		Vector3.new(7.0, 3.2, 9.0),
-		baseCF * CFrame.new(-6.0, wallHeight + 3.2, roofZ),
+		Vector3.new(8.0, 3.2, 10.0),
+		baseCF * CFrame.new(-6.0, wallHeight + 3.6, 0),
 		Color3.fromRGB(15, 20, 30),
 		Enum.Material.Corrugated,
 		model,

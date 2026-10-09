@@ -134,26 +134,12 @@ function VaultHUD.Create()
 	tcCorner.CornerRadius = UDim.new(0, 18)
 	tcCorner.Parent = topCapsule
 
-	-- 45° Specular Rim Light
+	-- Crisp Liquid Glass Rim Stroke
 	local tcStroke = Instance.new("UIStroke")
-	tcStroke.Color = Color3.fromRGB(30, 41, 59)
+	tcStroke.Color = Color3.fromRGB(56, 189, 248)
 	tcStroke.Thickness = 1.4
 	tcStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 	tcStroke.Parent = topCapsule
-
-	local tcStrokeGrad = Instance.new("UIGradient")
-	tcStrokeGrad.Rotation = 45
-	tcStrokeGrad.Color = ColorSequence.new({
-		ColorSequenceKeypoint.new(0.0, Color3.fromRGB(255, 255, 255)),
-		ColorSequenceKeypoint.new(0.4, Color3.fromRGB(148, 163, 184)),
-		ColorSequenceKeypoint.new(1.0, Color3.fromRGB(30, 41, 59)),
-	})
-	tcStrokeGrad.Transparency = NumberSequence.new({
-		NumberSequenceKeypoint.new(0.0, 0.12),
-		NumberSequenceKeypoint.new(0.6, 0.65),
-		NumberSequenceKeypoint.new(1.0, 0.85),
-	})
-	tcStrokeGrad.Parent = tcStroke
 
 	-- Diffuse Glass Gradient
 	local tcBgGrad = Instance.new("UIGradient")

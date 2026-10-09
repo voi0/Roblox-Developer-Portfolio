@@ -181,25 +181,12 @@ function UILib.CreateGlassCard(parent: GuiObject, size: UDim2, pos: UDim2, ancho
 	corner.CornerRadius = UDim.new(0, 16)
 	corner.Parent = card
 
-	-- Specular 45° Rim Light
+	-- Specular Rim Stroke
 	local stroke = Instance.new("UIStroke")
-	stroke.Thickness = 1.2
+	stroke.Thickness = 1.4
+	stroke.Color = Color3.fromRGB(56, 189, 248)
 	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 	stroke.Parent = card
-
-	local strokeGrad = Instance.new("UIGradient")
-	strokeGrad.Rotation = 45
-	strokeGrad.Color = ColorSequence.new({
-		ColorSequenceKeypoint.new(0.0, Color3.fromRGB(255, 255, 255)),
-		ColorSequenceKeypoint.new(0.4, Color3.fromRGB(148, 163, 184)),
-		ColorSequenceKeypoint.new(1.0, Color3.fromRGB(30, 41, 59)),
-	})
-	strokeGrad.Transparency = NumberSequence.new({
-		NumberSequenceKeypoint.new(0.0, 0.15),
-		NumberSequenceKeypoint.new(0.6, 0.65),
-		NumberSequenceKeypoint.new(1.0, 0.85),
-	})
-	strokeGrad.Parent = stroke
 
 	-- Diffuse Glass Gradient
 	local bgGrad = Instance.new("UIGradient")
@@ -231,25 +218,8 @@ function UILib.ApplyLiquidGlassStyle(frame: Frame, accentColor: Color3?): UIStro
 		stroke.Parent = frame
 	end
 	stroke.Thickness = 1.6
+	stroke.Color = accentColor or Color3.fromRGB(56, 189, 248)
 	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-
-	local existingGrad = stroke:FindFirstChildOfClass("UIGradient")
-	if not existingGrad then
-		local strokeGrad = Instance.new("UIGradient")
-		strokeGrad.Rotation = 45
-		local tint = accentColor or Color3.fromRGB(56, 189, 248)
-		strokeGrad.Color = ColorSequence.new({
-			ColorSequenceKeypoint.new(0.0, Color3.fromRGB(255, 255, 255)),
-			ColorSequenceKeypoint.new(0.35, tint),
-			ColorSequenceKeypoint.new(1.0, Color3.fromRGB(30, 41, 59)),
-		})
-		strokeGrad.Transparency = NumberSequence.new({
-			NumberSequenceKeypoint.new(0.0, 0.1),
-			NumberSequenceKeypoint.new(0.5, 0.35),
-			NumberSequenceKeypoint.new(1.0, 0.75),
-		})
-		strokeGrad.Parent = stroke
-	end
 
 	local bgGrad = frame:FindFirstChild("GlassBgGradient") :: UIGradient?
 	if not bgGrad then

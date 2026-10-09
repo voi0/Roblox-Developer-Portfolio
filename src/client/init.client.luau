@@ -174,6 +174,8 @@ player.CharacterAdded:Connect(setupCamera)
 -- ============================================================
 -- 3. DATA REPLICATION LISTENERS
 -- ============================================================
+local localPlayerData: any = nil
+
 local function onDataReceived(data: any)
 	if not data then return end
 	if localPlayerData and data.BankedCash and localPlayerData.BankedCash then

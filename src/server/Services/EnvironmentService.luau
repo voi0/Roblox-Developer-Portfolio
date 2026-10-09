@@ -63,30 +63,52 @@ local function setupAtmosphericLighting()
 		Lighting.Technology = Enum.Technology.Future
 	end)
 
-	Lighting.ClockTime = 14.0
-	Lighting.Brightness = 2.2
-	Lighting.Ambient = Color3.fromRGB(72, 85, 108)
-	Lighting.OutdoorAmbient = Color3.fromRGB(58, 70, 90)
+	Lighting.ClockTime = 0.0
+	Lighting.TimeOfDay = "00:00:00"
+	Lighting.Brightness = 0.0 -- Zero sunlight: purely artificial fixture illumination
+	Lighting.Ambient = Color3.fromRGB(38, 44, 58) -- Balanced ambient fill for crisp visibility
+	Lighting.OutdoorAmbient = Color3.fromRGB(16, 20, 28)
 	Lighting.GeographicLatitude = 25
 	Lighting.GlobalShadows = true
-	Lighting.EnvironmentDiffuseScale = 1.0
-	Lighting.EnvironmentSpecularScale = 1.0
-	Lighting.FogStart = 450
-	Lighting.FogEnd = 2400
-	Lighting.FogColor = Color3.fromRGB(24, 32, 46)
+	Lighting.EnvironmentDiffuseScale = 0.5
+	Lighting.EnvironmentSpecularScale = 0.5
+	Lighting.FogStart = 65
+	Lighting.FogEnd = 260
+	Lighting.FogColor = Color3.fromRGB(12, 15, 22)
 
-	-- Subterranean Deep Industrial Atmosphere
+	-- Purge any default daylight skybox from Studio template
+	for _, child in Lighting:GetChildren() do
+		if child:IsA("Sky") then
+			pcall(function() child:Destroy() end)
+		end
+	end
+
+	-- Insert pitch-black subterranean void skybox
+	local voidSky = Instance.new("Sky")
+	voidSky.Name = "SubterraneanVoidSky"
+	voidSky.SkyboxBk = ""
+	voidSky.SkyboxDn = ""
+	voidSky.SkyboxFt = ""
+	voidSky.SkyboxLf = ""
+	voidSky.SkyboxRt = ""
+	voidSky.SkyboxUp = ""
+	voidSky.SunAngularSize = 0
+	voidSky.MoonAngularSize = 0
+	voidSky.StarCount = 0
+	voidSky.Parent = Lighting
+
+	-- Subterranean Industrial Dust & Atmosphere
 	local atmosphere = Lighting:FindFirstChildOfClass("Atmosphere")
 	if not atmosphere then
 		atmosphere = Instance.new("Atmosphere")
 		atmosphere.Parent = Lighting
 	end
-	atmosphere.Density = 0.28
-	atmosphere.Offset = 0.22
-	atmosphere.Color = Color3.fromRGB(120, 145, 175)
-	atmosphere.Decay = Color3.fromRGB(36, 46, 64)
-	atmosphere.Glare = 0.16
-	atmosphere.Haze = 0.60
+	atmosphere.Density = 0.35
+	atmosphere.Offset = 0.0
+	atmosphere.Color = Color3.fromRGB(18, 22, 32)
+	atmosphere.Decay = Color3.fromRGB(10, 12, 18)
+	atmosphere.Glare = 0.0
+	atmosphere.Haze = 0.12
 
 	-- High-Threshold Bloom (Neon glows brightly, normal materials never blow out)
 	local bloom = Lighting:FindFirstChild("VaultWarsBloom") :: BloomEffect?
@@ -129,11 +151,11 @@ end
 -- ============================================================
 local function buildCavernEnclosure(parent: Folder)
 	local numSegments = 16
-	local radius = 175
-	local wallHeight = 92
+	local radius = 114
+	local wallHeight = 36
 	local wallThickness = 6
 	local halfAngle = math.pi / numSegments
-	local segmentWidth = 2 * radius * math.sin(halfAngle) + 4
+	local segmentWidth = 2 * radius * math.sin(halfAngle) + 6
 
 	local wallsFolder = Instance.new("Folder")
 	wallsFolder.Name = "PerimeterBlastWalls"
@@ -153,9 +175,9 @@ local function buildCavernEnclosure(parent: Folder)
 		-- 3.1. Lower Armored Blast Slab (DiamondPlate)
 		createPart(
 			`BlastWallLower_{i}`,
-			Vector3.new(segmentWidth, 42, wallThickness),
-			lookCenterCF * CFrame.new(0, -25, 0),
-			Color3.fromRGB(58, 66, 84),
+			Vector3.new(segmentWidth, 18, wallThickness),
+			lookCenterCF * CFrame.new(0, -9, 0),
+			Color3.fromRGB(48, 56, 72),
 			Enum.Material.DiamondPlate,
 			wallsFolder,
 			true
@@ -164,9 +186,9 @@ local function buildCavernEnclosure(parent: Folder)
 		-- 3.2. Upper Corrugated Blast Wall
 		createPart(
 			`BlastWallUpper_{i}`,
-			Vector3.new(segmentWidth, 50, wallThickness - 1),
-			lookCenterCF * CFrame.new(0, 21, 0.5),
-			Color3.fromRGB(75, 86, 108),
+			Vector3.new(segmentWidth, 18, wallThickness - 1),
+			lookCenterCF * CFrame.new(0, 9, 0.5),
+			Color3.fromRGB(64, 74, 94),
 			Enum.Material.Corrugated,
 			wallsFolder,
 			true
@@ -176,8 +198,8 @@ local function buildCavernEnclosure(parent: Folder)
 		-- Lower Cyan Coolant Pipeline
 		createPart(
 			`CoolantLine_{i}`,
-			Vector3.new(segmentWidth + 2, 1.8, 1.8),
-			lookCenterCF * CFrame.new(0, -5, -wallThickness / 2 - 0.8),
+			Vector3.new(segmentWidth + 2, 1.6, 1.6),
+			lookCenterCF * CFrame.new(0, 0, -wallThickness / 2 - 0.8),
 			Color3.fromRGB(14, 165, 233),
 			Enum.Material.Metal,
 			wallsFolder,
@@ -187,7 +209,7 @@ local function buildCavernEnclosure(parent: Folder)
 		createPart(
 			`CoolantGlow_{i}`,
 			Vector3.new(segmentWidth, 0.4, 0.4),
-			lookCenterCF * CFrame.new(0, -5, -wallThickness / 2 - 1.8),
+			lookCenterCF * CFrame.new(0, 0, -wallThickness / 2 - 1.7),
 			Color3.fromRGB(56, 189, 248),
 			Enum.Material.Neon,
 			wallsFolder,
@@ -198,7 +220,7 @@ local function buildCavernEnclosure(parent: Folder)
 		createPart(
 			`VoltageBus_{i}`,
 			Vector3.new(segmentWidth + 2, 1.4, 1.4),
-			lookCenterCF * CFrame.new(0, 25, -wallThickness / 2 - 0.6),
+			lookCenterCF * CFrame.new(0, 10, -wallThickness / 2 - 0.6),
 			Color3.fromRGB(245, 158, 11),
 			Enum.Material.Metal,
 			wallsFolder,
@@ -215,9 +237,9 @@ local function buildCavernEnclosure(parent: Folder)
 
 		local column = createPart(
 			`StructuralIBeam_{i}`,
-			Vector3.new(4.5, wallHeight + 4, 4.5),
+			Vector3.new(4.5, wallHeight + 2, 4.5),
 			vertCF,
-			Color3.fromRGB(42, 48, 64),
+			Color3.fromRGB(36, 42, 56),
 			Enum.Material.Metal,
 			wallsFolder,
 			true
@@ -301,17 +323,17 @@ local function buildOverheadCraneGantries(parent: Folder)
 	gantryFolder.Name = "OverheadIndustrialGantries"
 	gantryFolder.Parent = parent
 
-	local gantryHeights = { 76, 84 }
-	local zOffsets = { -65, 0, 65 }
+	local gantryHeights = { 28, 32 }
+	local zOffsets = { -35, 0, 35 }
 
 	for idx, zOff in zOffsets do
 		local beamHeight = gantryHeights[(idx % 2) + 1]
-		local spanLen = 330
+		local spanLen = 220
 
 		-- 4.1. Heavy Main Overhead Box Girder
 		local girder = createPart(
 			`CraneGirder_{idx}`,
-			Vector3.new(spanLen, 5.0, 6.0),
+			Vector3.new(spanLen, 4.0, 5.0),
 			CFrame.new(0, beamHeight, zOff),
 			Color3.fromRGB(24, 28, 40),
 			Enum.Material.DiamondPlate,
@@ -323,19 +345,19 @@ local function buildOverheadCraneGantries(parent: Folder)
 		createPart(
 			`CraneRailL_{idx}`,
 			Vector3.new(spanLen, 0.8, 0.8),
-			CFrame.new(0, beamHeight + 2.8, zOff - 2.2),
+			CFrame.new(0, beamHeight + 2.2, zOff - 1.8),
 			Color3.fromRGB(245, 158, 11),
 			Enum.Material.Metal,
 			girder,
 			false
 		)
 		-- 4.15 High-Bay Industrial Sodium Floodlights with Volumetric Cones
-		for _, xPos in { -80, -25, 25, 80 } do
+		for _, xPos in { -50, -18, 18, 50 } do
 			-- Cast-Iron Fixture Shroud
 			createPart(
 				`HighBayShroud_{idx}_{xPos}`,
-				Vector3.new(4.2, 1.2, 4.2),
-				CFrame.new(xPos, beamHeight - 2.4, zOff),
+				Vector3.new(3.8, 1.2, 3.8),
+				CFrame.new(xPos, beamHeight - 2.0, zOff),
 				Color3.fromRGB(15, 20, 28),
 				Enum.Material.Metal,
 				girder,
@@ -344,8 +366,8 @@ local function buildOverheadCraneGantries(parent: Folder)
 
 			local bayLightPart = createPart(
 				`HighBayLight_{idx}_{xPos}`,
-				Vector3.new(3.5, 0.4, 3.5),
-				CFrame.new(xPos, beamHeight - 3.1, zOff),
+				Vector3.new(3.0, 0.4, 3.0),
+				CFrame.new(xPos, beamHeight - 2.6, zOff),
 				Color3.fromRGB(254, 240, 138),
 				Enum.Material.Neon,
 				girder,
@@ -354,16 +376,16 @@ local function buildOverheadCraneGantries(parent: Folder)
 			local point = Instance.new("PointLight")
 			point.Name = "ArenaHighBayIllumination"
 			point.Color = Color3.fromRGB(255, 244, 224)
-			point.Range = 130
-			point.Brightness = 2.2
+			point.Range = 65
+			point.Brightness = 2.4
 			point.Shadows = true
 			point.Parent = bayLightPart
 
 			-- Semi-Transparent Volumetric Beam Cone
 			local beamCone = Instance.new("Part")
 			beamCone.Name = `VolumetricBeam_{idx}_{xPos}`
-			beamCone.Size = Vector3.new(32, 46, 32)
-			beamCone.CFrame = CFrame.new(xPos, beamHeight - 26, zOff)
+			beamCone.Size = Vector3.new(18, 22, 18)
+			beamCone.CFrame = CFrame.new(xPos, beamHeight - 11, zOff)
 			beamCone.Color = Color3.fromRGB(254, 240, 138)
 			beamCone.Material = Enum.Material.Neon
 			beamCone.Transparency = 0.94
@@ -611,16 +633,16 @@ local function buildCavernCeilingCanopy(parent: Folder)
 	ceilingFolder.Parent = parent
 
 	local numSegs = 16
-	local radius = 180
-	local baseCeilingY = 92
-	local apexCeilingY = 114
+	local radius = 118
+	local baseCeilingY = 32
+	local apexCeilingY = 44
 	local halfAngle = math.pi / numSegs
 	local segWidth = 2 * radius * math.sin(halfAngle) + 6
 
 	-- 7.1. Central Compression Hub Ring
 	local centerHub = createPart(
 		"CeilingCenterHub",
-		Vector3.new(52, 6, 52),
+		Vector3.new(44, 4, 44),
 		CFrame.new(0, apexCeilingY, 0),
 		Color3.fromRGB(30, 41, 59),
 		Enum.Material.DiamondPlate,
@@ -631,7 +653,7 @@ local function buildCavernCeilingCanopy(parent: Folder)
 	-- Glowing Cyan Central Ventilation Turbine
 	local turbineCore = createCylinder(
 		"CeilingTurbineCore",
-		Vector3.new(5, 42, 42),
+		Vector3.new(4, 32, 32),
 		CFrame.new(0, apexCeilingY + 0.5, 0) * CFrame.Angles(0, 0, math.rad(90)),
 		Color3.fromRGB(56, 189, 248),
 		Enum.Material.Neon,
@@ -644,16 +666,16 @@ local function buildCavernCeilingCanopy(parent: Folder)
 	for i = 1, numSegs do
 		local angle = (i - 0.5) * (math.pi * 2 / numSegs)
 		local outerPos = Vector3.new(math.cos(angle) * radius, baseCeilingY, math.sin(angle) * radius)
-		local innerPos = Vector3.new(math.cos(angle) * 26, apexCeilingY, math.sin(angle) * 26)
+		local innerPos = Vector3.new(math.cos(angle) * 22, apexCeilingY, math.sin(angle) * 22)
 		local midPos = (outerPos + innerPos) / 2
-		local spanLen = (outerPos - innerPos).Magnitude + 8
+		local spanLen = (outerPos - innerPos).Magnitude + 6
 
-		local slabCF = CFrame.lookAt(midPos, Vector3.new(0, midPos.Y, 0)) * CFrame.Angles(math.atan2(apexCeilingY - baseCeilingY, radius - 26), 0, 0)
+		local slabCF = CFrame.lookAt(midPos, Vector3.new(0, midPos.Y, 0)) * CFrame.Angles(math.atan2(apexCeilingY - baseCeilingY, radius - 22), 0, 0)
 
 		-- Main Bedrock / Slate Canopy Slab (Encloses entire sky)
 		createPart(
 			`CeilingSlab_{i}`,
-			Vector3.new(segWidth, 4.0, spanLen),
+			Vector3.new(segWidth, 3.5, spanLen),
 			slabCF,
 			(i % 2 == 0) and Color3.fromRGB(34, 40, 54) or Color3.fromRGB(28, 34, 46),
 			Enum.Material.Slate,
@@ -664,8 +686,8 @@ local function buildCavernCeilingCanopy(parent: Folder)
 		-- Internal Reinforced I-Beam Rafter
 		createPart(
 			`CeilingRafter_{i}`,
-			Vector3.new(3.5, 3.5, spanLen),
-			slabCF * CFrame.new(0, -2.5, 0),
+			Vector3.new(3.0, 3.0, spanLen),
+			slabCF * CFrame.new(0, -2.0, 0),
 			Color3.fromRGB(20, 24, 34),
 			Enum.Material.Metal,
 			ceilingFolder,
@@ -677,11 +699,70 @@ local function buildCavernCeilingCanopy(parent: Folder)
 	for _, rotDeg in { 0, 45, 90, 135 } do
 		createPart(
 			`CeilingCrossTruss_{rotDeg}`,
-			Vector3.new(350, 4.5, 5.0),
-			CFrame.new(0, baseCeilingY + 2, 0) * CFrame.Angles(0, math.rad(rotDeg), 0),
+			Vector3.new(236, 4.0, 4.5),
+			CFrame.new(0, baseCeilingY + 1.5, 0) * CFrame.Angles(0, math.rad(rotDeg), 0),
 			Color3.fromRGB(24, 28, 40),
 			Enum.Material.DiamondPlate,
 			ceilingFolder,
+			false
+		)
+	end
+end
+
+-- ============================================================
+-- 8. INTER-BUNKER CONTAINMENT BULKHEAD WALLS
+-- ============================================================
+local function buildInterBunkerBulkheads(parent: Folder)
+	local bulkheadsFolder = Instance.new("Folder")
+	bulkheadsFolder.Name = "InterBunkerBulkheads"
+	bulkheadsFolder.Parent = parent
+
+	local numPlots = 6
+	local radius = 96
+	local wallH = 24
+	for i = 1, numPlots do
+		local angle = (i - 0.5) * (math.pi * 2 / numPlots)
+		local pos = Vector3.new(math.cos(angle) * radius, wallH / 2, math.sin(angle) * radius)
+		local cf = CFrame.lookAt(pos, Vector3.new(0, wallH / 2, 0))
+
+		-- Heavy Concrete Blast Bulkhead
+		createPart(
+			`BulkheadWall_{i}`,
+			Vector3.new(38, wallH, 4.0),
+			cf,
+			Color3.fromRGB(40, 48, 64),
+			Enum.Material.Concrete,
+			bulkheadsFolder,
+			true
+		)
+		-- DiamondPlate Base Skirt
+		createPart(
+			`BulkheadSkirt_{i}`,
+			Vector3.new(38.5, 3.0, 4.6),
+			cf * CFrame.new(0, -wallH / 2 + 1.5, 0),
+			Color3.fromRGB(28, 34, 46),
+			Enum.Material.DiamondPlate,
+			bulkheadsFolder,
+			true
+		)
+		-- Yellow Caution Chevron Trim
+		createPart(
+			`BulkheadChevron_{i}`,
+			Vector3.new(36, 1.2, 0.4),
+			cf * CFrame.new(0, wallH / 2 - 2, -2.1),
+			Color3.fromRGB(245, 158, 11),
+			Enum.Material.SmoothPlastic,
+			bulkheadsFolder,
+			false
+		)
+		-- Cyan Status Neon Conduit
+		createPart(
+			`BulkheadNeon_{i}`,
+			Vector3.new(36, 0.4, 0.4),
+			cf * CFrame.new(0, 0, -2.1),
+			Color3.fromRGB(56, 189, 248),
+			Enum.Material.Neon,
+			bulkheadsFolder,
 			false
 		)
 	end
@@ -711,6 +792,7 @@ function EnvironmentService.Init()
 	-- 4. Cavern Architecture
 	buildCavernEnclosure(cavernFolder)
 	buildCavernCeilingCanopy(cavernFolder)
+	buildInterBunkerBulkheads(cavernFolder)
 	buildOverheadCraneGantries(cavernFolder)
 	buildCoolantDrainageTrenches(cavernFolder)
 	buildBackgroundServerMonoliths(cavernFolder)
