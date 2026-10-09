@@ -9,9 +9,28 @@
 	Located in: ReplicatedStorage.Shared.ModelEngine
 ]]
 
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
 
 local ModelEngine = {}
+
+--[[
+	Custom Mesh Hookup: If custom imported models exist in
+	ReplicatedStorage.Assets.Models[modelName], instantiates the custom asset;
+	otherwise falls back cleanly to the procedural high-fidelity engine.
+]]
+function ModelEngine.GetOrBuild(modelName: string, parent: Instance, cf: CFrame, buildFallback: () -> Model): Model
+	local assets = ReplicatedStorage:FindFirstChild("Assets") :: Folder?
+	local models = assets and assets:FindFirstChild("Models") :: Folder?
+	local customAsset = models and models:FindFirstChild(modelName) :: Model?
+	if customAsset then
+		local clone = customAsset:Clone()
+		clone:PivotTo(cf)
+		clone.Parent = parent
+		return clone
+	end
+	return buildFallback()
+end
 
 local function createPart(name: string, size: Vector3, cf: CFrame, color: Color3, mat: Enum.Material, parent: Instance, canCollide: boolean?): Part
 	local p = Instance.new("Part")
@@ -58,60 +77,106 @@ function ModelEngine.CreateMintMachine(parent: Instance, baseCF: CFrame): Model
 	model.Name = "IndustrialMintMachine"
 	model.Parent = parent
 
-	-- 1.1. Heavy Machine Base & Trusses
-	local chassis = createPart("BaseChassis", Vector3.new(6.8, 1.2, 28), baseCF * CFrame.new(0, 0.6, 0), Color3.fromRGB(24, 24, 32), Enum.Material.Metal, model, true)
+	-- 1.1. Heavy Cast-Iron Machine Bed & Foundation Anchors
+	local chassis = createPart("BaseChassis", Vector3.new(7.2, 1.4, 28.4), baseCF * CFrame.new(0, 0.7, 0), Color3.fromRGB(24, 28, 38), Enum.Material.Metal, model, true)
 	model.PrimaryPart = chassis
 
-	-- Footing Pads
-	for _, zOffset in { -13, 0, 13 } do
-		createPart("FootPadL", Vector3.new(1.2, 0.4, 2.4), baseCF * CFrame.new(-3.4, 0.2, zOffset), Color3.fromRGB(15, 23, 42), Enum.Material.Metal, model)
-		createPart("FootPadR", Vector3.new(1.2, 0.4, 2.4), baseCF * CFrame.new(3.4, 0.2, zOffset), Color3.fromRGB(15, 23, 42), Enum.Material.Metal, model)
+	-- Cast Base Flanges & Heavy Hex Anchor Bolts
+	for _, zOffset in { -13.2, -6.6, 0, 6.6, 13.2 } do
+		createPart(`BaseFlangeL_{zOffset}`, Vector3.new(0.8, 0.5, 2.0), baseCF * CFrame.new(-3.8, 0.25, zOffset), Color3.fromRGB(15, 20, 30), Enum.Material.Metal, model)
+		createCylinder(`AnchorBoltL_{zOffset}`, Vector3.new(0.3, 0.45, 0.45), baseCF * CFrame.new(-3.8, 0.55, zOffset) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(203, 213, 225), Enum.Material.Metal, model)
+
+		createPart(`BaseFlangeR_{zOffset}`, Vector3.new(0.8, 0.5, 2.0), baseCF * CFrame.new(3.8, 0.25, zOffset), Color3.fromRGB(15, 20, 30), Enum.Material.Metal, model)
+		createCylinder(`AnchorBoltR_{zOffset}`, Vector3.new(0.3, 0.45, 0.45), baseCF * CFrame.new(3.8, 0.55, zOffset) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(203, 213, 225), Enum.Material.Metal, model)
 	end
 
-	-- 1.2. Conveyor Belt Table & Rollers
-	local belt = createPart("ConveyorBelt", Vector3.new(5.0, 0.4, 26.8), baseCF * CFrame.new(0, 1.4, 0), Color3.fromRGB(18, 18, 22), Enum.Material.Slate, model, true)
-	
-	-- End Rollers (Cylinders)
-	createCylinder("RollerFront", Vector3.new(0.8, 5.2, 0.8), baseCF * CFrame.new(0, 1.4, -13.4) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(51, 65, 85), Enum.Material.Metal, model)
-	createCylinder("RollerBack", Vector3.new(0.8, 5.2, 0.8), baseCF * CFrame.new(0, 1.4, 13.4) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(51, 65, 85), Enum.Material.Metal, model)
+	-- 1.2. Heavy Electric Motor & Drive Assembly (Mounted at Rear, Z = +12.5)
+	local motorBase = createPart("MotorHousing", Vector3.new(3.2, 3.0, 4.4), baseCF * CFrame.new(-4.8, 1.8, 11.5), Color3.fromRGB(30, 41, 59), Enum.Material.Metal, model, true)
+	-- Radial Cooling Ribs on Motor
+	for ribIdx = -1.6, 1.6, 0.8 do
+		createPart(`MotorRib_{ribIdx}`, Vector3.new(3.4, 3.2, 0.25), motorBase.CFrame * CFrame.new(0, 0, ribIdx), Color3.fromRGB(15, 23, 42), Enum.Material.Metal, model)
+	end
+	-- Motor Drive Pulley & Rubber V-Belt
+	createCylinder("MotorPulley", Vector3.new(0.6, 2.2, 2.2), baseCF * CFrame.new(-3.0, 1.8, 11.5) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(245, 158, 11), Enum.Material.Metal, model)
+	createPart("DriveBelt", Vector3.new(0.3, 1.8, 2.4), baseCF * CFrame.new(-2.8, 1.6, 12.5) * CFrame.Angles(math.rad(25), 0, 0), Color3.fromRGB(15, 17, 26), Enum.Material.Rubber, model)
+	-- High Voltage Power Junction Box
+	local jBox = createPart("JunctionBox", Vector3.new(1.4, 1.8, 1.2), baseCF * CFrame.new(-6.8, 1.4, 11.5), Color3.fromRGB(245, 158, 11), Enum.Material.Metal, model)
+	createPart("JunctionWarningSign", Vector3.new(1.45, 0.5, 0.8), jBox.CFrame * CFrame.new(0, 0.2, 0), Color3.fromRGB(239, 68, 68), Enum.Material.Neon, model)
+	-- Armored Conduit Tube
+	createCylinder("PowerConduit", Vector3.new(1.2, 0.4, 0.4), baseCF * CFrame.new(-5.9, 1.2, 11.5), Color3.fromRGB(148, 163, 184), Enum.Material.Metal, model)
 
-	-- Polished Steel Guide Rails
-	createPart("GuideRailL", Vector3.new(0.4, 0.8, 27.2), baseCF * CFrame.new(-2.7, 1.8, 0), Color3.fromRGB(71, 85, 105), Enum.Material.Metal, model)
-	createPart("GuideRailR", Vector3.new(0.4, 0.8, 27.2), baseCF * CFrame.new(2.7, 1.8, 0), Color3.fromRGB(71, 85, 105), Enum.Material.Metal, model)
+	-- 1.3. Raw Bullion Intake Hopper (Rear Funnel Chute)
+	local hopperBack = createPart("HopperChute", Vector3.new(4.8, 3.2, 2.6), baseCF * CFrame.new(0, 3.8, 12.8) * CFrame.Angles(math.rad(-30), 0, 0), Color3.fromRGB(47, 55, 70), Enum.Material.DiamondPlate, model, true)
+	createPart("HopperLip", Vector3.new(5.2, 0.4, 0.4), hopperBack.CFrame * CFrame.new(0, 1.7, 1.2), Color3.fromRGB(245, 158, 11), Enum.Material.Metal, model)
 
-	-- 1.3. Overhead Stamping Gantry & Hydraulic Press
-	local gantryL = createPart("GantryPillarL", Vector3.new(1.4, 9.0, 2.2), baseCF * CFrame.new(-3.6, 5.2, 4), Color3.fromRGB(30, 41, 59), Enum.Material.Metal, model)
-	local gantryR = createPart("GantryPillarR", Vector3.new(1.4, 9.0, 2.2), baseCF * CFrame.new(3.6, 5.2, 4), Color3.fromRGB(30, 41, 59), Enum.Material.Metal, model)
-	local gantryTop = createPart("GantryCrossbar", Vector3.new(8.6, 2.0, 3.2), baseCF * CFrame.new(0, 10.2, 4), Color3.fromRGB(15, 23, 42), Enum.Material.Metal, model)
+	-- 1.4. Conveyor Belt Bed & Track Rollers
+	local belt = createPart("ConveyorBelt", Vector3.new(5.2, 0.4, 27.2), baseCF * CFrame.new(0, 1.6, 0), Color3.fromRGB(18, 22, 28), Enum.Material.Slate, model, true)
 
-	-- Hydraulic Cylinders (Static sleeves)
-	local cylL = createCylinder("HydraulicSleeveL", Vector3.new(4.2, 1.0, 1.0), baseCF * CFrame.new(-1.8, 8.2, 4), Color3.fromRGB(51, 65, 85), Enum.Material.Metal, model)
-	local cylR = createCylinder("HydraulicSleeveR", Vector3.new(4.2, 1.0, 1.0), baseCF * CFrame.new(1.8, 8.2, 4), Color3.fromRGB(51, 65, 85), Enum.Material.Metal, model)
+	-- Heavy Machined End Rollers
+	createCylinder("RollerFront", Vector3.new(0.9, 5.4, 0.9), baseCF * CFrame.new(0, 1.6, -13.6) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(100, 116, 139), Enum.Material.Metal, model)
+	createCylinder("RollerBack", Vector3.new(0.9, 5.4, 0.9), baseCF * CFrame.new(0, 1.6, 13.6) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(100, 116, 139), Enum.Material.Metal, model)
 
-	-- Moveable Hydraulic Stamping Head
-	local stampHead = createPart("StampingHead", Vector3.new(4.8, 1.6, 3.2), baseCF * CFrame.new(0, 5.8, 4), Color3.fromRGB(234, 179, 8), Enum.Material.Metal, model, true)
-	-- Chrome Piston Shafts attached to head
-	local rodL = createCylinder("PistonRodL", Vector3.new(3.0, 0.6, 0.6), baseCF * CFrame.new(-1.8, 7.2, 4), Color3.fromRGB(203, 213, 225), Enum.Material.Metal, model)
-	local rodR = createCylinder("PistonRodR", Vector3.new(3.0, 0.6, 0.6), baseCF * CFrame.new(1.8, 7.2, 4), Color3.fromRGB(203, 213, 225), Enum.Material.Metal, model)
+	-- Intermediate Support Rollers (Every 5 studs along the bed)
+	for _, zR in { -9, -4.5, 0, 4.5, 9 } do
+		createCylinder(`SupportRoller_{zR}`, Vector3.new(0.5, 5.3, 0.5), baseCF * CFrame.new(0, 1.5, zR) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(71, 85, 105), Enum.Material.Metal, model)
+	end
 
-	-- Cooling Pipes & Copper Coils
-	createPart("CopperCoil1", Vector3.new(5.0, 0.3, 0.3), baseCF * CFrame.new(0, 9.4, 2.3), Color3.fromRGB(249, 115, 22), Enum.Material.Neon, model)
-	createPart("CopperCoil2", Vector3.new(5.0, 0.3, 0.3), baseCF * CFrame.new(0, 9.4, 5.7), Color3.fromRGB(249, 115, 22), Enum.Material.Neon, model)
+	-- Heavy Steel Side Guide Rails & Wear Strips
+	createPart("GuideRailL", Vector3.new(0.5, 1.2, 27.6), baseCF * CFrame.new(-2.85, 2.0, 0), Color3.fromRGB(71, 85, 105), Enum.Material.Metal, model)
+	createPart("GuideRailR", Vector3.new(0.5, 1.2, 27.6), baseCF * CFrame.new(2.85, 2.0, 0), Color3.fromRGB(71, 85, 105), Enum.Material.Metal, model)
+	createPart("WearStripL", Vector3.new(0.2, 0.2, 27.6), baseCF * CFrame.new(-2.65, 2.5, 0), Color3.fromRGB(245, 158, 11), Enum.Material.Neon, model)
+	createPart("WearStripR", Vector3.new(0.2, 0.2, 27.6), baseCF * CFrame.new(2.65, 2.5, 0), Color3.fromRGB(245, 158, 11), Enum.Material.Neon, model)
 
-	-- Digital Yield Monitor
-	local monitor = createPart("YieldMonitor", Vector3.new(2.4, 1.4, 0.6), baseCF * CFrame.new(0, 10.6, 2.2), Color3.fromRGB(15, 17, 26), Enum.Material.Metal, model)
-	local screen = createPart("MonitorScreen", Vector3.new(2.1, 1.1, 0.1), baseCF * CFrame.new(0, 10.6, 1.85), Color3.fromRGB(16, 185, 129), Enum.Material.Neon, model)
+	-- 1.5. Heavy Overhead Gantry Structure & Hydraulic Ram
+	local gantryL = createPart("GantryPillarL", Vector3.new(1.8, 9.6, 2.8), baseCF * CFrame.new(-3.8, 5.6, 4), Color3.fromRGB(30, 41, 59), Enum.Material.Metal, model)
+	local gantryR = createPart("GantryPillarR", Vector3.new(1.8, 9.6, 2.8), baseCF * CFrame.new(3.8, 5.6, 4), Color3.fromRGB(30, 41, 59), Enum.Material.Metal, model)
+	-- Diagonal Triangular Gusset Brackets
+	createPart("GussetL", Vector3.new(1.2, 2.6, 2.6), baseCF * CFrame.new(-3.6, 9.2, 4) * CFrame.Angles(0, 0, math.rad(-45)), Color3.fromRGB(24, 28, 40), Enum.Material.Metal, model)
+	createPart("GussetR", Vector3.new(1.2, 2.6, 2.6), baseCF * CFrame.new(3.6, 9.2, 4) * CFrame.Angles(0, 0, math.rad(45)), Color3.fromRGB(24, 28, 40), Enum.Material.Metal, model)
 
-	-- Steam Vent Attachments for VFX
+	-- Overhead Hydraulic Crossbar Head
+	local gantryTop = createPart("GantryCrossbar", Vector3.new(9.6, 2.4, 3.8), baseCF * CFrame.new(0, 10.6, 4), Color3.fromRGB(15, 23, 42), Enum.Material.Metal, model)
+	-- Hydraulic Valve Manifold Block on Top
+	createPart("HydraulicManifold", Vector3.new(4.2, 1.4, 2.2), baseCF * CFrame.new(0, 12.2, 4), Color3.fromRGB(47, 55, 70), Enum.Material.Metal, model)
+
+	-- Dual Heavy Hydraulic Cylinders (Sleeves)
+	local cylL = createCylinder("HydraulicSleeveL", Vector3.new(4.6, 1.2, 1.2), baseCF * CFrame.new(-1.8, 8.4, 4), Color3.fromRGB(51, 65, 85), Enum.Material.Metal, model)
+	local cylR = createCylinder("HydraulicSleeveR", Vector3.new(4.6, 1.2, 1.2), baseCF * CFrame.new(1.8, 8.4, 4), Color3.fromRGB(51, 65, 85), Enum.Material.Metal, model)
+	-- Machined Brass Gland Bushing Collars
+	createCylinder("GlandCollarL", Vector3.new(0.5, 1.4, 1.4), baseCF * CFrame.new(-1.8, 6.3, 4), Color3.fromRGB(234, 179, 8), Enum.Material.Metal, model)
+	createCylinder("GlandCollarR", Vector3.new(0.5, 1.4, 1.4), baseCF * CFrame.new(1.8, 6.3, 4), Color3.fromRGB(234, 179, 8), Enum.Material.Metal, model)
+
+	-- Moveable Hydraulic Stamping Ram Head (Targeted by MintService)
+	local stampHead = createPart("StampingHead", Vector3.new(5.0, 1.8, 3.4), baseCF * CFrame.new(0, 5.8, 4), Color3.fromRGB(30, 41, 59), Enum.Material.Metal, model, true)
+	-- Yellow & Black Hazard Chevron Strip on Ram
+	createPart("HazardStripe", Vector3.new(5.05, 0.4, 3.45), stampHead.CFrame * CFrame.new(0, -0.6, 0), Color3.fromRGB(245, 158, 11), Enum.Material.SmoothPlastic, stampHead)
+
+	-- Polished Chrome Piston Shafts attached to Head
+	local rodL = createCylinder("PistonRodL", Vector3.new(3.4, 0.7, 0.7), baseCF * CFrame.new(-1.8, 7.4, 4), Color3.fromRGB(241, 245, 249), Enum.Material.Metal, model)
+	rodL.Reflectance = 0.5
+	local rodR = createCylinder("PistonRodR", Vector3.new(3.4, 0.7, 0.7), baseCF * CFrame.new(1.8, 7.4, 4), Color3.fromRGB(241, 245, 249), Enum.Material.Metal, model)
+	rodR.Reflectance = 0.5
+
+	-- High-Pressure Steam Exhaust Nozzles with Copper Deflector Shields
+	createCylinder("SteamNozzleL", Vector3.new(0.8, 0.5, 0.5), stampHead.CFrame * CFrame.new(-2.6, 0.3, 0) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(249, 115, 22), Enum.Material.Metal, stampHead)
+	createCylinder("SteamNozzleR", Vector3.new(0.8, 0.5, 0.5), stampHead.CFrame * CFrame.new(2.6, 0.3, 0) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(249, 115, 22), Enum.Material.Metal, stampHead)
+
+	-- Steam Vent Attachments for VFX (Targeted by MintService)
 	local ventL = Instance.new("Attachment")
 	ventL.Name = "SteamVentL"
-	ventL.Position = Vector3.new(-2.2, 0, 0)
+	ventL.Position = Vector3.new(-2.6, 0.3, 0)
 	ventL.Parent = stampHead
 
 	local ventR = Instance.new("Attachment")
 	ventR.Name = "SteamVentR"
-	ventR.Position = Vector3.new(2.2, 0, 0)
+	ventR.Position = Vector3.new(2.6, 0.3, 0)
 	ventR.Parent = stampHead
+
+	-- 1.6. Real-Time Digital LCD Production Terminal
+	local arm = createPart("MonitorArm", Vector3.new(0.4, 1.8, 0.4), baseCF * CFrame.new(4.2, 8.8, 2.5) * CFrame.Angles(0, math.rad(30), 0), Color3.fromRGB(51, 65, 85), Enum.Material.Metal, model)
+	local monitor = createPart("YieldMonitor", Vector3.new(2.4, 1.4, 0.5), arm.CFrame * CFrame.new(0.6, 0.8, -0.6) * CFrame.Angles(0, math.rad(-25), 0), Color3.fromRGB(15, 17, 26), Enum.Material.Metal, model)
+	createPart("MonitorScreen", Vector3.new(2.1, 1.1, 0.08), monitor.CFrame * CFrame.new(0, 0, -0.26), Color3.fromRGB(16, 185, 129), Enum.Material.Neon, model)
+	createPart("MonitorLED", Vector3.new(0.2, 0.2, 0.1), monitor.CFrame * CFrame.new(0.8, 0.45, -0.27), Color3.fromRGB(56, 189, 248), Enum.Material.Neon, model)
 
 	return model
 end
@@ -124,45 +189,71 @@ function ModelEngine.CreateVaultDoor(parent: Instance, baseCF: CFrame): Model
 	model.Name = "HeavyBankVaultDoor"
 	model.Parent = parent
 
-	-- 2.1. Reinforced Outer Frame Arch
-	local archLeft = createPart("ArchLeft", Vector3.new(2.4, 15.0, 3.6), baseCF * CFrame.new(-7.2, 7.5, 0), Color3.fromRGB(24, 24, 32), Enum.Material.Concrete, model, true)
-	local archRight = createPart("ArchRight", Vector3.new(2.4, 15.0, 3.6), baseCF * CFrame.new(7.2, 7.5, 0), Color3.fromRGB(24, 24, 32), Enum.Material.Concrete, model, true)
-	local archTop = createPart("ArchTop", Vector3.new(16.8, 2.6, 3.6), baseCF * CFrame.new(0, 15.3, 0), Color3.fromRGB(24, 24, 32), Enum.Material.Concrete, model, true)
-	local archThreshold = createPart("ArchThreshold", Vector3.new(16.8, 0.8, 3.6), baseCF * CFrame.new(0, 0.4, 0), Color3.fromRGB(15, 23, 42), Enum.Material.Metal, model, true)
+	-- 2.1. Reinforced Bulkhead Portal Frame (Massive Stepped Arch)
+	local archLeft = createPart("ArchLeft", Vector3.new(2.8, 15.6, 4.2), baseCF * CFrame.new(-7.6, 7.8, 0), Color3.fromRGB(24, 28, 38), Enum.Material.Concrete, model, true)
+	local archRight = createPart("ArchRight", Vector3.new(2.8, 15.6, 4.2), baseCF * CFrame.new(7.6, 7.8, 0), Color3.fromRGB(24, 28, 38), Enum.Material.Concrete, model, true)
+	local archTop = createPart("ArchTop", Vector3.new(18.0, 2.8, 4.2), baseCF * CFrame.new(0, 15.6, 0), Color3.fromRGB(24, 28, 38), Enum.Material.Concrete, model, true)
+	local archThreshold = createPart("ArchThreshold", Vector3.new(18.0, 0.8, 4.2), baseCF * CFrame.new(0, 0.4, 0), Color3.fromRGB(15, 23, 42), Enum.Material.Metal, model, true)
 	model.PrimaryPart = archTop
 
-	-- Interlocking Bolt Receptors (Recesses in frame)
-	createPart("BoltHoleL", Vector3.new(0.8, 1.2, 1.2), baseCF * CFrame.new(-6.0, 7.5, 0), Color3.fromRGB(10, 10, 12), Enum.Material.Metal, model)
-	createPart("BoltHoleR", Vector3.new(0.8, 1.2, 1.2), baseCF * CFrame.new(6.0, 7.5, 0), Color3.fromRGB(10, 10, 12), Enum.Material.Metal, model)
+	-- Steel Architrave Facing Plates
+	createPart("FrameFacingL", Vector3.new(0.6, 15.0, 4.4), baseCF * CFrame.new(-6.0, 7.5, 0), Color3.fromRGB(51, 65, 85), Enum.Material.Metal, model, true)
+	createPart("FrameFacingR", Vector3.new(0.6, 15.0, 4.4), baseCF * CFrame.new(6.0, 7.5, 0), Color3.fromRGB(51, 65, 85), Enum.Material.Metal, model, true)
 
-	-- 2.2. Heavy Vault Door Assembly (Circular Multi-Tiered)
-	local doorPivot = createPart("DoorPivotHinge", Vector3.new(1.8, 13.0, 1.8), baseCF * CFrame.new(-5.4, 7.5, 0), Color3.fromRGB(30, 41, 59), Enum.Material.Metal, model, true)
-	
-	-- Main Circular Door Slab
-	local doorSlab = createCylinder("DoorSlab", Vector3.new(1.8, 11.4, 11.4), baseCF * CFrame.new(0, 7.5, -0.4) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(30, 41, 59), Enum.Material.Metal, model, true)
+	-- Machined Deadbolt Receiver Sockets in Jamb
+	createPart("BoltHoleL", Vector3.new(0.8, 1.4, 1.4), baseCF * CFrame.new(-5.6, 7.5, 0), Color3.fromRGB(10, 10, 12), Enum.Material.Metal, model)
+	createPart("BoltHoleR", Vector3.new(0.8, 1.4, 1.4), baseCF * CFrame.new(5.6, 7.5, 0), Color3.fromRGB(10, 10, 12), Enum.Material.Metal, model)
 
-	-- Gold/Brass Flange Rim
-	local rim = createCylinder("DoorRim", Vector3.new(2.0, 12.0, 12.0), baseCF * CFrame.new(0, 7.5, -0.4) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(234, 179, 8), Enum.Material.Metal, model)
+	-- 2.2. Dual Pneumatic Hinge Brackets & Damper Pistons
+	createPart("HingeBracketUpper", Vector3.new(2.4, 2.0, 2.6), baseCF * CFrame.new(-5.8, 12.0, 0), Color3.fromRGB(38, 46, 60), Enum.Material.Metal, model, true)
+	createPart("HingeBracketLower", Vector3.new(2.4, 2.0, 2.6), baseCF * CFrame.new(-5.8, 3.2, 0), Color3.fromRGB(38, 46, 60), Enum.Material.Metal, model, true)
+	createCylinder("DoorPivotHinge", Vector3.new(2.0, 13.0, 2.0), baseCF * CFrame.new(-5.2, 7.5, 0), Color3.fromRGB(15, 23, 42), Enum.Material.Metal, model, true)
 
-	-- Inner Armor Hub
-	local hub = createCylinder("DoorHub", Vector3.new(2.4, 6.2, 6.2), baseCF * CFrame.new(0, 7.5, -0.6) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(15, 23, 42), Enum.Material.Metal, model)
+	-- 2.3. Circular Multi-Tiered Vault Door Assembly
+	-- Main Circular Door Slab (Animated by PlotService)
+	local doorSlab = createCylinder("DoorSlab", Vector3.new(2.0, 11.6, 11.6), baseCF * CFrame.new(0, 7.5, -0.4) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(30, 41, 59), Enum.Material.Metal, model, true)
 
-	-- 2.3. Working 6-Spoke Brass Cog Wheel
-	local wheel = createCylinder("CogWheelCenter", Vector3.new(1.4, 3.2, 3.2), baseCF * CFrame.new(0, 7.5, -1.8) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(245, 158, 11), Enum.Material.Metal, model)
-	for i = 1, 6 do
-		local angle = (i / 6) * (math.pi * 2)
-		local spokeDir = Vector3.new(math.cos(angle), math.sin(angle), 0)
-		createPart(`CogSpoke_{i}`, Vector3.new(0.4, 2.6, 0.4), baseCF * CFrame.new(Vector3.new(0, 7.5, -1.8) + spokeDir * 2.0) * CFrame.Angles(0, 0, angle + math.rad(90)), Color3.fromRGB(245, 158, 11), Enum.Material.Metal, model)
+	-- Beveled Outer Armor Blast Rim with Stepped Grooves
+	local rim = createCylinder("DoorRim", Vector3.new(2.3, 12.2, 12.2), baseCF * CFrame.new(0, 7.5, -0.4) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(234, 179, 8), Enum.Material.Metal, model)
+	rim.Reflectance = 0.25
+
+	-- Intermediate Gear Ring (Simulated Perimeter Cog Teeth)
+	for cogAngle = 0, 330, 30 do
+		local cRad = math.rad(cogAngle)
+		local toothPos = Vector3.new(math.cos(cRad) * 5.8, math.sin(cRad) * 5.8, 0)
+		createPart(`PerimeterTooth_{cogAngle}`, Vector3.new(0.6, 0.5, 1.8), baseCF * CFrame.new(Vector3.new(0, 7.5, -0.4) + toothPos) * CFrame.Angles(0, 0, cRad), Color3.fromRGB(245, 158, 11), Enum.Material.Metal, model)
 	end
 
-	-- 2.4. Sliding Chrome Locking Bolts (4 Directions)
-	local pinL = createCylinder("LockingPinLeft", Vector3.new(0.9, 2.4, 0.9), baseCF * CFrame.new(-5.4, 7.5, -0.4) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(226, 232, 240), Enum.Material.Metal, model)
-	local pinR = createCylinder("LockingPinRight", Vector3.new(0.9, 2.4, 0.9), baseCF * CFrame.new(5.4, 7.5, -0.4) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(226, 232, 240), Enum.Material.Metal, model)
-	local pinT = createCylinder("LockingPinTop", Vector3.new(2.4, 0.9, 0.9), baseCF * CFrame.new(0, 12.8, -0.4), Color3.fromRGB(226, 232, 240), Enum.Material.Metal, model)
-	local pinB = createCylinder("LockingPinBottom", Vector3.new(2.4, 0.9, 0.9), baseCF * CFrame.new(0, 2.2, -0.4), Color3.fromRGB(226, 232, 240), Enum.Material.Metal, model)
+	-- Inner Polished Titanium Hub Center
+	createCylinder("DoorHub", Vector3.new(2.6, 6.4, 6.4), baseCF * CFrame.new(0, 7.5, -0.6) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(15, 23, 42), Enum.Material.Metal, model)
 
-	-- Pressure Gauge
-	local gauge = createCylinder("PressureGauge", Vector3.new(0.6, 1.8, 1.8), baseCF * CFrame.new(3.2, 9.6, -1.6) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(239, 68, 68), Enum.Material.Neon, model)
+	-- 2.4. 8-Spoke Heavy Cast Brass Vault Wheel (Targeted by PlotService CogWheelCenter)
+	local wheel = createCylinder("CogWheelCenter", Vector3.new(1.5, 3.4, 3.4), baseCF * CFrame.new(0, 7.5, -1.9) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(245, 158, 11), Enum.Material.Metal, model)
+	for i = 1, 8 do
+		local angle = (i / 8) * (math.pi * 2)
+		local spokeDir = Vector3.new(math.cos(angle), math.sin(angle), 0)
+		createPart(`CogSpoke_{i}`, Vector3.new(0.45, 2.8, 0.45), baseCF * CFrame.new(Vector3.new(0, 7.5, -1.9) + spokeDir * 2.2) * CFrame.Angles(0, 0, angle + math.rad(90)), Color3.fromRGB(245, 158, 11), Enum.Material.Metal, model)
+		-- Machined Chrome Turn Grip on spoke tip
+		createCylinder(`SpokeHandle_{i}`, Vector3.new(0.8, 0.5, 0.5), baseCF * CFrame.new(Vector3.new(0, 7.5, -2.4) + spokeDir * 3.4) * CFrame.Angles(math.rad(90), 0, 0), Color3.fromRGB(226, 232, 240), Enum.Material.Metal, model)
+	end
+
+	-- 2.5. Sliding Chrome Locking Bolts (Targeted by PlotService LockingPinLeft/Right)
+	local pinL = createCylinder("LockingPinLeft", Vector3.new(1.1, 2.6, 1.1), baseCF * CFrame.new(-5.4, 7.5, -0.4) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(241, 245, 249), Enum.Material.Metal, model)
+	pinL.Reflectance = 0.4
+	local pinR = createCylinder("LockingPinRight", Vector3.new(1.1, 2.6, 1.1), baseCF * CFrame.new(5.4, 7.5, -0.4) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(241, 245, 249), Enum.Material.Metal, model)
+	pinR.Reflectance = 0.4
+	createCylinder("LockingPinTop", Vector3.new(2.6, 1.1, 1.1), baseCF * CFrame.new(0, 12.8, -0.4), Color3.fromRGB(241, 245, 249), Enum.Material.Metal, model)
+	createCylinder("LockingPinBottom", Vector3.new(2.6, 1.1, 1.1), baseCF * CFrame.new(0, 2.2, -0.4), Color3.fromRGB(241, 245, 249), Enum.Material.Metal, model)
+
+	-- 2.6. Biometric Keypad Security Console on Jamb
+	local consoleHousing = createPart("SecurityKeypad", Vector3.new(1.4, 2.2, 0.6), baseCF * CFrame.new(6.6, 8.0, -1.8), Color3.fromRGB(15, 17, 26), Enum.Material.Metal, model)
+	createPart("KeypadScreen", Vector3.new(1.1, 0.8, 0.1), consoleHousing.CFrame * CFrame.new(0, 0.4, -0.31), Color3.fromRGB(56, 189, 248), Enum.Material.Neon, model)
+	createPart("StatusLockLED", Vector3.new(0.25, 0.25, 0.1), consoleHousing.CFrame * CFrame.new(-0.35, -0.5, -0.31), Color3.fromRGB(239, 68, 68), Enum.Material.Neon, model)
+	createPart("StatusUnlockLED", Vector3.new(0.25, 0.25, 0.1), consoleHousing.CFrame * CFrame.new(0.35, -0.5, -0.31), Color3.fromRGB(16, 185, 129), Enum.Material.Neon, model)
+
+	-- 2.7. Dual Pneumatic Vacuum Seal Pressure Gauges
+	createCylinder("PressureGauge", Vector3.new(0.6, 2.0, 2.0), baseCF * CFrame.new(-3.4, 10.2, -1.6) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(239, 68, 68), Enum.Material.Neon, model)
+	createCylinder("PressureGauge2", Vector3.new(0.6, 1.6, 1.6), baseCF * CFrame.new(-3.4, 8.0, -1.6) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(245, 158, 11), Enum.Material.Neon, model)
 
 	return model
 end
@@ -421,65 +512,131 @@ function ModelEngine.CreateSecurityTurret(parent: Instance, baseCF: CFrame): Mod
 	model.Name = "AutomatedSecurityTurret"
 	model.Parent = parent
 
-	-- Ceiling/Wall Mount Base Plate
-	local mount = createPart("MountPlate", Vector3.new(2.4, 0.4, 2.4), baseCF, Color3.fromRGB(30, 41, 59), Enum.Material.Metal, model, true)
+	-- 8.1. Heavy Octagonal Armored Base & Outrigger Stabilizers
+	local mount = createPart("MountPlate", Vector3.new(3.6, 0.6, 3.6), baseCF, Color3.fromRGB(24, 28, 38), Enum.Material.Metal, model, true)
 	model.PrimaryPart = mount
 
-	-- Swivel Gimbal Joint (Base Pivot)
-	createCylinder("GimbalJoint", Vector3.new(0.8, 1.2, 1.2), baseCF * CFrame.new(0, -0.6, 0), Color3.fromRGB(51, 65, 85), Enum.Material.Metal, model, true)
+	-- 4 Diagonal Hydraulic Stabilizer Outriggers with Anchor Footings
+	for _, angle in { 45, 135, 225, 315 } do
+		local rad = math.rad(angle)
+		local dir = Vector3.new(math.cos(rad), 0, math.sin(rad))
+		createPart(`Outrigger_{angle}`, Vector3.new(1.8, 0.4, 0.6), baseCF * CFrame.new(dir * 2.2) * CFrame.Angles(0, -rad, 0), Color3.fromRGB(38, 46, 60), Enum.Material.Metal, model)
+		createCylinder(`OutriggerFoot_{angle}`, Vector3.new(0.3, 0.8, 0.8), baseCF * CFrame.new(dir * 2.9) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(15, 23, 42), Enum.Material.Metal, model)
+	end
 
-	-- Articulated Turret Head (Sub-model that swivels)
+	-- 8.2. Azimuth 360° Turntable Bearing Ring with Brass Gear Teeth
+	createCylinder("TurntableRing", Vector3.new(0.5, 2.8, 2.8), baseCF * CFrame.new(0, -0.4, 0) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(51, 65, 85), Enum.Material.Metal, model)
+	createCylinder("TurntableBrassTeeth", Vector3.new(0.2, 3.0, 3.0), baseCF * CFrame.new(0, -0.4, 0) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(245, 158, 11), Enum.Material.Metal, model)
+
+	-- 8.3. Dual Heavy Knuckle Gimbal Joint (Base Pivot)
+	createCylinder("GimbalJoint", Vector3.new(1.0, 1.6, 1.6), baseCF * CFrame.new(0, -1.0, 0), Color3.fromRGB(30, 41, 59), Enum.Material.Metal, model, true)
+
+	-- 8.4. Articulated Composite Stealth Turret Head (Sub-model that swivels)
 	local headModel = Instance.new("Model")
 	headModel.Name = "TurretHead"
 	headModel.Parent = model
 
-	local podCF = baseCF * CFrame.new(0, -1.3, 0)
-	local pod = createPart("WeaponPod", Vector3.new(1.6, 1.2, 2.4), podCF, Color3.fromRGB(15, 23, 42), Enum.Material.Metal, headModel, false)
+	local podCF = baseCF * CFrame.new(0, -1.8, 0)
+	local pod = createPart("WeaponPod", Vector3.new(2.4, 1.6, 3.4), podCF, Color3.fromRGB(15, 20, 30), Enum.Material.Metal, headModel, false)
 	pod.Anchored = true
 	headModel.PrimaryPart = pod
 	headModel:SetAttribute("RestCF", podCF)
 
-	-- Dual Motorized Barrels (Welded to Pod)
-	local bLeft = createCylinder("BarrelLeft", Vector3.new(1.8, 0.35, 0.35), podCF * CFrame.new(-0.45, 0, -1.8) * CFrame.Angles(math.rad(90), 0, 0), Color3.fromRGB(71, 85, 105), Enum.Material.Metal, headModel, false)
+	-- Angular Stealth Composite Armor Chevrons on Pod
+	createPart("PodArmorL", Vector3.new(0.4, 1.4, 3.2), podCF * CFrame.new(-1.25, 0.1, 0), Color3.fromRGB(30, 36, 48), Enum.Material.Metal, headModel, false)
+	local wArmorL = Instance.new("WeldConstraint")
+	wArmorL.Part0 = pod
+	wArmorL.Part1 = headModel:FindFirstChild("PodArmorL") :: Part
+	wArmorL.Parent = pod
+
+	createPart("PodArmorR", Vector3.new(0.4, 1.4, 3.2), podCF * CFrame.new(1.25, 0.1, 0), Color3.fromRGB(30, 36, 48), Enum.Material.Metal, headModel, false)
+	local wArmorR = Instance.new("WeldConstraint")
+	wArmorR.Part0 = pod
+	wArmorR.Part1 = headModel:FindFirstChild("PodArmorR") :: Part
+	wArmorR.Parent = pod
+
+	-- 8.5. Twin Fluted Heavy Autocannon Barrels with Multi-Port Muzzle Brakes
+	local bLeft = createCylinder("BarrelLeft", Vector3.new(2.8, 0.45, 0.45), podCF * CFrame.new(-0.6, -0.1, -2.4) * CFrame.Angles(math.rad(90), 0, 0), Color3.fromRGB(71, 85, 105), Enum.Material.Metal, headModel, false)
 	bLeft.Anchored = false
 	local wLeft = Instance.new("WeldConstraint")
 	wLeft.Part0 = pod
 	wLeft.Part1 = bLeft
 	wLeft.Parent = pod
 
-	local bRight = createCylinder("BarrelRight", Vector3.new(1.8, 0.35, 0.35), podCF * CFrame.new(0.45, 0, -1.8) * CFrame.Angles(math.rad(90), 0, 0), Color3.fromRGB(71, 85, 105), Enum.Material.Metal, headModel, false)
+	-- Muzzle Brake on Left Barrel
+	local brakeL = createPart("MuzzleBrakeL", Vector3.new(0.65, 0.65, 0.8), podCF * CFrame.new(-0.6, -0.1, -3.8), Color3.fromRGB(30, 41, 59), Enum.Material.Metal, headModel, false)
+	brakeL.Anchored = false
+	local wBrakeL = Instance.new("WeldConstraint")
+	wBrakeL.Part0 = pod
+	wBrakeL.Part1 = brakeL
+	wBrakeL.Parent = pod
+
+	local bRight = createCylinder("BarrelRight", Vector3.new(2.8, 0.45, 0.45), podCF * CFrame.new(0.6, -0.1, -2.4) * CFrame.Angles(math.rad(90), 0, 0), Color3.fromRGB(71, 85, 105), Enum.Material.Metal, headModel, false)
 	bRight.Anchored = false
 	local wRight = Instance.new("WeldConstraint")
 	wRight.Part0 = pod
 	wRight.Part1 = bRight
 	wRight.Parent = pod
 
-	-- Ammo Drum Feed (Welded to Pod)
-	local drum = createCylinder("AmmoDrum", Vector3.new(0.8, 1.4, 1.4), podCF * CFrame.new(0, 0.4, 0.6) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(245, 158, 11), Enum.Material.Metal, headModel, false)
-	drum.Anchored = false
-	local wDrum = Instance.new("WeldConstraint")
-	wDrum.Part0 = pod
-	wDrum.Part1 = drum
-	wDrum.Parent = pod
+	-- Muzzle Brake on Right Barrel
+	local brakeR = createPart("MuzzleBrakeR", Vector3.new(0.65, 0.65, 0.8), podCF * CFrame.new(0.6, -0.1, -3.8), Color3.fromRGB(30, 41, 59), Enum.Material.Metal, headModel, false)
+	brakeR.Anchored = false
+	local wBrakeR = Instance.new("WeldConstraint")
+	wBrakeR.Part0 = pod
+	wBrakeR.Part1 = brakeR
+	wBrakeR.Parent = pod
 
-	-- Red Targeting Laser Beam emitter
-	local laserSight = createPart("LaserSight", Vector3.new(0.25, 0.25, 0.35), podCF * CFrame.new(0, -0.4, -1.2), Color3.fromRGB(239, 68, 68), Enum.Material.Neon, headModel, false)
+	-- 8.6. Dual High-Capacity Cylindrical Ammo Drums & Chute
+	local drumL = createCylinder("AmmoDrumL", Vector3.new(1.0, 1.8, 1.8), podCF * CFrame.new(-1.8, 0.2, 0.8) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(245, 158, 11), Enum.Material.Metal, headModel, false)
+	drumL.Anchored = false
+	local wDrumL = Instance.new("WeldConstraint")
+	wDrumL.Part0 = pod
+	wDrumL.Part1 = drumL
+	wDrumL.Parent = pod
+
+	local drumR = createCylinder("AmmoDrumR", Vector3.new(1.0, 1.8, 1.8), podCF * CFrame.new(1.8, 0.2, 0.8) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(245, 158, 11), Enum.Material.Metal, headModel, false)
+	drumR.Anchored = false
+	local wDrumR = Instance.new("WeldConstraint")
+	wDrumR.Part0 = pod
+	wDrumR.Part1 = drumR
+	wDrumR.Parent = pod
+
+	-- 8.7. Multi-Spectrum Sensor Suite (Crimson Laser + Green Targeting Lens)
+	local laserSight = createPart("LaserSight", Vector3.new(0.35, 0.35, 0.5), podCF * CFrame.new(0, -0.6, -1.6), Color3.fromRGB(239, 68, 68), Enum.Material.Neon, headModel, false)
 	laserSight.Anchored = false
 	local wSight = Instance.new("WeldConstraint")
 	wSight.Part0 = pod
 	wSight.Part1 = laserSight
 	wSight.Parent = pod
 
-	-- Laser Sight Attachment
+	local opticLens = createCylinder("OpticCameraLens", Vector3.new(0.3, 0.6, 0.6), podCF * CFrame.new(0, 0.6, -1.6) * CFrame.Angles(math.rad(90), 0, 0), Color3.fromRGB(16, 185, 129), Enum.Material.Neon, headModel, false)
+	opticLens.Anchored = false
+	local wLens = Instance.new("WeldConstraint")
+	wLens.Part0 = pod
+	wLens.Part1 = opticLens
+	wLens.Parent = pod
+
+	-- 8.8. Rear Heat Dissipation Radiator Block with Glowing Fins
+	for finIdx = 1, 3 do
+		local zFin = 1.2 + (finIdx * 0.4)
+		local fin = createPart(`RadiatorFin_{finIdx}`, Vector3.new(1.8, 0.8, 0.15), podCF * CFrame.new(0, 0.3, zFin), Color3.fromRGB(249, 115, 22), Enum.Material.Neon, headModel, false)
+		fin.Anchored = false
+		local wFin = Instance.new("WeldConstraint")
+		wFin.Part0 = pod
+		wFin.Part1 = fin
+		wFin.Parent = pod
+	end
+
+	-- Laser Sight Attachment (Targeted by TurretService)
 	local laserAtt = Instance.new("Attachment")
 	laserAtt.Name = "LaserAttachment"
-	laserAtt.Position = Vector3.new(0, 0, -0.2)
+	laserAtt.Position = Vector3.new(0, 0, -0.3)
 	laserAtt.Parent = laserSight
 
-	-- Muzzle Flash Attachment
+	-- Muzzle Flash Attachment (Targeted by TurretService)
 	local muzzleAtt = Instance.new("Attachment")
 	muzzleAtt.Name = "MuzzleAttachment"
-	muzzleAtt.Position = Vector3.new(0, 0, -1.0)
+	muzzleAtt.Position = Vector3.new(0, 0, -1.5)
 	muzzleAtt.Parent = bLeft
 
 	return model
