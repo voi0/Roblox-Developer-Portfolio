@@ -213,6 +213,60 @@ function UILib.CreateGlassCard(parent: GuiObject, size: UDim2, pos: UDim2, ancho
 	return card
 end
 
+function UILib.ApplyLiquidGlassStyle(frame: Frame, accentColor: Color3?): UIStroke
+	frame.BackgroundColor3 = Color3.fromRGB(15, 17, 26)
+	frame.BackgroundTransparency = 0.08
+	frame.BorderSizePixel = 0
+
+	local corner = frame:FindFirstChildOfClass("UICorner")
+	if not corner then
+		corner = Instance.new("UICorner")
+		corner.CornerRadius = UDim.new(0, 16)
+		corner.Parent = frame
+	end
+
+	local stroke = frame:FindFirstChildOfClass("UIStroke")
+	if not stroke then
+		stroke = Instance.new("UIStroke")
+		stroke.Parent = frame
+	end
+	stroke.Thickness = 1.6
+	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+
+	local existingGrad = stroke:FindFirstChildOfClass("UIGradient")
+	if not existingGrad then
+		local strokeGrad = Instance.new("UIGradient")
+		strokeGrad.Rotation = 45
+		local tint = accentColor or Color3.fromRGB(56, 189, 248)
+		strokeGrad.Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0.0, Color3.fromRGB(255, 255, 255)),
+			ColorSequenceKeypoint.new(0.35, tint),
+			ColorSequenceKeypoint.new(1.0, Color3.fromRGB(30, 41, 59)),
+		})
+		strokeGrad.Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0.0, 0.1),
+			NumberSequenceKeypoint.new(0.5, 0.35),
+			NumberSequenceKeypoint.new(1.0, 0.75),
+		})
+		strokeGrad.Parent = stroke
+	end
+
+	local bgGrad = frame:FindFirstChild("GlassBgGradient") :: UIGradient?
+	if not bgGrad then
+		bgGrad = Instance.new("UIGradient")
+		bgGrad.Name = "GlassBgGradient"
+		bgGrad.Rotation = 90
+		bgGrad.Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0.0, Color3.fromRGB(28, 34, 52)),
+			ColorSequenceKeypoint.new(1.0, Color3.fromRGB(13, 15, 22)),
+		})
+		bgGrad.Parent = frame
+	end
+
+	return stroke
+end
+
+
 function UILib.ApplySpringHover(btn: GuiButton, stroke: UIStroke?, accentColor: Color3?)
 	local scale = btn:FindFirstChildOfClass("UIScale")
 	if not scale then

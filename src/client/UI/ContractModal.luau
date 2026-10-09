@@ -47,21 +47,11 @@ function ContractModal.Create(parentGui: ScreenGui)
 	modal.Size = UDim2.new(0, 780, 0, 520)
 	modal.Position = UDim2.new(0.5, 0, 0.5, 0)
 	modal.AnchorPoint = Vector2.new(0.5, 0.5)
-	modal.BackgroundColor3 = Color3.fromRGB(15, 17, 26)
-	modal.BackgroundTransparency = 0.05
-	modal.BorderSizePixel = 0
 	modal.Visible = false
 	modal.Parent = parentGui
 	ContractModal._mainFrame = modal
 
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 16)
-	corner.Parent = modal
-
-	local stroke = Instance.new("UIStroke")
-	stroke.Color = Color3.fromRGB(245, 158, 11)
-	stroke.Thickness = 2
-	stroke.Parent = modal
+	local stroke = UILib.ApplyLiquidGlassStyle(modal, Color3.fromRGB(245, 158, 11))
 
 	-- ── 1. HEADER ──
 	local header = Instance.new("Frame")
@@ -135,6 +125,7 @@ function ContractModal.Create(parentGui: ScreenGui)
 	local cbCorner = Instance.new("UICorner")
 	cbCorner.CornerRadius = UDim.new(0, 10)
 	cbCorner.Parent = closeBtn
+	UILib.ApplySpringHover(closeBtn, nil, nil)
 
 	closeBtn.MouseButton1Click:Connect(function()
 		playSound("click")

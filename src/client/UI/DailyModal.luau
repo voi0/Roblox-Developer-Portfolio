@@ -12,6 +12,7 @@ local TweenService = game:GetService("TweenService")
 local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
 local Types = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Types"))
 local ModelEngine = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("ModelEngine"))
+local UILib = require(script.Parent:WaitForChild("UILib"))
 
 local player = Players.LocalPlayer
 local DailyModal = {}
@@ -28,17 +29,12 @@ function DailyModal.Create(parentGui: ScreenGui)
 	frame.Size = UDim2.new(0, 680, 0, 480)
 	frame.Position = UDim2.new(0.5, 0, 0.5, 0)
 	frame.AnchorPoint = Vector2.new(0.5, 0.5)
-	frame.BackgroundColor3 = Color3.fromRGB(11, 13, 20)
-	frame.BorderSizePixel = 0
 	frame.Visible = false
 	frame.ZIndex = 50
 	frame.Parent = parentGui
 	DailyModal._frame = frame
 
-	Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 16)
-	local stroke = Instance.new("UIStroke", frame)
-	stroke.Color = Color3.fromRGB(245, 158, 11) -- Amber Gold
-	stroke.Thickness = 2
+	local stroke = UILib.ApplyLiquidGlassStyle(frame, Color3.fromRGB(245, 158, 11))
 
 	-- Header
 	local header = Instance.new("Frame")
@@ -79,6 +75,7 @@ function DailyModal.Create(parentGui: ScreenGui)
 	closeBtn.BackgroundColor3 = Color3.fromRGB(24, 24, 32)
 	closeBtn.Parent = header
 	Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 8)
+	UILib.ApplySpringHover(closeBtn, nil, nil)
 
 	closeBtn.MouseButton1Click:Connect(function()
 		DailyModal.Close()

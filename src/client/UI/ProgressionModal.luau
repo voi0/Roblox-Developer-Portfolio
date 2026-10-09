@@ -13,6 +13,7 @@ local TweenService = game:GetService("TweenService")
 local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
 local Types = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Types"))
 local Spring = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Spring"))
+local UILib = require(script.Parent:WaitForChild("UILib"))
 
 local player = Players.LocalPlayer
 local ProgressionModal = {}
@@ -84,17 +85,12 @@ function ProgressionModal.Create(parentGui: ScreenGui)
 	modal.Size = UDim2.new(0, 780, 0, 540)
 	modal.Position = UDim2.new(0.5, 0, 0.5, 0)
 	modal.AnchorPoint = Vector2.new(0.5, 0.5)
-	modal.BackgroundColor3 = Color3.fromRGB(11, 13, 20)
-	modal.BorderSizePixel = 0
 	modal.Visible = false
 	modal.ZIndex = 60
 	modal.Parent = parentGui
 	ProgressionModal._frame = modal
 
-	Instance.new("UICorner", modal).CornerRadius = UDim.new(0, 16)
-	local mStroke = Instance.new("UIStroke", modal)
-	mStroke.Color = Color3.fromRGB(245, 158, 11)
-	mStroke.Thickness = 2.5
+	local mStroke = UILib.ApplyLiquidGlassStyle(modal, Color3.fromRGB(245, 158, 11))
 
 	-- Header Bar
 	local header = Instance.new("Frame")
