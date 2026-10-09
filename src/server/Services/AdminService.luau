@@ -157,6 +157,8 @@ function AdminService.ProcessCommand(player: Player, msg: string)
 				data.LaserTier = 4
 				data.VaultInterestTier = 10
 				data.PrestigeTokens = (data.PrestigeTokens or 0) + 50
+				data.Level = 50
+				data.SkillPoints = (data.SkillPoints or 0) + 30
 				dataSvc.SyncClient(player)
 
 				local plotSvc = getPlotService()
@@ -166,11 +168,45 @@ function AdminService.ProcessCommand(player: Player, msg: string)
 					laserSvc.UpdateTier(plot.Index, 4)
 				end
 
-				notify(player, "Max Stats", "Conveyor Lv25, Laser T4, Interest T10, +$100M, +50 Tokens!")
+				notify(player, "Max Stats", "Conveyor Lv25, Laser T4, Interest T10, Level 50, +30 SP, +$100M, +50 Tokens!")
 			end
 		end
 
-	-- 7. /reset
+	-- 7. /xp <amount>
+	elseif cmd == "/xp" or cmd == ":xp" then
+		local amt = tonumber(parts[2]) or 1000
+		if dataSvc then
+			dataSvc.AddXP(player, amt, "Admin Grant")
+			notify(player, "XP Granted", `Awarded +{amt} XP!`)
+		end
+
+	-- 8. /sp <amount>
+	elseif cmd == "/sp" or cmd == ":sp" then
+		local amt = tonumber(parts[2]) or 5
+		if dataSvc then
+			local data = dataSvc.GetData(player)
+			if data then
+				data.SkillPoints = (data.SkillPoints or 0) + amt
+				dataSvc.SyncClient(player)
+				notify(player, "SP Granted", `Awarded +{amt} Skill Points!`)
+			end
+		end
+
+	-- 9. /unlockallperks
+	elseif cmd == "/unlockallperks" or cmd == ":unlockallperks" then
+		if dataSvc then
+			local data = dataSvc.GetData(player)
+			if data then
+				if not data.UnlockedPerks then data.UnlockedPerks = {} end
+				for perkId in Config.Progression.Perks do
+					data.UnlockedPerks[perkId] = true
+				end
+				dataSvc.SyncClient(player)
+				notify(player, "Perks Unlocked", "Unlocked all 12 Infiltrator, Enforcer & Tycoon perks!")
+			end
+		end
+
+	-- 10. /reset
 	elseif cmd == "/reset" or cmd == ":reset" then
 		if dataSvc then
 			local data = dataSvc.GetData(player)
@@ -183,6 +219,10 @@ function AdminService.ProcessCommand(player: Player, msg: string)
 				data.PrestigeTokens = 0
 				data.PrestigeLevel = 0
 				data.RelicInventory = {}
+				data.XP = 0
+				data.Level = 1
+				data.SkillPoints = 0
+				data.UnlockedPerks = {}
 				dataSvc.SyncClient(player)
 				notify(player, "Profile Reset", "Reset data back to baseline level 1.")
 			end

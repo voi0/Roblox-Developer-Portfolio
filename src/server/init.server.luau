@@ -19,6 +19,7 @@ print("========================================")
 
 local serviceNames = {
 	"DataService",
+	"ProgressionService",
 	"PlotService",
 	"LaserService",
 	"MintService",

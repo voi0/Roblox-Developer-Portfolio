@@ -56,6 +56,7 @@ local VaultHUD = safeRequire(uiFolder, "VaultHUD")
 local UpgradesModal = safeRequire(uiFolder, "UpgradesModal")
 local FusionModal = safeRequire(uiFolder, "FusionModal")
 local DailyModal = safeRequire(uiFolder, "DailyModal")
+local ProgressionModal = safeRequire(uiFolder, "ProgressionModal")
 local NotificationUI = safeRequire(uiFolder, "NotificationUI")
 local HeistController = safeRequire(controllersFolder, "HeistController")
 local SoundController = safeRequire(controllersFolder, "SoundController")
@@ -106,6 +107,13 @@ if VaultHUD then
 			DailyModal.Toggle()
 		end)
 	end
+
+	if ProgressionModal and VaultHUD._gui then
+		ProgressionModal.Create(VaultHUD._gui)
+		VaultHUD.SetProgressCallback(function()
+			ProgressionModal.Toggle()
+		end)
+	end
 end
 
 if HeistController then
@@ -154,6 +162,7 @@ local function onDataReceived(data: any)
 	if UpgradesModal then UpgradesModal.Update(data) end
 	if FusionModal then FusionModal.Update(data) end
 	if DailyModal and DailyModal._isOpen then DailyModal.Refresh() end
+	if ProgressionModal then ProgressionModal.Update(data) end
 end
 
 task.spawn(function()
@@ -183,6 +192,41 @@ task.spawn(function()
 		end)
 	end
 
+	-- Level Up Celebration listener
+	local levelUpEvt = ReplicatedStorage:WaitForChild("LevelUpCelebration", 15) :: RemoteEvent?
+	if levelUpEvt then
+		levelUpEvt.OnClientEvent:Connect(function(level: number, rankTitle: string, newSP: number)
+			if SoundController then SoundController.Play("Prestige") end
+			if VFXController and player.Character then
+				local root = player.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
+				if root then
+					VFXController.PlayLevelUpCelebration(root.Position, level, rankTitle)
+				end
+			end
+			if NotificationUI then
+				NotificationUI.Show({
+					Title = "🌟 LEVEL UP!",
+					Message = `Promoted to Level {level} ({string.upper(rankTitle)})!\n+1 Skill Point available!`,
+					Type = "Daily",
+					Duration = 6,
+				})
+			end
+		end)
+	end
+
+	-- Floating 3D XP Gained listener
+	local xpGainedEvt = ReplicatedStorage:WaitForChild("XPGained", 15) :: RemoteEvent?
+	if xpGainedEvt then
+		xpGainedEvt.OnClientEvent:Connect(function(amount: number, reason: string, currentXP: number, reqXP: number)
+			if VFXController and player.Character then
+				local root = player.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
+				if root then
+					VFXController.PlayFloatingXP(root.Position, amount, reason)
+				end
+			end
+		end)
+	end
+
 	local getData = ReplicatedStorage:WaitForChild("GetData", 15) :: RemoteFunction?
 	if getData then
 		for _ = 1, 10 do
@@ -199,7 +243,7 @@ task.spawn(function()
 end)
 
 -- ============================================================
--- 4. KEYBOARD HOTKEYS: [U] UPGRADES, [B] FUSION, [Y] DAILY, [F] TACKLE, [ESC] CLOSE
+-- 4. KEYBOARD HOTKEYS: [U] UPGRADES, [B] FUSION, [Y] DAILY, [P] PROGRESS, [F] TACKLE, [ESC] CLOSE
 -- ============================================================
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
 	if gameProcessed then return end
@@ -212,6 +256,9 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
 
 	elseif input.KeyCode == Enum.KeyCode.Y then
 		if DailyModal then DailyModal.Toggle() end
+
+	elseif input.KeyCode == Enum.KeyCode.P then
+		if ProgressionModal then ProgressionModal.Toggle() end
 
 	-- ⚡ [F] SECURITY TACKLE / ZAP INTRUDER
 	elseif input.KeyCode == Enum.KeyCode.F then
@@ -231,6 +278,9 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
 		end
 		if DailyModal and DailyModal._isOpen then
 			DailyModal.Close()
+		end
+		if ProgressionModal and ProgressionModal._isOpen then
+			ProgressionModal.Close()
 		end
 	end
 end)

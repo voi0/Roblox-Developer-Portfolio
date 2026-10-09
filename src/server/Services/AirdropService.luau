@@ -226,6 +226,13 @@ function AirdropService.CrackAirdrop(winner: Player, crateModel: Model, pos: Vec
 
 	dataSvc.AddRelic(winner, relicDef.Id, 1)
 
+	-- Award massive XP for cracking central airdrop (+500 XP)
+	local progMod = script.Parent:FindFirstChild("ProgressionService")
+	if progMod then
+		local ps = require(progMod :: ModuleScript)
+		ps.AwardXP(winner, Config.Progression.XPAwards.AirdropCracked, "Airdrop Cracked")
+	end
+
 	-- Destroy crate
 	crateModel:Destroy()
 	AirdropService._currentCrate = nil

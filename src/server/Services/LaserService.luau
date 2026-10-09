@@ -36,6 +36,12 @@ local function getHeistService(): any?
 	return nil
 end
 
+local function getProgressionService(): any?
+	local svc = script.Parent:FindFirstChild("ProgressionService")
+	if svc then return require(svc :: ModuleScript) end
+	return nil
+end
+
 function LaserService.Init()
 	print("  [LaserService] Initializing Laser Security Engine...")
 
@@ -127,12 +133,23 @@ function LaserService.HandleTrespasserHit(intruder: Player, plot: any)
 	local root = char and char:FindFirstChild("HumanoidRootPart") :: BasePart?
 	if not hum or not root or hum.Health <= 0 then return end
 
+	local progSvc = getProgressionService()
+	-- Phantom Dash active ability grants 1.2s complete laser immunity
+	if progSvc and progSvc.IsInvulnerable(intruder) then
+		return
+	end
+
 	-- Get laser tier of the plot
 	local dataSvc = getDataService()
 	local ownerData = plot.Owner and dataSvc and dataSvc.GetData(plot.Owner)
 	local tier = ownerData and ownerData.LaserTier or 1
 	local isTitanium = ownerData and (ownerData.HasTitaniumLasers or ownerData.LaserTier >= 4)
 	local dmg = isTitanium and 120 or (Config.Heist.LaserDamageByTier[tier] or 25)
+
+	-- Hardened Carapace perk reduces damage taken by 40%
+	if progSvc and progSvc.HasPerk(intruder, "HardenedCarapace") then
+		dmg = math.floor(dmg * 0.6)
+	end
 
 	-- Apply damage
 	hum:TakeDamage(dmg)

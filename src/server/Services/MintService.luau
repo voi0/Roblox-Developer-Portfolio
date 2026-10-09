@@ -37,6 +37,12 @@ local function getHeistService(): any?
 	return nil
 end
 
+local function getProgressionService(): any?
+	local svc = script.Parent:FindFirstChild("ProgressionService")
+	if svc then return require(svc :: ModuleScript) end
+	return nil
+end
+
 function MintService.Init()
 	print("  [MintService] Initializing Conveyor Mint & RNG Relic Engine...")
 
@@ -47,12 +53,17 @@ function MintService.Init()
 end
 
 function MintService._mintLoop()
+	local lastPlotDropTime: { [number]: number } = {}
+
 	while true do
-		task.wait(Config.Mint.DropIntervalSeconds)
+		task.wait(0.5)
 
 		local plotSvc = getPlotService()
 		local dataSvc = getDataService()
+		local progSvc = getProgressionService()
 		if not plotSvc or not dataSvc then continue end
+
+		local now = os.clock()
 
 		for i = 1, Config.Arena.PlotCount do
 			local plot = plotSvc.GetPlotByIndex(i)
@@ -61,6 +72,16 @@ function MintService._mintLoop()
 			local owner = plot.Owner
 			local data = dataSvc.GetData(owner)
 			if not data then continue end
+
+			-- Check OverchargedPress perk for faster stamping cycle (3.25s vs 5.0s)
+			local dropInterval = Config.Mint.DropIntervalSeconds
+			if dataSvc.HasPerk(owner, "OverchargedPress") then
+				dropInterval *= 0.65
+			end
+
+			if now - (lastPlotDropTime[i] or 0) < dropInterval then
+				continue
+			end
 
 			-- Check active conveyor capacity
 			if not MintService._activeItems[i] then
@@ -80,14 +101,26 @@ function MintService._mintLoop()
 			if data.HasDoubleCapacity then
 				maxCapacity *= 2
 			end
+			-- Compounding Treasury perk grants +50% stash capacity
+			if dataSvc.HasPerk(owner, "CompoundingTreasury") then
+				maxCapacity = math.floor(maxCapacity * 1.5)
+			end
 
 			if #cleanList >= maxCapacity then
 				-- Conveyor is full, stall drop
 				continue
 			end
 
+			lastPlotDropTime[i] = now
+
 			-- Calculate Base Income
 			local baseIncome = Config.Economy.GetConveyorIncome(data.ConveyorLevel, data.PrestigeTokens)
+
+			-- Midas Touch perk: +20% chance to drop pure gold bullion with 1.5x value
+			if dataSvc.HasPerk(owner, "MidasTouch") and math.random() <= 0.20 then
+				baseIncome = math.floor(baseIncome * 1.5)
+			end
+
 			local isRelic = math.random() <= Config.Mint.RelicRNGChance
 			local finalValue = baseIncome
 			local relicDef: Types.RelicDefinition? = nil
@@ -102,6 +135,11 @@ function MintService._mintLoop()
 						mintedEvt:FireAllClients(owner.DisplayName, relicDef.Name, relicDef.Tier, finalValue)
 					end
 				end
+			end
+
+			-- Award active XP for minted bullion
+			if progSvc then
+				progSvc.AwardXP(owner, Config.Progression.XPAwards.MintItem, "Mint Item")
 			end
 
 			-- If Auto-Collector Drone is owned, directly deposit into bank

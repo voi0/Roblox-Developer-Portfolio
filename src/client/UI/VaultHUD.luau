@@ -25,9 +25,11 @@ VaultHUD._unbankedFrame = nil :: Frame?
 VaultHUD._adrenalineBtn = nil :: TextButton?
 VaultHUD._breachVignette = nil :: Frame?
 VaultHUD._breachMsg = nil :: TextLabel?
+VaultHUD._levelPill = nil :: TextLabel?
 VaultHUD._onUpgradesToggle = nil :: (() -> ())?
 VaultHUD._onFusionToggle = nil :: (() -> ())?
 VaultHUD._onDailyToggle = nil :: (() -> ())?
+VaultHUD._onProgressToggle = nil :: (() -> ())?
 
 -- ============================================================
 -- NUMBER FORMATTER (K / M / B / T / Qa)
@@ -116,10 +118,10 @@ function VaultHUD.Create()
 	incomeLabel.Parent = topBanner
 	VaultHUD._incomeLabel = incomeLabel
 
-	-- ── 2. TOP RIGHT: ACTION BUTTONS (DAILY, UPGRADES & FUSION) ──
+	-- ── 2. TOP RIGHT: ACTION BUTTONS (DAILY, FUSION, UPGRADES & PROGRESS) ──
 	local topRight = Instance.new("Frame")
 	topRight.Name = "TopRight"
-	topRight.Size = UDim2.new(0, 410, 0, 48)
+	topRight.Size = UDim2.new(0, 540, 0, 48)
 	topRight.Position = UDim2.new(1, -20, 0, 16)
 	topRight.AnchorPoint = Vector2.new(1, 0)
 	topRight.BackgroundTransparency = 1
@@ -130,6 +132,26 @@ function VaultHUD.Create()
 	trLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
 	trLayout.Padding = UDim.new(0, 10)
 	trLayout.Parent = topRight
+
+	local progressBtn = Instance.new("TextButton")
+	progressBtn.Name = "ProgressButton"
+	progressBtn.Size = UDim2.new(0, 120, 0, 42)
+	progressBtn.BackgroundColor3 = Color3.fromRGB(24, 24, 27)
+	progressBtn.Text = "🌟 PROGRESS"
+	progressBtn.TextColor3 = Color3.fromRGB(250, 204, 21)
+	progressBtn.TextSize = 13
+	progressBtn.Font = Enum.Font.GothamBlack
+	progressBtn.Parent = topRight
+	Instance.new("UICorner", progressBtn).CornerRadius = UDim.new(0, 12)
+	local pStroke = Instance.new("UIStroke", progressBtn)
+	pStroke.Color = Color3.fromRGB(250, 204, 21)
+	pStroke.Thickness = 2
+
+	progressBtn.MouseButton1Click:Connect(function()
+		if VaultHUD._onProgressToggle then
+			VaultHUD._onProgressToggle()
+		end
+	end)
 
 	local dailyBtn = Instance.new("TextButton")
 	dailyBtn.Name = "DailyButton"
@@ -389,6 +411,10 @@ end
 
 function VaultHUD.SetDailyCallback(callback: () -> ())
 	VaultHUD._onDailyToggle = callback
+end
+
+function VaultHUD.SetProgressCallback(callback: () -> ())
+	VaultHUD._onProgressToggle = callback
 end
 
 function VaultHUD.SetCarryingState(isCarrying: boolean, payload: any?)

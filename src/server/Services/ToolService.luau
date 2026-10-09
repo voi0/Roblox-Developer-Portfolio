@@ -37,6 +37,12 @@ local function getHeistService(): any?
 	return nil
 end
 
+local function getProgressionService(): any?
+	local svc = script.Parent:FindFirstChild("ProgressionService")
+	if svc then return require(svc :: ModuleScript) end
+	return nil
+end
+
 -- ============================================================
 -- TOOL PROCEDURAL BUILDERS
 -- ============================================================
@@ -119,6 +125,7 @@ function ToolService.UseStunBaton(defender: Player)
 
 	local toolEvt = ReplicatedStorage:FindFirstChild("ToolFeedback") :: RemoteEvent?
 	local heistSvc = getHeistService()
+	local progSvc = getProgressionService()
 
 	-- Find closest target within Range (9 studs)
 	local bestTarget: Player? = nil
@@ -144,9 +151,20 @@ function ToolService.UseStunBaton(defender: Player)
 		local vRoot = vChar:FindFirstChild("HumanoidRootPart") :: BasePart?
 
 		if vHum and vRoot then
-			vHum:TakeDamage(Config.Tools.StunBaton.Damage)
+			local hasHeavySwing = progSvc and progSvc.HasPerk(defender, "HeavySwing")
+			local damage = hasHeavySwing and 30 or Config.Tools.StunBaton.Damage
+			local knockback = hasHeavySwing and (Config.Tools.StunBaton.KnockbackSpeed * 1.5) or Config.Tools.StunBaton.KnockbackSpeed
+
+			-- Hardened Carapace perk reduces damage and knockback by 40%
+			local victimHasHardened = progSvc and progSvc.HasPerk(bestTarget, "HardenedCarapace")
+			if victimHasHardened then
+				damage = math.floor(damage * 0.6)
+				knockback *= 0.6
+			end
+
+			vHum:TakeDamage(damage)
 			local knockDir = (vRoot.Position - root.Position).Unit
-			vRoot.AssemblyLinearVelocity = knockDir * Config.Tools.StunBaton.KnockbackSpeed + Vector3.new(0, 16, 0)
+			vRoot.AssemblyLinearVelocity = knockDir * knockback + Vector3.new(0, 16, 0)
 
 			-- Force dropped loot if carrying
 			if heistSvc and heistSvc.IsCarryingLoot(bestTarget) then
@@ -175,8 +193,13 @@ end
 function ToolService.UseEMPJammer(infiltrator: Player)
 	local now = os.clock()
 	local lastUse = ToolService._jammerCooldowns[infiltrator] or 0
-	if now - lastUse < Config.Tools.EMPJammer.CooldownSeconds then
-		local rem = math.ceil(Config.Tools.EMPJammer.CooldownSeconds - (now - lastUse))
+	local progSvc = getProgressionService()
+	local hasOverclock = progSvc and progSvc.HasPerk(infiltrator, "OverclockedEMP")
+
+	-- Overclocked EMP perk reduces cooldown by 6s (19s vs 25s)
+	local cooldown = hasOverclock and 19.0 or Config.Tools.EMPJammer.CooldownSeconds
+	if now - lastUse < cooldown then
+		local rem = math.ceil(cooldown - (now - lastUse))
 		local toolEvt = ReplicatedStorage:FindFirstChild("ToolFeedback") :: RemoteEvent?
 		if toolEvt then
 			toolEvt:FireClient(infiltrator, "Cooldown", rem)
@@ -212,7 +235,8 @@ function ToolService.UseEMPJammer(infiltrator: Player)
 
 	if targetPlotIndex then
 		ToolService._jammerCooldowns[infiltrator] = now
-		local dur = Config.Tools.EMPJammer.DisableDurationSeconds
+		-- Overclocked EMP extends duration to 8.5s (vs 6.0s)
+		local dur = hasOverclock and 8.5 or Config.Tools.EMPJammer.DisableDurationSeconds
 		laserSvc.DisableLasers(targetPlotIndex, dur)
 
 		local targetPlot = plotSvc.GetPlotByIndex(targetPlotIndex)

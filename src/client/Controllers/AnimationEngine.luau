@@ -68,6 +68,42 @@ function AnimationEngine.Init()
 		end)
 	end
 
+	-- Keybindings for Active Capstone Abilities: [Q] Phantom Dash & [R] Shockwave Slam
+	local UserInputService = game:GetService("UserInputService")
+	UserInputService.InputBegan:Connect(function(input, gameProcessed)
+		if gameProcessed then return end
+		if input.KeyCode == Enum.KeyCode.Q then
+			local dashRF = ReplicatedStorage:FindFirstChild("PhantomDashRequest") :: RemoteFunction?
+			if dashRF then
+				task.spawn(function()
+					dashRF:InvokeServer()
+				end)
+			end
+		elseif input.KeyCode == Enum.KeyCode.R then
+			local slamRF = ReplicatedStorage:FindFirstChild("ShockwaveSlamRequest") :: RemoteFunction?
+			if slamRF then
+				task.spawn(function()
+					slamRF:InvokeServer()
+				end)
+			end
+		end
+	end)
+
+	-- Listen for global VFX broadcasts
+	local vfxEvt = ReplicatedStorage:FindFirstChild("VFXBroadcast") :: RemoteEvent?
+	if vfxEvt then
+		vfxEvt.OnClientEvent:Connect(function(vfxType: string, pos: Vector3, extra: any)
+			local vfxControllerMod = script.Parent:FindFirstChild("VFXController")
+			local vfx = vfxControllerMod and require(vfxControllerMod :: ModuleScript)
+			if not vfx then return end
+			if vfxType == "PhantomDash" then
+				vfx.PlayPhantomDash(pos, extra)
+			elseif vfxType == "ShockwaveSlam" then
+				vfx.PlayShockwaveSlam(pos, extra)
+			end
+		end)
+	end
+
 	print("  [AnimationEngine] Spring Animation Engine online ✓")
 end
 

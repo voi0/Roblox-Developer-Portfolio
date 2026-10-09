@@ -31,6 +31,12 @@ local function getDataService(): any?
 	return nil
 end
 
+local function getProgressionService(): any?
+	local svc = script.Parent:FindFirstChild("ProgressionService")
+	if svc then return require(svc :: ModuleScript) end
+	return nil
+end
+
 function FusionService.Init()
 	print("  [FusionService] Initializing Relic Synthesis & Radiant Mutation Altar...")
 
@@ -80,8 +86,16 @@ function FusionService.FuseRelics(player: Player, relicId: string): (boolean, st
 		return false, "Failed to deduct relics", nil
 	end
 
-	-- 20% Chance for Supercharged Radiant Mutation
-	local isRadiant = (math.random(1, 100) <= 20)
+	local progSvc = getProgressionService()
+	local hasAlchemical = progSvc and progSvc.HasPerk(player, "AlchemicalResonance")
+	-- Alchemical Resonance doubles Supercharged Mutation chance to 40% (vs 20%)
+	local radiantThreshold = hasAlchemical and 40 or 20
+	local isRadiant = (math.random(1, 100) <= radiantThreshold)
+
+	-- Award XP for successful synthesis
+	if progSvc then
+		progSvc.AwardXP(player, Config.Progression.XPAwards.FuseRelic, "Relic Synthesized")
+	end
 
 	if isMaxTier then
 		-- Fusing 3 Celestial Crowns grants 1 Radiant Crown + $100M Jackpot

@@ -164,4 +164,168 @@ Config.Admin = {
 	CreatorUsername = "intradient",
 }
 
+-- ============================================================
+-- 10. PROGRESSION ENGINE, HEIST RANKS & 3-BRANCH SKILL TREE
+-- ============================================================
+Config.Progression = {
+	MaxLevel = 100,
+	BaseXP = 100,
+	XPExponent = 1.45,
+	SkillPointsPerLevel = 1,
+
+	-- XP Award Values for active gameplay actions
+	XPAwards = {
+		MintItem = 10,
+		SnatchLoot = 75,
+		DepositStolenLoot = 150,
+		TackleThief = 125,
+		FuseRelic = 200,
+		AirdropCracked = 500,
+		DailyClaim = 250,
+	},
+
+	-- Heist Prestige Ranks
+	Ranks = {
+		{ MinLevel = 1,   Title = "Rookie Burglar",      Color = Color3.fromRGB(148, 163, 184) },
+		{ MinLevel = 5,   Title = "Street Infiltrator",  Color = Color3.fromRGB(56, 189, 248) },
+		{ MinLevel = 15,  Title = "Shadow Operative",    Color = Color3.fromRGB(168, 85, 247) },
+		{ MinLevel = 30,  Title = "Vault Phantom",       Color = Color3.fromRGB(236, 72, 153) },
+		{ MinLevel = 50,  Title = "Syndicate Underboss", Color = Color3.fromRGB(245, 158, 11) },
+		{ MinLevel = 75,  Title = "Apex Kingpin",        Color = Color3.fromRGB(239, 68, 68) },
+		{ MinLevel = 100, Title = "Vault Sovereign",     Color = Color3.fromRGB(250, 204, 21) },
+	},
+
+	-- 3-Branch Specialization Skill Tree
+	Perks = {
+		-- INFILTRATOR BRANCH (Stealth, Mobility & Evasion)
+		LightfootProtocol = {
+			Id = "LightfootProtocol",
+			Name = "Lightfoot Protocol",
+			Branch = "Infiltrator",
+			Tier = 1,
+			CostSP = 1,
+			RequiredPerkId = nil,
+			Description = "+20% Base Sprint Speed & -50% Loot Carrying Weight Debuff.",
+		},
+		SilentProwler = {
+			Id = "SilentProwler",
+			Name = "Silent Prowler",
+			Branch = "Infiltrator",
+			Tier = 2,
+			CostSP = 2,
+			RequiredPerkId = "LightfootProtocol",
+			Description = "Laser Tripwire Detection Range reduced by 35% & Silent Footsteps.",
+		},
+		OverclockedEMP = {
+			Id = "OverclockedEMP",
+			Name = "Overclocked EMP",
+			Branch = "Infiltrator",
+			Tier = 3,
+			CostSP = 3,
+			RequiredPerkId = "SilentProwler",
+			Description = "EMP Jammer Cooldown reduced by 6s & Jam Duration extended by +2.5s.",
+		},
+		PhantomDash = {
+			Id = "PhantomDash",
+			Name = "Phantom Dash (CAPSTONE)",
+			Branch = "Infiltrator",
+			Tier = 4,
+			CostSP = 5,
+			RequiredPerkId = "OverclockedEMP",
+			Description = "Double-Tap Shift / [Q] to dash forward 24 studs with 1.2s laser immunity [12s CD].",
+		},
+
+		-- ENFORCER BRANCH (Combat, Base Defense & Bounty)
+		HeavySwing = {
+			Id = "HeavySwing",
+			Name = "Heavy Swing",
+			Branch = "Enforcer",
+			Tier = 1,
+			CostSP = 1,
+			RequiredPerkId = nil,
+			Description = "+50% Stun Baton Knockback Force & Stun Duration increased to 4.0s.",
+		},
+		HardenedCarapace = {
+			Id = "HardenedCarapace",
+			Name = "Hardened Carapace",
+			Branch = "Enforcer",
+			Tier = 2,
+			CostSP = 2,
+			RequiredPerkId = "HeavySwing",
+			Description = "-40% Damage taken from Enemy Lasers & Batons; Immune to Tackle knockdown.",
+		},
+		BountyHunter = {
+			Id = "BountyHunter",
+			Name = "Bounty Hunter",
+			Branch = "Enforcer",
+			Tier = 3,
+			CostSP = 3,
+			RequiredPerkId = "HardenedCarapace",
+			Description = "Earn 2x Cash Bounty ($1,000) and +150 bonus XP when neutralizing intruders in your plot.",
+		},
+		ShockwaveSlam = {
+			Id = "ShockwaveSlam",
+			Name = "Shockwave Slam (CAPSTONE)",
+			Branch = "Enforcer",
+			Tier = 4,
+			CostSP = 5,
+			RequiredPerkId = "BountyHunter",
+			Description = "Press [R] with Baton to slam ground, emitting EMP shockwave knocking back all intruders in 18 studs.",
+		},
+
+		-- TYCOON BRANCH (Economy, Automation & Relic Mastery)
+		OverchargedPress = {
+			Id = "OverchargedPress",
+			Name = "Overcharged Press",
+			Branch = "Tycoon",
+			Tier = 1,
+			CostSP = 1,
+			RequiredPerkId = nil,
+			Description = "Conveyor Mint Stamping Speed increased by +35%; faster bullion generation cycle.",
+		},
+		MidasTouch = {
+			Id = "MidasTouch",
+			Name = "Midas Touch",
+			Branch = "Tycoon",
+			Tier = 2,
+			CostSP = 2,
+			RequiredPerkId = "OverchargedPress",
+			Description = "+20% Chance for Mint to drop Pure Gold Bullion (Value Multiplier 1.5x).",
+		},
+		CompoundingTreasury = {
+			Id = "CompoundingTreasury",
+			Name = "Compounding Treasury",
+			Branch = "Tycoon",
+			Tier = 3,
+			CostSP = 3,
+			RequiredPerkId = "MidasTouch",
+			Description = "Vault Interest Rate increased from 2.5% to 4.5% every 60s; Stash Capacity +50%.",
+		},
+		AlchemicalResonance = {
+			Id = "AlchemicalResonance",
+			Name = "Alchemical Resonance (CAPSTONE)",
+			Branch = "Tycoon",
+			Tier = 4,
+			CostSP = 5,
+			RequiredPerkId = "CompoundingTreasury",
+			Description = "Relic Fusion Altar success rate +15% & Supercharged Mutation chance doubled to 40%.",
+		},
+	},
+}
+
+function Config.Progression.GetXPRequiredForLevel(level: number): number
+	if level >= Config.Progression.MaxLevel then return 999_999_999 end
+	return math.floor(Config.Progression.BaseXP * (level ^ Config.Progression.XPExponent))
+end
+
+function Config.Progression.GetRankForLevel(level: number): { Title: string, Color: Color3 }
+	local currentRank = Config.Progression.Ranks[1]
+	for _, rank in Config.Progression.Ranks do
+		if level >= rank.MinLevel then
+			currentRank = rank
+		end
+	end
+	return currentRank
+end
+
 return Config

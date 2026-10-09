@@ -26,12 +26,31 @@ export type RelicDefinition = {
 
 export type PlotUpgradeType = "Conveyor" | "Laser" | "VaultInterest"
 
+export type PerkBranch = "Infiltrator" | "Enforcer" | "Tycoon"
+
+export type PerkDefinition = {
+	Id: string,
+	Name: string,
+	Branch: PerkBranch,
+	Tier: number,
+	CostSP: number,
+	Description: string,
+	RequiredPerkId: string?,
+}
+
 export type PlayerData = {
 	-- Currencies
 	UnbankedCash: number,
 	BankedCash: number,
 	PrestigeTokens: number,
 	PrestigeLevel: number,
+
+	-- Progression & Mastery
+	XP: number,
+	Level: number,
+	SkillPoints: number,
+	UnlockedPerks: { [string]: boolean },
+	TotalXPAccumulated: number,
 
 	-- Base Upgrades
 	ConveyorLevel: number,

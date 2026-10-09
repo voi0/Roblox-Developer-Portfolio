@@ -298,4 +298,194 @@ function ModelEngine.CreateJammerModel(): Tool
 	return tool
 end
 
+-- ============================================================
+-- 5. DYNAMIC 3D TACTICAL LOOT SACK
+-- ============================================================
+function ModelEngine.CreateLootSack(parent: Instance, cf: CFrame, tier: string): Model
+	local model = Instance.new("Model")
+	model.Name = "DynamicLootSack"
+	model.Parent = parent
+
+	local tierColors: { [string]: Color3 } = {
+		Common = Color3.fromRGB(245, 158, 11),
+		Rare = Color3.fromRGB(16, 185, 129),
+		Epic = Color3.fromRGB(239, 68, 68),
+		Legendary = Color3.fromRGB(56, 189, 248),
+		Mythic = Color3.fromRGB(168, 85, 247),
+		Secret = Color3.fromRGB(250, 204, 21),
+	}
+	local accent = tierColors[tier] or Color3.fromRGB(245, 158, 11)
+
+	-- Main Duffle Body
+	local body = createPart("SackBody", Vector3.new(2.4, 2.8, 1.5), cf, Color3.fromRGB(24, 24, 27), Enum.Material.SmoothPlastic, model, false)
+	body.Massless = true
+	model.PrimaryPart = body
+
+	-- Webbing Straps (Horizontal & Vertical)
+	createPart("StrapHoriz", Vector3.new(2.45, 0.35, 1.55), cf, Color3.fromRGB(39, 39, 42), Enum.Material.Fabric, model, false)
+	createPart("StrapVert", Vector3.new(0.35, 2.85, 1.55), cf, Color3.fromRGB(39, 39, 42), Enum.Material.Fabric, model, false)
+
+	-- Glowing Cyber Trim Seams
+	createPart("NeonTrimLeft", Vector3.new(0.12, 2.6, 0.12), cf * CFrame.new(-1.15, 0, 0.72), accent, Enum.Material.Neon, model, false)
+	createPart("NeonTrimRight", Vector3.new(0.12, 2.6, 0.12), cf * CFrame.new(1.15, 0, 0.72), accent, Enum.Material.Neon, model, false)
+
+	-- Cyber Padlock Buckle
+	local lock = createPart("CyberLock", Vector3.new(0.65, 0.65, 0.35), cf * CFrame.new(0, 0.4, 0.8), Color3.fromRGB(203, 213, 225), Enum.Material.Metal, model, false)
+	createPart("LockLed", Vector3.new(0.2, 0.2, 0.1), cf * CFrame.new(0, 0.4, 0.98), accent, Enum.Material.Neon, model, false)
+
+	return model
+end
+
+-- ============================================================
+-- 6. PHYSICAL HYDRAULIC FLOOR SWITCH (SPRING BUTTON)
+-- ============================================================
+function ModelEngine.CreateHydraulicFloorButton(parent: Instance, baseCF: CFrame, accentColor: Color3, labelText: string): (Model, Part)
+	local model = Instance.new("Model")
+	model.Name = "HydraulicFloorButton"
+	model.Parent = parent
+
+	-- Heavy Outer Cast-Iron Chassis
+	local chassis = createPart("Chassis", Vector3.new(6.4, 0.6, 6.4), baseCF * CFrame.new(0, 0.3, 0), Color3.fromRGB(30, 41, 59), Enum.Material.DiamondPlate, model, true)
+	model.PrimaryPart = chassis
+
+	-- 4 Corner Industrial Bolt Rivets
+	for _, xOff in { -2.7, 2.7 } do
+		for _, zOff in { -2.7, 2.7 } do
+			createCylinder(`Bolt_{xOff}_{zOff}`, Vector3.new(0.2, 0.4, 0.4), baseCF * CFrame.new(xOff, 0.65, zOff) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(100, 116, 139), Enum.Material.Metal, model)
+		end
+	end
+
+	-- Recessed Inner Channel Rim
+	createPart("InnerRim", Vector3.new(5.0, 0.3, 5.0), baseCF * CFrame.new(0, 0.45, 0), Color3.fromRGB(15, 23, 42), Enum.Material.Metal, model, false)
+
+	-- Spring-Loaded Mechanical Plunger Plate (Starts raised +0.35 studs)
+	local plunger = createPart("PlungerPlate", Vector3.new(4.5, 0.5, 4.5), baseCF * CFrame.new(0, 0.75, 0), Color3.fromRGB(24, 24, 27), Enum.Material.Metal, model, true)
+	plunger:SetAttribute("RestY", (baseCF * CFrame.new(0, 0.75, 0)).Position.Y)
+	plunger:SetAttribute("DownY", (baseCF * CFrame.new(0, 0.35, 0)).Position.Y)
+
+	-- Neon Glowing Pressure Ring on Plunger
+	createPart("PlungerNeonRing", Vector3.new(4.2, 0.1, 4.2), baseCF * CFrame.new(0, 0.98, 0), accentColor, Enum.Material.Neon, model, false)
+
+	-- SurfaceGui with Crisp Label
+	local sGui = Instance.new("SurfaceGui")
+	sGui.Name = "ButtonLabelGui"
+	sGui.Face = Enum.NormalId.Top
+	sGui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+	sGui.PixelsPerStud = 50
+	sGui.Parent = plunger
+
+	local lbl = Instance.new("TextLabel")
+	lbl.Size = UDim2.new(1, 0, 1, 0)
+	lbl.BackgroundTransparency = 1
+	lbl.Text = labelText
+	lbl.TextColor3 = accentColor
+	lbl.TextSize = 22
+	lbl.Font = Enum.Font.GothamBlack
+	lbl.Parent = sGui
+
+	return model, plunger
+end
+
+-- ============================================================
+-- 7. TACTICAL BIOMETRIC SECURITY TERMINAL
+-- ============================================================
+function ModelEngine.CreateBiometricTerminal(parent: Instance, baseCF: CFrame): Model
+	local model = Instance.new("Model")
+	model.Name = "BiometricSecurityTerminal"
+	model.Parent = parent
+
+	-- Base Steel Footing
+	local foot = createPart("PedestalBase", Vector3.new(1.8, 0.3, 1.8), baseCF * CFrame.new(0, 0.15, 0), Color3.fromRGB(30, 41, 59), Enum.Material.Metal, model, true)
+	model.PrimaryPart = foot
+
+	-- Vertical Conduit Pedestal
+	createPart("Pillar", Vector3.new(0.6, 3.4, 0.6), baseCF * CFrame.new(0, 1.9, 0), Color3.fromRGB(15, 23, 42), Enum.Material.Metal, model, true)
+
+	-- Angled Console Head
+	local consoleHead = createPart("ConsoleHead", Vector3.new(1.4, 0.4, 1.2), baseCF * CFrame.new(0, 3.6, -0.2) * CFrame.Angles(math.rad(-25), 0, 0), Color3.fromRGB(24, 24, 27), Enum.Material.Metal, model, true)
+
+	-- Illuminated Handprint Glass Prism
+	createPart("BiometricPad", Vector3.new(0.9, 0.1, 0.8), consoleHead.CFrame * CFrame.new(0, 0.22, 0), Color3.fromRGB(56, 189, 248), Enum.Material.Neon, model, false)
+
+	-- Status Indicator LED
+	createPart("StatusLED", Vector3.new(0.25, 0.15, 0.25), consoleHead.CFrame * CFrame.new(0, 0.22, -0.48), Color3.fromRGB(16, 185, 129), Enum.Material.Neon, model, false)
+
+	return model
+end
+
+-- ============================================================
+-- 8. AUTOMATED BASE DEFENSE TURRET
+-- ============================================================
+function ModelEngine.CreateSecurityTurret(parent: Instance, baseCF: CFrame): Model
+	local model = Instance.new("Model")
+	model.Name = "AutomatedSecurityTurret"
+	model.Parent = parent
+
+	-- Ceiling/Wall Mount Base Plate
+	local mount = createPart("MountPlate", Vector3.new(2.2, 0.4, 2.2), baseCF, Color3.fromRGB(30, 41, 59), Enum.Material.Metal, model, true)
+	model.PrimaryPart = mount
+
+	-- Swivel Gimbal Joint (Cylinder)
+	local gimbal = createCylinder("GimbalJoint", Vector3.new(0.8, 1.2, 1.2), baseCF * CFrame.new(0, -0.6, 0), Color3.fromRGB(51, 65, 85), Enum.Material.Metal, model)
+
+	-- Minigun Weapon Pod Body
+	local pod = createPart("WeaponPod", Vector3.new(1.6, 1.2, 2.4), baseCF * CFrame.new(0, -1.3, 0), Color3.fromRGB(15, 23, 42), Enum.Material.Metal, model, true)
+
+	-- Dual Motorized Barrels
+	createCylinder("BarrelLeft", Vector3.new(1.8, 0.35, 0.35), pod.CFrame * CFrame.new(-0.45, 0, -1.8) * CFrame.Angles(math.rad(90), 0, 0), Color3.fromRGB(71, 85, 105), Enum.Material.Metal, model)
+	createCylinder("BarrelRight", Vector3.new(1.8, 0.35, 0.35), pod.CFrame * CFrame.new(0.45, 0, -1.8) * CFrame.Angles(math.rad(90), 0, 0), Color3.fromRGB(71, 85, 105), Enum.Material.Metal, model)
+
+	-- Ammo Drum Feed
+	createCylinder("AmmoDrum", Vector3.new(0.8, 1.4, 1.4), pod.CFrame * CFrame.new(0, 0.4, 0.6) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(245, 158, 11), Enum.Material.Metal, model)
+
+	-- Red Targeting Laser Beam emitter
+	local laserSight = createPart("LaserSight", Vector3.new(0.2, 0.2, 0.3), pod.CFrame * CFrame.new(0, -0.4, -1.2), Color3.fromRGB(239, 68, 68), Enum.Material.Neon, model, false)
+
+	return model
+end
+
+-- ============================================================
+-- 9. SYNDICATE PLAZA KIOSK (BLACK MARKET BROKER)
+-- ============================================================
+function ModelEngine.CreateSyndicateKiosk(parent: Instance, baseCF: CFrame): Model
+	local model = Instance.new("Model")
+	model.Name = "SyndicatePlazaKiosk"
+	model.Parent = parent
+
+	-- Heavy Floor Slab
+	local floor = createPart("KioskFloor", Vector3.new(12, 0.6, 10), baseCF * CFrame.new(0, 0.3, 0), Color3.fromRGB(15, 17, 26), Enum.Material.DiamondPlate, model, true)
+	model.PrimaryPart = floor
+
+	-- Industrial Counter Desk
+	createPart("FrontCounter", Vector3.new(9, 3.4, 1.6), baseCF * CFrame.new(0, 2.0, 3.2), Color3.fromRGB(24, 24, 32), Enum.Material.Metal, model, true)
+	createPart("CounterTrim", Vector3.new(9.2, 0.25, 1.8), baseCF * CFrame.new(0, 3.75, 3.2), Color3.fromRGB(245, 158, 11), Enum.Material.Neon, model, false)
+
+	-- 4 Steel Canopy Pillars
+	for _, xOff in { -5.2, 5.2 } do
+		for _, zOff in { -4.2, 4.2 } do
+			createPart(`CanopyPillar_{xOff}_{zOff}`, Vector3.new(0.6, 9.0, 0.6), baseCF * CFrame.new(xOff, 4.8, zOff), Color3.fromRGB(30, 41, 59), Enum.Material.Metal, model, true)
+		end
+	end
+
+	-- Angled Cyber Roof Canopy
+	createPart("RoofSlab", Vector3.new(13.4, 0.5, 11.4), baseCF * CFrame.new(0, 9.4, 0) * CFrame.Angles(math.rad(-6), 0, 0), Color3.fromRGB(15, 23, 42), Enum.Material.Metal, model, true)
+
+	-- Neon Syndicate Overhead Sign
+	local sign = createPart("SyndicateSign", Vector3.new(7.5, 1.4, 0.3), baseCF * CFrame.new(0, 8.6, 5.4), Color3.fromRGB(11, 13, 20), Enum.Material.Metal, model, true)
+	local sGui = Instance.new("SurfaceGui")
+	sGui.Face = Enum.NormalId.Front
+	sGui.PixelsPerStud = 50
+	sGui.Parent = sign
+	local lbl = Instance.new("TextLabel")
+	lbl.Size = UDim2.new(1, 0, 1, 0)
+	lbl.BackgroundTransparency = 1
+	lbl.Text = "⚡ SYNDICATE BLACK MARKET ⚡"
+	lbl.TextColor3 = Color3.fromRGB(250, 204, 21)
+	lbl.TextSize = 22
+	lbl.Font = Enum.Font.GothamBlack
+	lbl.Parent = sGui
+
+	return model
+end
+
 return ModelEngine

@@ -28,6 +28,13 @@ local DATA_TEMPLATE: Types.PlayerData = {
 	PrestigeTokens = 0,
 	PrestigeLevel = 0,
 
+	-- Progression & Mastery
+	XP = 0,
+	Level = 1,
+	SkillPoints = 0,
+	UnlockedPerks = {},
+	TotalXPAccumulated = 0,
+
 	ConveyorLevel = 1,
 	LaserTier = 1,
 	VaultInterestTier = 1,
@@ -379,6 +386,89 @@ function DataService.LiquidateVault(player: Player): (boolean, number)
 end
 
 -- ============================================================
+-- PROGRESSION, XP & SKILL TREE
+-- ============================================================
+function DataService.AddXP(player: Player, amount: number, reason: string?): (boolean, number, number)
+	local data = DataService.GetData(player)
+	if not data or amount <= 0 then return false, 1, 0 end
+
+	data.XP = (data.XP or 0) + math.floor(amount)
+	data.TotalXPAccumulated = (data.TotalXPAccumulated or 0) + math.floor(amount)
+
+	local leveledUp = false
+	local initialLevel = data.Level or 1
+
+	while data.Level < Config.Progression.MaxLevel do
+		local req = Config.Progression.GetXPRequiredForLevel(data.Level)
+		if data.XP >= req then
+			data.XP -= req
+			data.Level += 1
+			data.SkillPoints = (data.SkillPoints or 0) + Config.Progression.SkillPointsPerLevel
+			leveledUp = true
+		else
+			break
+		end
+	end
+
+	DataService.SyncClient(player)
+
+	if leveledUp then
+		local rank = Config.Progression.GetRankForLevel(data.Level)
+		print(`  [Progression] {player.Name} reached Level {data.Level}! Rank: {rank.Title} (+{data.Level - initialLevel} SP)`)
+		local lvlEvt = ReplicatedStorage:FindFirstChild("LevelUpCelebration") :: RemoteEvent?
+		if lvlEvt then
+			lvlEvt:FireClient(player, data.Level, rank.Title, data.SkillPoints)
+			lvlEvt:FireAllClients(player, data.Level, rank.Title)
+		end
+	end
+
+	local xpEvt = ReplicatedStorage:FindFirstChild("XPGained") :: RemoteEvent?
+	if xpEvt then
+		xpEvt:FireClient(player, math.floor(amount), reason or "Action", data.XP, Config.Progression.GetXPRequiredForLevel(data.Level))
+	end
+
+	return leveledUp, data.Level, data.SkillPoints
+end
+
+function DataService.HasPerk(player: Player, perkId: string): boolean
+	local data = DataService.GetData(player)
+	if not data or not data.UnlockedPerks then return false end
+	return data.UnlockedPerks[perkId] == true
+end
+
+function DataService.SpendSkillPoints(player: Player, perkId: string): (boolean, string?)
+	local data = DataService.GetData(player)
+	if not data then return false, "No player data" end
+
+	local perkDef = Config.Progression.Perks[perkId]
+	if not perkDef then return false, "Invalid Perk ID" end
+
+	if data.UnlockedPerks and data.UnlockedPerks[perkId] then
+		return false, "Perk already unlocked"
+	end
+
+	if (data.SkillPoints or 0) < perkDef.CostSP then
+		return false, `Need {perkDef.CostSP} Skill Points (have {data.SkillPoints or 0})`
+	end
+
+	if perkDef.RequiredPerkId and perkDef.RequiredPerkId ~= "" then
+		if not (data.UnlockedPerks and data.UnlockedPerks[perkDef.RequiredPerkId]) then
+			local reqDef = Config.Progression.Perks[perkDef.RequiredPerkId]
+			local reqName = reqDef and reqDef.Name or perkDef.RequiredPerkId
+			return false, `Prerequisite required: {reqName}`
+		end
+	end
+
+	data.SkillPoints -= perkDef.CostSP
+	if not data.UnlockedPerks then data.UnlockedPerks = {} end
+	data.UnlockedPerks[perkId] = true
+
+	DataService.SyncClient(player)
+	print(`  [Progression] {player.Name} unlocked perk {perkDef.Name}!`)
+	return true, `Unlocked {perkDef.Name}!`
+end
+
+-- ============================================================
 -- INITIALIZE REMOTES & HOOKS
 -- ============================================================
 function DataService.Init()
@@ -431,6 +521,30 @@ function DataService.Init()
 		end
 	end
 
+	local perkRF = ReplicatedStorage:FindFirstChild("PurchasePerk") :: RemoteFunction?
+	if not perkRF then
+		perkRF = Instance.new("RemoteFunction")
+		perkRF.Name = "PurchasePerk"
+		perkRF.Parent = ReplicatedStorage
+	end
+	perkRF.OnServerInvoke = function(p: Player, perkId: string)
+		return DataService.SpendSkillPoints(p, perkId)
+	end
+
+	local lvlEvt = ReplicatedStorage:FindFirstChild("LevelUpCelebration") :: RemoteEvent?
+	if not lvlEvt then
+		lvlEvt = Instance.new("RemoteEvent")
+		lvlEvt.Name = "LevelUpCelebration"
+		lvlEvt.Parent = ReplicatedStorage
+	end
+
+	local xpEvt = ReplicatedStorage:FindFirstChild("XPGained") :: RemoteEvent?
+	if not xpEvt then
+		xpEvt = Instance.new("RemoteEvent")
+		xpEvt.Name = "XPGained"
+		xpEvt.Parent = ReplicatedStorage
+	end
+
 	-- Real-time 60-second compound interest ticker for active & AFK tycoons
 	task.spawn(function()
 		while true do
@@ -442,8 +556,12 @@ function DataService.Init()
 					local banked = profile.Data.BankedCash or 0
 					if banked > 0 then
 						local tier = profile.Data.VaultInterestTier or 1
-						-- Tier 1 = 2%/hr -> (tier * 0.02) / 60 per minute
-						local ratePerMinute = (tier * 0.02) / 60
+						local baseRatePerHour = tier * 0.02
+						-- Compounding Treasury perk boosts interest rate to 4.5%
+						if DataService.HasPerk(player, "CompoundingTreasury") then
+							baseRatePerHour = math.max(baseRatePerHour, 0.045)
+						end
+						local ratePerMinute = baseRatePerHour / 60
 						local interestEarned = math.floor(banked * ratePerMinute)
 						if interestEarned > 0 then
 							profile.Data.BankedCash += interestEarned

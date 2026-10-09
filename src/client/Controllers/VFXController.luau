@@ -243,4 +243,143 @@ function VFXController.PlayElectricArc(fromPos: Vector3, toPos: Vector3)
 	Debris:AddItem(beamPart, 0.25)
 end
 
+-- ============================================================
+-- FLOATING 3D XP INDICATOR
+-- ============================================================
+function VFXController.PlayFloatingXP(worldPos: Vector3, xpAmount: number, reason: string)
+	local anchor = Instance.new("Part")
+	anchor.Size = Vector3.new(0.5, 0.5, 0.5)
+	anchor.Position = worldPos + Vector3.new(0, 3.2, 0)
+	anchor.Anchored = true
+	anchor.CanCollide = false
+	anchor.Transparency = 1
+	anchor.Parent = Workspace
+
+	local bGui = Instance.new("BillboardGui")
+	bGui.Size = UDim2.new(0, 180, 0, 36)
+	bGui.AlwaysOnTop = true
+	bGui.Parent = anchor
+
+	local label = Instance.new("TextLabel")
+	label.Size = UDim2.new(1, 0, 1, 0)
+	label.BackgroundTransparency = 1
+	label.Text = `+{xpAmount} XP [{string.upper(reason)}]`
+	label.TextColor3 = Color3.fromRGB(250, 204, 21)
+	label.TextSize = 15
+	label.Font = Enum.Font.GothamBlack
+	label.Parent = bGui
+
+	local targetPos = anchor.Position + Vector3.new(0, 4.0, 0)
+	local moveTween = TweenService:Create(anchor, TweenInfo.new(1.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+		Position = targetPos,
+	})
+	local fadeTween = TweenService:Create(label, TweenInfo.new(1.1, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+		TextTransparency = 1,
+	})
+
+	moveTween:Play()
+	fadeTween:Play()
+	Debris:AddItem(anchor, 1.2)
+end
+
+-- ============================================================
+-- CELEBRATORY LEVEL-UP SEQUENCE
+-- ============================================================
+function VFXController.PlayLevelUpCelebration(worldPos: Vector3, level: number, rankTitle: string)
+	VFXController.AddCameraTrauma(0.55)
+	VFXController.FlashScreen(Color3.fromRGB(254, 240, 138), 0.35, 0.45)
+
+	-- Golden Vertical Light Pillar
+	local pillar = Instance.new("Part")
+	pillar.Name = "LevelUpPillar"
+	pillar.Size = Vector3.new(8, 140, 8)
+	pillar.CFrame = CFrame.new(worldPos + Vector3.new(0, 70, 0))
+	pillar.Anchored = true
+	pillar.CanCollide = false
+	pillar.Color = Color3.fromRGB(250, 204, 21)
+	pillar.Material = Enum.Material.Neon
+	pillar.Transparency = 0.25
+	pillar.Parent = Workspace
+
+	local mesh = Instance.new("CylinderMesh")
+	mesh.Parent = pillar
+
+	TweenService:Create(pillar, TweenInfo.new(1.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+		Transparency = 1,
+		Size = Vector3.new(1, 140, 1),
+	}):Play()
+	Debris:AddItem(pillar, 1.8)
+
+	-- Expanding Radial Ground Shockwave Ring
+	local ring = Instance.new("Part")
+	ring.Name = "LevelUpShockwave"
+	ring.Size = Vector3.new(4, 0.4, 4)
+	ring.CFrame = CFrame.new(worldPos)
+	ring.Anchored = true
+	ring.CanCollide = false
+	ring.Color = Color3.fromRGB(250, 204, 21)
+	ring.Material = Enum.Material.Neon
+	ring.Transparency = 0.2
+	ring.Parent = Workspace
+
+	local ringMesh = Instance.new("SpecialMesh")
+	ringMesh.MeshType = Enum.MeshType.Sphere
+	ringMesh.Parent = ring
+
+	TweenService:Create(ring, TweenInfo.new(0.9, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+		Size = Vector3.new(38, 0.4, 38),
+		Transparency = 1,
+	}):Play()
+	Debris:AddItem(ring, 1.0)
+end
+
+-- ============================================================
+-- PHANTOM DASH VFX
+-- ============================================================
+function VFXController.PlayPhantomDash(worldPos: Vector3, lookDir: Vector3)
+	VFXController.AddCameraTrauma(0.25)
+	local trailPart = Instance.new("Part")
+	trailPart.Size = Vector3.new(1.2, 3.5, 12)
+	trailPart.CFrame = CFrame.lookAt(worldPos, worldPos + lookDir)
+	trailPart.Color = Color3.fromRGB(56, 189, 248)
+	trailPart.Material = Enum.Material.Neon
+	trailPart.Anchored = true
+	trailPart.CanCollide = false
+	trailPart.Transparency = 0.3
+	trailPart.Parent = Workspace
+
+	TweenService:Create(trailPart, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+		Transparency = 1,
+		Size = Vector3.new(0.1, 1, 16),
+	}):Play()
+	Debris:AddItem(trailPart, 0.45)
+end
+
+-- ============================================================
+-- SHOCKWAVE SLAM VFX
+-- ============================================================
+function VFXController.PlayShockwaveSlam(worldPos: Vector3, hitCount: number)
+	VFXController.AddCameraTrauma(0.45)
+	local ring = Instance.new("Part")
+	ring.Name = "SlamShockwave"
+	ring.Size = Vector3.new(2, 0.4, 2)
+	ring.CFrame = CFrame.new(worldPos)
+	ring.Anchored = true
+	ring.CanCollide = false
+	ring.Color = Color3.fromRGB(239, 68, 68)
+	ring.Material = Enum.Material.Neon
+	ring.Transparency = 0.2
+	ring.Parent = Workspace
+
+	local mesh = Instance.new("SpecialMesh")
+	mesh.MeshType = Enum.MeshType.Sphere
+	mesh.Parent = ring
+
+	TweenService:Create(ring, TweenInfo.new(0.7, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+		Size = Vector3.new(36, 0.4, 36),
+		Transparency = 1,
+	}):Play()
+	Debris:AddItem(ring, 0.8)
+end
+
 return VFXController

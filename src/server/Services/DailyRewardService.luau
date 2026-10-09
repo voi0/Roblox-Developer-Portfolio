@@ -128,6 +128,14 @@ function DailyRewardService.Claim(player: Player): any
 
 	data.DailyStreak = newStreak
 	data.LastDailyClaimTimestamp = now
+
+	-- Award active XP for daily login (+250 XP)
+	local progMod = script.Parent:FindFirstChild("ProgressionService")
+	if progMod then
+		local ps = require(progMod :: ModuleScript)
+		ps.AwardXP(player, Config.Progression.XPAwards.DailyClaim, "Daily Streak Claimed")
+	end
+
 	dataSvc.SyncClient(player)
 
 	-- Broadcast / Notify player

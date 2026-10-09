@@ -235,6 +235,9 @@ function PlotService.Init()
 		end
 	end)
 
+	-- ── 2.6. CENTRAL PLAZA SYNDICATE BLACK MARKET KIOSK ──
+	ModelEngine.CreateSyndicateKiosk(rootFolder, CFrame.new(0, 0, -50))
+
 	-- ── 3. BUILD 6 MODULAR PLOTS CIRCULARLY ──
 	local plotsFolder = Instance.new("Folder")
 	plotsFolder.Name = "Plots"
@@ -301,31 +304,13 @@ function PlotService.Init()
 		local belt = (mintMachine:FindFirstChild("ConveyorBelt") or conveyor) :: Part
 		local stampingHead = mintMachine:FindFirstChild("StampingHead") :: Part?
 
-		-- ── 6. DEPOSIT SAFE PAD ──
-		local safePad = createPart(
-			"DepositSafe",
-			Vector3.new(7, 1.2, 7),
-			faceCenterCF * CFrame.new(0, 0.7, pLen / 2 - 9),
+		-- ── 6. PHYSICAL HYDRAULIC DEPOSIT SWITCH ──
+		local safeBtnModel, safePad = ModelEngine.CreateHydraulicFloorButton(
+			pFolder,
+			faceCenterCF * CFrame.new(0, 0, pLen / 2 - 9),
 			Color3.fromRGB(16, 185, 129),
-			Enum.Material.Neon,
-			pFolder
+			"📥 STEP TO BANK"
 		)
-
-		local safeLabel = Instance.new("BillboardGui")
-		safeLabel.Name = "SafeBillboard"
-		safeLabel.Size = UDim2.new(0, 160, 0, 40)
-		safeLabel.StudsOffset = Vector3.new(0, 2.8, 0)
-		safeLabel.AlwaysOnTop = true
-		safeLabel.Parent = safePad
-
-		local slText = Instance.new("TextLabel")
-		slText.Size = UDim2.new(1, 0, 1, 0)
-		slText.BackgroundTransparency = 1
-		slText.Text = "📥 STEP TO BANK"
-		slText.TextColor3 = Color3.fromRGB(16, 185, 129)
-		slText.TextSize = 14
-		slText.Font = Enum.Font.GothamBlack
-		slText.Parent = safeLabel
 
 		-- ── 7. FRONT LASER PILLARS (SECURITY ENTRANCE) ──
 		local leftLaserPost = createPart(
@@ -344,6 +329,10 @@ function PlotService.Init()
 			Enum.Material.Metal,
 			pFolder
 		)
+
+		-- ── 7.5. BIOMETRIC SECURITY TERMINAL & AUTOMATED DEFENSE TURRET ──
+		ModelEngine.CreateBiometricTerminal(pFolder, faceCenterCF * CFrame.new(-pWidth / 2 + 4.5, 0, -pLen / 2 + 3.5))
+		ModelEngine.CreateSecurityTurret(pFolder, faceCenterCF * CFrame.new(0, 10.4, -pLen / 2 + 1))
 
 		-- ── 8. SIREN BEACON ON FRONT ARCHWAY ──
 		local frontArch = createPart(
@@ -457,6 +446,21 @@ function PlotService.Init()
 			local char = hit.Parent
 			local p = char and Players:GetPlayerFromCharacter(char)
 			if p and PlotService._plots[i].Owner == p then
+				-- Animate physical plunger depression
+				local restY = safePad:GetAttribute("RestY") :: number?
+				if restY then
+					TweenService:Create(safePad, TweenInfo.new(0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+						CFrame = safePad.CFrame * CFrame.new(0, -0.35, 0)
+					}):Play()
+					task.delay(0.35, function()
+						if safePad and safePad.Parent then
+							TweenService:Create(safePad, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+								CFrame = CFrame.new(safePad.Position.X, restY, safePad.Position.Z) * safePad.CFrame.Rotation
+							}):Play()
+						end
+					end)
+				end
+
 				PlotService.AnimateVaultDoorOpen(i)
 				local heistMod = script.Parent:FindFirstChild("HeistService") :: ModuleScript?
 				local heistSvc = heistMod and require(heistMod)

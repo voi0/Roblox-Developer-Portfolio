@@ -13,12 +13,19 @@ local Debris = game:GetService("Debris")
 
 local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
 local Types = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Types"))
+local ModelEngine = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("ModelEngine"))
 
 local HeistService = {}
-HeistService._carrying = {} :: { [Player]: { Payload: Types.StolenItemPayload, Model: Part, Weld: Weld } }
+HeistService._carrying = {} :: { [Player]: { Payload: Types.StolenItemPayload, Model: Instance, Weld: Weld } }
 
 local function getDataService(): any?
 	local svc = script.Parent:FindFirstChild("DataService")
+	if svc then return require(svc :: ModuleScript) end
+	return nil
+end
+
+local function getProgressionService(): any?
+	local svc = script.Parent:FindFirstChild("ProgressionService")
 	if svc then return require(svc :: ModuleScript) end
 	return nil
 end
@@ -76,31 +83,25 @@ function HeistService.StartHeist(thief: Player, itemPart: Part, sourcePlot: any)
 	-- Remove original part from conveyor
 	itemPart:Destroy()
 
-	-- Create Carry Model (Welded above head)
-	local carryPart = Instance.new("Part")
-	carryPart.Name = "CarriedLoot"
-	carryPart.Size = Vector3.new(2.4, 1.6, 1.2)
-	carryPart.Color = (tier == "Common") and Color3.fromRGB(234, 179, 8) or Color3.fromRGB(56, 189, 248)
-	carryPart.Material = Enum.Material.Neon
-	carryPart.CanCollide = false
-	carryPart.Massless = true
-	carryPart.CFrame = root.CFrame * CFrame.new(0, 3.4, 0)
-	carryPart.Parent = char
+	-- Create 3D Tactical Dynamic Loot Sack welded to player's torso
+	local attachPart = char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso") or root
+	local sackModel = ModelEngine.CreateLootSack(char, attachPart.CFrame, tier)
+	local sackBody = sackModel.PrimaryPart or sackModel:FindFirstChild("SackBody") :: BasePart?
 
 	local weld = Instance.new("Weld")
-	weld.Name = "CarryWeld"
-	weld.Part0 = root
-	weld.Part1 = carryPart
-	weld.C0 = CFrame.new(0, 3.4, 0)
-	weld.Parent = carryPart
+	weld.Name = "SackWeld"
+	weld.Part0 = attachPart
+	weld.Part1 = sackBody
+	weld.C0 = CFrame.new(0, 0.2, 0.85)
+	weld.Parent = sackBody or char
 
-	-- Floating text above carry model
+	-- Floating tactical badge above carry model
 	local bGui = Instance.new("BillboardGui")
 	bGui.Name = "StolenTag"
 	bGui.Size = UDim2.new(0, 160, 0, 40)
-	bGui.StudsOffset = Vector3.new(0, 1.5, 0)
+	bGui.StudsOffset = Vector3.new(0, 2.2, 0)
 	bGui.AlwaysOnTop = true
-	bGui.Parent = carryPart
+	bGui.Parent = sackBody or char
 
 	local sLabel = Instance.new("TextLabel")
 	sLabel.Size = UDim2.new(1, 0, 1, 0)
@@ -111,9 +112,17 @@ function HeistService.StartHeist(thief: Player, itemPart: Part, sourcePlot: any)
 	sLabel.Font = Enum.Font.GothamBlack
 	sLabel.Parent = bGui
 
-	-- Apply Carry Speed Debuff
-	hum.WalkSpeed = Config.Heist.CarryDebuffSpeed
+	-- Apply Carry Speed Debuff (Lightfoot Protocol reduces debuff by 50%)
+	local progSvc = getProgressionService()
+	local hasLightfoot = progSvc and progSvc.HasPerk(thief, "LightfootProtocol")
+	local carrySpeed = hasLightfoot and 14.5 or Config.Heist.CarryDebuffSpeed
+	hum.WalkSpeed = carrySpeed
 	hum.JumpPower = 35
+
+	-- Award XP for successful snatch
+	if progSvc then
+		progSvc.AwardXP(thief, Config.Progression.XPAwards.SnatchLoot, "Loot Snatched")
+	end
 
 	-- Listen for death
 	hum.Died:Connect(function()
@@ -131,7 +140,7 @@ function HeistService.StartHeist(thief: Player, itemPart: Part, sourcePlot: any)
 
 	HeistService._carrying[thief] = {
 		Payload = payload,
-		Model = carryPart,
+		Model = sackModel,
 		Weld = weld,
 	}
 
@@ -197,8 +206,10 @@ function HeistService.DepositStolenLoot(thief: Player): boolean
 	local payload = carryInfo.Payload
 	local char = thief.Character
 	local hum = char and char:FindFirstChildOfClass("Humanoid")
+	local progSvc = getProgressionService()
+	local hasLightfoot = progSvc and progSvc.HasPerk(thief, "LightfootProtocol")
 	if hum then
-		hum.WalkSpeed = Config.Heist.NormalWalkSpeed
+		hum.WalkSpeed = hasLightfoot and 19.2 or Config.Heist.NormalWalkSpeed
 		hum.JumpPower = 50
 	end
 
@@ -230,6 +241,11 @@ function HeistService.DepositStolenLoot(thief: Player): boolean
 		if payload.Id and payload.Id ~= "" and payload.Id ~= "Cash Stack" then
 			dataSvc.AddRelic(thief, payload.Id, 1)
 		end
+	end
+
+	-- Award XP for successfully securing stolen loot
+	if progSvc then
+		progSvc.AwardXP(thief, Config.Progression.XPAwards.DepositStolenLoot, "Loot Secured")
 	end
 
 	-- Server-wide chat celebration
@@ -307,18 +323,23 @@ function HeistService.TackleThief(defender: Player, targetPlayer: Player?): (boo
 	local payload = carryInfo.Payload
 	HeistService.DropLoot(target)
 
+	local progSvc = getProgressionService()
+	local targetHasHardened = progSvc and progSvc.HasPerk(target, "HardenedCarapace")
+
+	-- Knockdown impulse (suppressed if target unlocked Hardened Carapace)
 	task.spawn(function()
-		local origSpeed = tHum.WalkSpeed
-		tHum.WalkSpeed = 0
-		tHum.PlatformStand = true
+		if not targetHasHardened then
+			tHum.WalkSpeed = 0
+			tHum.PlatformStand = true
 
-		local away = (tRoot.Position - root.Position).Unit
-		tRoot.AssemblyLinearVelocity = away * 40 + Vector3.new(0, 15, 0)
+			local away = (tRoot.Position - root.Position).Unit
+			tRoot.AssemblyLinearVelocity = away * 40 + Vector3.new(0, 15, 0)
 
-		task.wait(2.0)
-		if tHum and tHum.Parent then
-			tHum.PlatformStand = false
-			tHum.WalkSpeed = Config.Heist.NormalWalkSpeed
+			task.wait(2.0)
+			if tHum and tHum.Parent then
+				tHum.PlatformStand = false
+				tHum.WalkSpeed = Config.Heist.NormalWalkSpeed
+			end
 		end
 	end)
 
@@ -329,8 +350,17 @@ function HeistService.TackleThief(defender: Player, targetPlayer: Player?): (boo
 		dataSvc.AddUnbanked(defender, payload.Value)
 	end
 
+	-- Bounty Hunter Perk: 2x cash bounty ($1,000) and +150 bonus XP
+	local isBountyHunter = progSvc and progSvc.HasPerk(defender, "BountyHunter")
+	local bountyCash = isBountyHunter and 1000 or 500
+	local bountyXP = Config.Progression.XPAwards.TackleThief + (isBountyHunter and 150 or 0)
+
 	if dataSvc then
-		dataSvc.AddBanked(defender, 500)
+		dataSvc.AddBanked(defender, bountyCash)
+	end
+
+	if progSvc then
+		progSvc.AwardXP(defender, bountyXP, isBountyHunter and "Bounty Hunter Intercept" or "Thief Neutralized")
 	end
 
 	local bcast = ReplicatedStorage:FindFirstChild("HeistBroadcast") :: RemoteEvent?
