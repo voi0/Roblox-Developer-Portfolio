@@ -80,7 +80,7 @@ local UPGRADE_DEFS: { [string]: any } = {
 		Title = "Hydraulic Mint Press",
 		Cost = 0,
 		AccentColor = Color3.fromRGB(16, 185, 129),
-		ButtonOffset = Vector3.new(6, 0.2, -14),
+		ButtonOffset = Vector3.new(0, 2.0, -12),
 		Build = function(plot: any)
 			if plot.BuiltObjects["MintPress"] then return end
 			local mintCF = plot.CF * CFrame.new(8, 2, 0)
@@ -99,7 +99,7 @@ local UPGRADE_DEFS: { [string]: any } = {
 		Title = "Bank Safe & Deposit Pad",
 		Cost = 50,
 		AccentColor = Color3.fromRGB(245, 158, 11),
-		ButtonOffset = Vector3.new(6, 0.2, -6),
+		ButtonOffset = Vector3.new(-5, 2.0, -6),
 		Build = function(plot: any)
 			if plot.BuiltObjects["BankSafe"] then return end
 
@@ -163,7 +163,7 @@ local UPGRADE_DEFS: { [string]: any } = {
 		Title = "Bunker Blast Walls",
 		Cost = 150,
 		AccentColor = Color3.fromRGB(56, 189, 248),
-		ButtonOffset = Vector3.new(-6, 0.2, -14),
+		ButtonOffset = Vector3.new(-5, 2.0, 0),
 		Build = function(plot: any)
 			if plot.BuiltObjects["BlastWalls"] then return end
 			local shellCF = plot.CF * CFrame.new(0, 2, 0)
@@ -178,7 +178,7 @@ local UPGRADE_DEFS: { [string]: any } = {
 		Title = "Security Laser Grid",
 		Cost = 300,
 		AccentColor = Color3.fromRGB(239, 68, 68),
-		ButtonOffset = Vector3.new(-6, 0.2, -18),
+		ButtonOffset = Vector3.new(0, 2.0, -16),
 		Build = function(plot: any)
 			if plot.BuiltObjects["LaserGrid"] then return end
 			local pWidth = Config.Arena.PlotWidth
@@ -224,7 +224,7 @@ local UPGRADE_DEFS: { [string]: any } = {
 		Title = "Cogwheel Vault Door",
 		Cost = 600,
 		AccentColor = Color3.fromRGB(168, 85, 247),
-		ButtonOffset = Vector3.new(0, 0.2, 4),
+		ButtonOffset = Vector3.new(0, 2.0, 6),
 		Build = function(plot: any)
 			if plot.BuiltObjects["VaultDoor"] then return end
 			local pLen = Config.Arena.PlotLength
@@ -241,7 +241,7 @@ local UPGRADE_DEFS: { [string]: any } = {
 		Title = "Overclock Coils (2x Speed)",
 		Cost = 1200,
 		AccentColor = Color3.fromRGB(234, 179, 8),
-		ButtonOffset = Vector3.new(6, 0.2, 2),
+		ButtonOffset = Vector3.new(0, 2.0, 0),
 		Build = function(plot: any)
 			if plot.BuiltObjects["ConveyorOverclock"] then return end
 			local coils = Instance.new("Model")
@@ -258,7 +258,7 @@ local UPGRADE_DEFS: { [string]: any } = {
 		Title = "Automated Sentry Turret",
 		Cost = 2500,
 		AccentColor = Color3.fromRGB(239, 68, 68),
-		ButtonOffset = Vector3.new(-8, 0.2, -8),
+		ButtonOffset = Vector3.new(-6, 2.0, -10),
 		Build = function(plot: any)
 			if plot.BuiltObjects["DefenseTurret"] then return end
 			local pLen = Config.Arena.PlotLength
@@ -278,7 +278,7 @@ local UPGRADE_DEFS: { [string]: any } = {
 		Title = "Prized Relic Showcase",
 		Cost = 5000,
 		AccentColor = Color3.fromRGB(216, 180, 254),
-		ButtonOffset = Vector3.new(-8, 0.2, 8),
+		ButtonOffset = Vector3.new(-5, 2.0, 6),
 		Build = function(plot: any)
 			if plot.BuiltObjects["RelicPedestal"] then return end
 			local pLen = Config.Arena.PlotLength
@@ -321,7 +321,7 @@ local UPGRADE_DEFS: { [string]: any } = {
 		Title = "Emergency Alarm & Siren",
 		Cost = 10000,
 		AccentColor = Color3.fromRGB(239, 68, 68),
-		ButtonOffset = Vector3.new(8, 0.2, 8),
+		ButtonOffset = Vector3.new(-6, 2.0, 12),
 		Build = function(plot: any)
 			if plot.BuiltObjects["SecurityAlarm"] then return end
 			local pLen = Config.Arena.PlotLength
@@ -919,7 +919,7 @@ function PlotService.SpawnNextButton(plotIndex: number)
 		local maxModel = Instance.new("Model")
 		maxModel.Name = "VaultMaxedBadge"
 		maxModel.Parent = plot.Folder
-		local flange = createPart("MaxFlange", Vector3.new(8, 0.4, 8), plot.CF * CFrame.new(0, 0.2, 0), Color3.fromRGB(245, 158, 11), Enum.Material.Neon, maxModel, false)
+		local flange = createPart("MaxFlange", Vector3.new(8, 0.4, 8), plot.CF * CFrame.new(0, 2.0, 0), Color3.fromRGB(245, 158, 11), Enum.Material.Neon, maxModel, false)
 		local bGui = Instance.new("BillboardGui")
 		bGui.Size = UDim2.new(0, 240, 0, 50)
 		bGui.StudsOffset = Vector3.new(0, 3.5, 0)
@@ -942,7 +942,7 @@ function PlotService.SpawnNextButton(plotIndex: number)
 
 	local btnModel, stepPad, bGui, costLbl = ModelEngine.CreateTycoonButton(
 		plot.Folder,
-		plot.CF * CFrame.new(def.ButtonOffset),
+		plot.CF * CFrame.new(def.ButtonOffset.X, 2.0, def.ButtonOffset.Z),
 		nextUpgradeId,
 		def.Title,
 		def.Cost,

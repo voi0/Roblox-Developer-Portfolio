@@ -11,7 +11,7 @@ local Config = {}
 -- 1. ECONOMY CONSTANTS & CURVES
 -- ============================================================
 Config.Economy = {
-	StartingBankedCash = 0,
+	StartingBankedCash = 100,
 	StartingUnbankedCash = 0,
 	BaseMintRate = 5, -- Base $/sec generated at level 1
 
@@ -80,7 +80,7 @@ Config.Arena = {
 -- 3. MINT CONVEYOR & RELIC CYCLE
 -- ============================================================
 Config.Mint = {
-	DropIntervalSeconds = 5.0,  -- Time between conveyor spawns
+	DropIntervalSeconds = 3.5,  -- Time between conveyor spawns
 	ConveyorLength = 18,
 	ConveyorSpeed = 3.5,        -- Studs per second item travels down conveyor
 	MaxUnbankedItemsPerPlot = 6, -- Capacity cap before conveyor stalls

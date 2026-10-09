@@ -84,19 +84,7 @@ function CameraController.Init()
 		local hum = char and char:FindFirstChildOfClass("Humanoid")
 		local root = char and char:FindFirstChild("HumanoidRootPart") :: BasePart?
 
-		-- Subtle walk sway when moving and not focused in UI
-		if hum and root and not CameraController._isUIFocused then
-			local speed = root.AssemblyLinearVelocity.Magnitude
-			if speed > 2 and hum.FloorMaterial ~= Enum.Material.Air then
-				swayTime = swayTime + dt * 10
-				local swayOffset = Vector3.new(
-					math.sin(swayTime * 0.5) * 0.02,
-					math.abs(math.sin(swayTime)) * 0.035,
-					0
-				)
-				currentCam.CFrame = currentCam.CFrame * CFrame.new(swayOffset)
-			end
-		end
+
 
 		-- Procedural Camera Shake
 		if CameraController._shakeIntensity > 0.001 then

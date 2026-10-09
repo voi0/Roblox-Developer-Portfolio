@@ -90,24 +90,24 @@ function ModelEngine.CreateMintMachine(parent: Instance, baseCF: CFrame): Model
 		createCylinder(`AnchorBoltR_{zOffset}`, Vector3.new(0.3, 0.45, 0.45), baseCF * CFrame.new(3.8, 0.55, zOffset) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(203, 213, 225), Enum.Material.Metal, model)
 	end
 
-	-- 1.2. Heavy Electric Motor & Drive Assembly (Mounted at Rear, Z = +12.5)
-	local motorBase = createPart("MotorHousing", Vector3.new(3.2, 3.0, 4.4), baseCF * CFrame.new(-4.8, 1.8, 11.5), Color3.fromRGB(30, 41, 59), Enum.Material.Metal, model, true)
+	-- 1.2. Heavy Electric Motor & Drive Assembly (Mounted at Intake End, Z = -11.5)
+	local motorBase = createPart("MotorHousing", Vector3.new(3.2, 3.0, 4.4), baseCF * CFrame.new(-4.8, 1.8, -11.5), Color3.fromRGB(30, 41, 59), Enum.Material.Metal, model, true)
 	-- Radial Cooling Ribs on Motor
 	for ribIdx = -1.6, 1.6, 0.8 do
 		createPart(`MotorRib_{ribIdx}`, Vector3.new(3.4, 3.2, 0.25), motorBase.CFrame * CFrame.new(0, 0, ribIdx), Color3.fromRGB(15, 23, 42), Enum.Material.Metal, model)
 	end
 	-- Motor Drive Pulley & Rubber V-Belt
-	createCylinder("MotorPulley", Vector3.new(0.6, 2.2, 2.2), baseCF * CFrame.new(-3.0, 1.8, 11.5) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(245, 158, 11), Enum.Material.Metal, model)
-	createPart("DriveBelt", Vector3.new(0.3, 1.8, 2.4), baseCF * CFrame.new(-2.8, 1.6, 12.5) * CFrame.Angles(math.rad(25), 0, 0), Color3.fromRGB(15, 17, 26), Enum.Material.Rubber, model)
+	createCylinder("MotorPulley", Vector3.new(0.6, 2.2, 2.2), baseCF * CFrame.new(-3.0, 1.8, -11.5) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(245, 158, 11), Enum.Material.Metal, model)
+	createPart("DriveBelt", Vector3.new(0.3, 1.8, 2.4), baseCF * CFrame.new(-2.8, 1.6, -10.5) * CFrame.Angles(math.rad(-25), 0, 0), Color3.fromRGB(15, 17, 26), Enum.Material.Rubber, model)
 	-- High Voltage Power Junction Box
-	local jBox = createPart("JunctionBox", Vector3.new(1.4, 1.8, 1.2), baseCF * CFrame.new(-6.8, 1.4, 11.5), Color3.fromRGB(245, 158, 11), Enum.Material.Metal, model)
+	local jBox = createPart("JunctionBox", Vector3.new(1.4, 1.8, 1.2), baseCF * CFrame.new(-6.8, 1.4, -11.5), Color3.fromRGB(245, 158, 11), Enum.Material.Metal, model)
 	createPart("JunctionWarningSign", Vector3.new(1.45, 0.5, 0.8), jBox.CFrame * CFrame.new(0, 0.2, 0), Color3.fromRGB(239, 68, 68), Enum.Material.Neon, model)
 	-- Armored Conduit Tube
-	createCylinder("PowerConduit", Vector3.new(1.2, 0.4, 0.4), baseCF * CFrame.new(-5.9, 1.2, 11.5), Color3.fromRGB(148, 163, 184), Enum.Material.Metal, model)
+	createCylinder("PowerConduit", Vector3.new(1.2, 0.4, 0.4), baseCF * CFrame.new(-5.9, 1.2, -11.5), Color3.fromRGB(148, 163, 184), Enum.Material.Metal, model)
 
-	-- 1.3. Raw Bullion Intake Hopper (Rear Funnel Chute)
-	local hopperBack = createPart("HopperChute", Vector3.new(4.8, 3.2, 2.6), baseCF * CFrame.new(0, 3.8, 12.8) * CFrame.Angles(math.rad(-30), 0, 0), Color3.fromRGB(47, 55, 70), Enum.Material.DiamondPlate, model, true)
-	createPart("HopperLip", Vector3.new(5.2, 0.4, 0.4), hopperBack.CFrame * CFrame.new(0, 1.7, 1.2), Color3.fromRGB(245, 158, 11), Enum.Material.Metal, model)
+	-- 1.3. Raw Bullion Intake Hopper (Intake Chute at Z = -12.8)
+	local hopperBack = createPart("HopperChute", Vector3.new(4.8, 3.2, 2.6), baseCF * CFrame.new(0, 3.8, -12.8) * CFrame.Angles(math.rad(30), 0, 0), Color3.fromRGB(47, 55, 70), Enum.Material.DiamondPlate, model, true)
+	createPart("HopperLip", Vector3.new(5.2, 0.4, 0.4), hopperBack.CFrame * CFrame.new(0, 1.7, -1.2), Color3.fromRGB(245, 158, 11), Enum.Material.Metal, model)
 
 	-- 1.4. Conveyor Belt Bed & Track Rollers
 	local belt = createPart("ConveyorBelt", Vector3.new(5.2, 0.4, 27.2), baseCF * CFrame.new(0, 1.6, 0), Color3.fromRGB(18, 22, 28), Enum.Material.Slate, model, true)
@@ -127,34 +127,34 @@ function ModelEngine.CreateMintMachine(parent: Instance, baseCF: CFrame): Model
 	createPart("WearStripL", Vector3.new(0.2, 0.2, 27.6), baseCF * CFrame.new(-2.65, 2.5, 0), Color3.fromRGB(245, 158, 11), Enum.Material.Neon, model)
 	createPart("WearStripR", Vector3.new(0.2, 0.2, 27.6), baseCF * CFrame.new(2.65, 2.5, 0), Color3.fromRGB(245, 158, 11), Enum.Material.Neon, model)
 
-	-- 1.5. Heavy Overhead Gantry Structure & Hydraulic Ram
-	local gantryL = createPart("GantryPillarL", Vector3.new(1.8, 9.6, 2.8), baseCF * CFrame.new(-3.8, 5.6, 4), Color3.fromRGB(30, 41, 59), Enum.Material.Metal, model)
-	local gantryR = createPart("GantryPillarR", Vector3.new(1.8, 9.6, 2.8), baseCF * CFrame.new(3.8, 5.6, 4), Color3.fromRGB(30, 41, 59), Enum.Material.Metal, model)
+	-- 1.5. Heavy Overhead Gantry Structure & Hydraulic Ram (Centered at Stamping Station Z = -6.5)
+	local gantryL = createPart("GantryPillarL", Vector3.new(1.8, 9.6, 2.8), baseCF * CFrame.new(-3.8, 5.6, -6.5), Color3.fromRGB(30, 41, 59), Enum.Material.Metal, model)
+	local gantryR = createPart("GantryPillarR", Vector3.new(1.8, 9.6, 2.8), baseCF * CFrame.new(3.8, 5.6, -6.5), Color3.fromRGB(30, 41, 59), Enum.Material.Metal, model)
 	-- Diagonal Triangular Gusset Brackets
-	createPart("GussetL", Vector3.new(1.2, 2.6, 2.6), baseCF * CFrame.new(-3.6, 9.2, 4) * CFrame.Angles(0, 0, math.rad(-45)), Color3.fromRGB(24, 28, 40), Enum.Material.Metal, model)
-	createPart("GussetR", Vector3.new(1.2, 2.6, 2.6), baseCF * CFrame.new(3.6, 9.2, 4) * CFrame.Angles(0, 0, math.rad(45)), Color3.fromRGB(24, 28, 40), Enum.Material.Metal, model)
+	createPart("GussetL", Vector3.new(1.2, 2.6, 2.6), baseCF * CFrame.new(-3.6, 9.2, -6.5) * CFrame.Angles(0, 0, math.rad(-45)), Color3.fromRGB(24, 28, 40), Enum.Material.Metal, model)
+	createPart("GussetR", Vector3.new(1.2, 2.6, 2.6), baseCF * CFrame.new(3.6, 9.2, -6.5) * CFrame.Angles(0, 0, math.rad(45)), Color3.fromRGB(24, 28, 40), Enum.Material.Metal, model)
 
 	-- Overhead Hydraulic Crossbar Head
-	local gantryTop = createPart("GantryCrossbar", Vector3.new(9.6, 2.4, 3.8), baseCF * CFrame.new(0, 10.6, 4), Color3.fromRGB(15, 23, 42), Enum.Material.Metal, model)
+	local gantryTop = createPart("GantryCrossbar", Vector3.new(9.6, 2.4, 3.8), baseCF * CFrame.new(0, 10.6, -6.5), Color3.fromRGB(15, 23, 42), Enum.Material.Metal, model)
 	-- Hydraulic Valve Manifold Block on Top
-	createPart("HydraulicManifold", Vector3.new(4.2, 1.4, 2.2), baseCF * CFrame.new(0, 12.2, 4), Color3.fromRGB(47, 55, 70), Enum.Material.Metal, model)
+	createPart("HydraulicManifold", Vector3.new(4.2, 1.4, 2.2), baseCF * CFrame.new(0, 12.2, -6.5), Color3.fromRGB(47, 55, 70), Enum.Material.Metal, model)
 
 	-- Dual Heavy Hydraulic Cylinders (Sleeves)
-	local cylL = createCylinder("HydraulicSleeveL", Vector3.new(4.6, 1.2, 1.2), baseCF * CFrame.new(-1.8, 8.4, 4), Color3.fromRGB(51, 65, 85), Enum.Material.Metal, model)
-	local cylR = createCylinder("HydraulicSleeveR", Vector3.new(4.6, 1.2, 1.2), baseCF * CFrame.new(1.8, 8.4, 4), Color3.fromRGB(51, 65, 85), Enum.Material.Metal, model)
+	local cylL = createCylinder("HydraulicSleeveL", Vector3.new(4.6, 1.2, 1.2), baseCF * CFrame.new(-1.8, 8.4, -6.5), Color3.fromRGB(51, 65, 85), Enum.Material.Metal, model)
+	local cylR = createCylinder("HydraulicSleeveR", Vector3.new(4.6, 1.2, 1.2), baseCF * CFrame.new(1.8, 8.4, -6.5), Color3.fromRGB(51, 65, 85), Enum.Material.Metal, model)
 	-- Machined Brass Gland Bushing Collars
-	createCylinder("GlandCollarL", Vector3.new(0.5, 1.4, 1.4), baseCF * CFrame.new(-1.8, 6.3, 4), Color3.fromRGB(234, 179, 8), Enum.Material.Metal, model)
-	createCylinder("GlandCollarR", Vector3.new(0.5, 1.4, 1.4), baseCF * CFrame.new(1.8, 6.3, 4), Color3.fromRGB(234, 179, 8), Enum.Material.Metal, model)
+	createCylinder("GlandCollarL", Vector3.new(0.5, 1.4, 1.4), baseCF * CFrame.new(-1.8, 6.3, -6.5), Color3.fromRGB(234, 179, 8), Enum.Material.Metal, model)
+	createCylinder("GlandCollarR", Vector3.new(0.5, 1.4, 1.4), baseCF * CFrame.new(1.8, 6.3, -6.5), Color3.fromRGB(234, 179, 8), Enum.Material.Metal, model)
 
 	-- Moveable Hydraulic Stamping Ram Head (Targeted by MintService)
-	local stampHead = createPart("StampingHead", Vector3.new(5.0, 1.8, 3.4), baseCF * CFrame.new(0, 5.8, 4), Color3.fromRGB(30, 41, 59), Enum.Material.Metal, model, true)
+	local stampHead = createPart("StampingHead", Vector3.new(5.0, 1.8, 3.4), baseCF * CFrame.new(0, 5.8, -6.5), Color3.fromRGB(30, 41, 59), Enum.Material.Metal, model, true)
 	-- Yellow & Black Hazard Chevron Strip on Ram
 	createPart("HazardStripe", Vector3.new(5.05, 0.4, 3.45), stampHead.CFrame * CFrame.new(0, -0.6, 0), Color3.fromRGB(245, 158, 11), Enum.Material.SmoothPlastic, stampHead)
 
 	-- Polished Chrome Piston Shafts attached to Head
-	local rodL = createCylinder("PistonRodL", Vector3.new(3.4, 0.7, 0.7), baseCF * CFrame.new(-1.8, 7.4, 4), Color3.fromRGB(241, 245, 249), Enum.Material.Metal, model)
+	local rodL = createCylinder("PistonRodL", Vector3.new(3.4, 0.7, 0.7), baseCF * CFrame.new(-1.8, 7.4, -6.5), Color3.fromRGB(241, 245, 249), Enum.Material.Metal, model)
 	rodL.Reflectance = 0.5
-	local rodR = createCylinder("PistonRodR", Vector3.new(3.4, 0.7, 0.7), baseCF * CFrame.new(1.8, 7.4, 4), Color3.fromRGB(241, 245, 249), Enum.Material.Metal, model)
+	local rodR = createCylinder("PistonRodR", Vector3.new(3.4, 0.7, 0.7), baseCF * CFrame.new(1.8, 7.4, -6.5), Color3.fromRGB(241, 245, 249), Enum.Material.Metal, model)
 	rodR.Reflectance = 0.5
 
 	-- High-Pressure Steam Exhaust Nozzles with Copper Deflector Shields
@@ -173,7 +173,7 @@ function ModelEngine.CreateMintMachine(parent: Instance, baseCF: CFrame): Model
 	ventR.Parent = stampHead
 
 	-- 1.6. Real-Time Digital LCD Production Terminal
-	local arm = createPart("MonitorArm", Vector3.new(0.4, 1.8, 0.4), baseCF * CFrame.new(4.2, 8.8, 2.5) * CFrame.Angles(0, math.rad(30), 0), Color3.fromRGB(51, 65, 85), Enum.Material.Metal, model)
+	local arm = createPart("MonitorArm", Vector3.new(0.4, 1.8, 0.4), baseCF * CFrame.new(4.2, 8.8, -8.0) * CFrame.Angles(0, math.rad(30), 0), Color3.fromRGB(51, 65, 85), Enum.Material.Metal, model)
 	local monitor = createPart("YieldMonitor", Vector3.new(2.4, 1.4, 0.5), arm.CFrame * CFrame.new(0.6, 0.8, -0.6) * CFrame.Angles(0, math.rad(-25), 0), Color3.fromRGB(15, 17, 26), Enum.Material.Metal, model)
 	createPart("MonitorScreen", Vector3.new(2.1, 1.1, 0.08), monitor.CFrame * CFrame.new(0, 0, -0.26), Color3.fromRGB(16, 185, 129), Enum.Material.Neon, model)
 	createPart("MonitorLED", Vector3.new(0.2, 0.2, 0.1), monitor.CFrame * CFrame.new(0.8, 0.45, -0.27), Color3.fromRGB(56, 189, 248), Enum.Material.Neon, model)
@@ -837,6 +837,36 @@ function ModelEngine.CreateTycoonButton(
 
 	-- Elevated Glowing Interactive Pad
 	local pad = createPart("StepPad", Vector3.new(5.6, 0.5, 5.6), cf * CFrame.new(0, 0.55, 0), accentColor, Enum.Material.Neon, model, false)
+
+	-- Vertical Objective Beacon (translucent glowing column reaching toward cavern roof)
+	local beacon = createCylinder("ObjectiveBeacon", Vector3.new(24, 1.8, 1.8), cf * CFrame.new(0, 12, 0) * CFrame.Angles(0, 0, math.rad(90)), accentColor, Enum.Material.Neon, model, false)
+	beacon.Transparency = 0.82
+
+	-- Ambient Ground Illumination
+	local padLight = Instance.new("PointLight")
+	padLight.Name = "ButtonGlow"
+	padLight.Color = accentColor
+	padLight.Range = 14
+	padLight.Brightness = 2.2
+	padLight.Parent = pad
+
+	-- Floating Upward Sparkle Particles
+	local pEmit = Instance.new("ParticleEmitter")
+	pEmit.Name = "BeaconPuff"
+	pEmit.Rate = 5
+	pEmit.Speed = NumberRange.new(2, 6)
+	pEmit.Lifetime = NumberRange.new(1.0, 1.8)
+	pEmit.SpreadAngle = Vector2.new(6, 6)
+	pEmit.Size = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.5),
+		NumberSequenceKeypoint.new(1, 0),
+	})
+	pEmit.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.35),
+		NumberSequenceKeypoint.new(1, 1),
+	})
+	pEmit.Color = ColorSequence.new(accentColor)
+	pEmit.Parent = pad
 
 	-- Floating 3D Billboard
 	local bGui = Instance.new("BillboardGui")

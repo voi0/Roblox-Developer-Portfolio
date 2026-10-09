@@ -240,9 +240,9 @@ function MintService.SpawnConveyorItem(plot: any, value: number, relicDef: Types
 	item:SetAttribute("Tier", isRelic and relicDef.Tier or "Common")
 	item:SetAttribute("RelicId", isRelic and relicDef.Id or "")
 
-	-- Start at head of conveyor
-	local startCF = plot.CF * CFrame.new(8, 2.4, -Config.Mint.ConveyorLength / 2 + 2)
-	local endCF = plot.CF * CFrame.new(8, 2.4, Config.Mint.ConveyorLength / 2 - 2)
+	-- Start at head of conveyor directly beneath hydraulic stamping head
+	local startCF = plot.CF * CFrame.new(8, 4.8, -6.5)
+	local endCF = plot.CF * CFrame.new(8, 4.8, 9.5)
 	item.CFrame = startCF
 	item.Parent = plot.Folder
 
