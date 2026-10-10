@@ -427,120 +427,169 @@ function PlotService.Init()
 		false
 	)
 
-	-- ── 2. CENTRAL CYBER-INDUSTRIAL TERMINAL & LEADERBOARD ──
-	createPart("MonolithPlinthLower", Vector3.new(18, 1.2, 18), CFrame.new(0, 5.3, 0), Color3.fromRGB(30, 41, 59), Enum.Material.DiamondPlate, rootFolder, true)
-	createPart("MonolithPlinthUpper", Vector3.new(14, 1.2, 14), CFrame.new(0, 6.5, 0), Color3.fromRGB(47, 55, 70), Enum.Material.Concrete, rootFolder, true)
+	-- ── 2. CENTRAL SUBTERRANEAN CYBER-REACTOR & COMMAND VAULT ──
+	local reactorFolder = Instance.new("Folder")
+	reactorFolder.Name = "CentralCyberReactor"
+	reactorFolder.Parent = rootFolder
 
-	local monolith = createPart("CenterMonolith", Vector3.new(10, 24, 10), CFrame.new(0, 19.1, 0), Color3.fromRGB(38, 46, 60), Enum.Material.Metal, rootFolder, true)
+	-- Heavy Octagonal Cast-Concrete Plinth
+	createPart("ReactorBaseTier1", Vector3.new(24, 1.8, 24), CFrame.new(0, 5.0, 0), Color3.fromRGB(24, 28, 40), Enum.Material.Concrete, reactorFolder, true)
+	createPart("ReactorBaseTier2", Vector3.new(20, 1.4, 20), CFrame.new(0, 6.4, 0), Color3.fromRGB(30, 41, 59), Enum.Material.DiamondPlate, reactorFolder, true)
+	createPart("ReactorCautionBorder", Vector3.new(20.4, 0.3, 20.4), CFrame.new(0, 7.15, 0), Color3.fromRGB(245, 158, 11), Enum.Material.SmoothPlastic, reactorFolder, false)
 
-	for _, xSide in { -5, 5 } do
-		for _, zSide in { -5, 5 } do
-			createPart(`MonolithCorner_{xSide}_{zSide}`, Vector3.new(1.6, 26, 1.6), CFrame.new(xSide, 19.1, zSide), Color3.fromRGB(24, 28, 40), Enum.Material.DiamondPlate, monolith, false)
-		end
+	-- Central Cylindrical Plasma Energy Core (Glowing Cyan)
+	local reactorCore = createPart("ReactorPlasmaCore", Vector3.new(10, 20, 10), CFrame.new(0, 17.5, 0), Color3.fromRGB(14, 165, 233), Enum.Material.Neon, reactorFolder, false)
+	local coreMesh = Instance.new("CylinderMesh")
+	coreMesh.Parent = reactorCore
+
+	local coreLight = Instance.new("PointLight")
+	coreLight.Color = Color3.fromRGB(56, 189, 248)
+	coreLight.Range = 45
+	coreLight.Brightness = 3.2
+	coreLight.Parent = reactorCore
+
+	-- Slotted Dark Steel Reactor Containment Cage around Core
+	for a = 0, 7 do
+		local radAngle = a * (math.pi / 4)
+		local pX = math.cos(radAngle) * 5.6
+		local pZ = math.sin(radAngle) * 5.6
+		createPart(`ReactorCagePillar_{a}`, Vector3.new(1.4, 20, 1.4), CFrame.new(pX, 17.5, pZ), Color3.fromRGB(15, 23, 42), Enum.Material.Metal, reactorFolder, true)
 	end
 
-	createPart("MonolithCrownCap", Vector3.new(12.5, 2.4, 12.5), CFrame.new(0, FLOOR_Y + 28.5, 0), Color3.fromRGB(15, 23, 42), Enum.Material.Metal, monolith, true)
-	createPart("MonolithHoloRing", Vector3.new(14, 0.4, 14), CFrame.new(0, FLOOR_Y + 29.9, 0), Color3.fromRGB(56, 189, 248), Enum.Material.Neon, monolith, false)
-	createPart("MonolithSpire", Vector3.new(0.8, 8, 0.8), CFrame.new(0, FLOOR_Y + 34, 0), Color3.fromRGB(203, 213, 225), Enum.Material.Metal, monolith, false)
-
-	local topBeacon = createPart("MonolithBeacon", Vector3.new(1.2, 1.2, 1.2), CFrame.new(0, FLOOR_Y + 38.5, 0), Color3.fromRGB(245, 158, 11), Enum.Material.Neon, monolith, false)
-	local mBeaconLight = Instance.new("PointLight")
-	mBeaconLight.Color = Color3.fromRGB(245, 158, 11)
-	mBeaconLight.Range = 35
-	mBeaconLight.Brightness = 2.4
-	mBeaconLight.Parent = topBeacon
-
+	-- 4 Heavy Steel Structural Pylon Buttresses (North, South, East, West)
 	for _, dir in { Vector3.new(1, 0, 0), Vector3.new(-1, 0, 0), Vector3.new(0, 0, 1), Vector3.new(0, 0, -1) } do
-		local mDownFixture = createPart("MonolithFloodFixture", Vector3.new(2.4, 0.8, 2.4), CFrame.new(dir * 6.5 + Vector3.new(0, FLOOR_Y + 27.5, 0)), Color3.fromRGB(254, 240, 138), Enum.Material.Neon, monolith, false)
-		local mDownSpot = Instance.new("SpotLight")
-		mDownSpot.Name = "MonolithPlazaSpot"
-		mDownSpot.Face = Enum.NormalId.Bottom
-		mDownSpot.Angle = 125
-		mDownSpot.Range = 75
-		mDownSpot.Brightness = 4.2
-		mDownSpot.Color = Color3.fromRGB(255, 248, 235)
-		mDownSpot.Shadows = true
-		mDownSpot.Parent = mDownFixture
+		local buttress = createPart("ReactorButtressPylon", Vector3.new(3.2, 24, 3.2), CFrame.new(dir * 11 + Vector3.new(0, 17.5, 0)), Color3.fromRGB(38, 46, 60), Enum.Material.Metal, reactorFolder, true)
+		createPart("ButtressHazardTrim", Vector3.new(3.4, 6.0, 0.3), buttress.CFrame * CFrame.new(0, -6.0, 1.7), Color3.fromRGB(245, 158, 11), Enum.Material.SmoothPlastic, buttress, false)
+
+		-- Downward Sodium Floodlights on Pylons
+		local fFixture = createPart("ReactorFloodFixture", Vector3.new(2.4, 0.8, 2.4), CFrame.new(dir * 11 + Vector3.new(0, 28, 0)), Color3.fromRGB(254, 240, 138), Enum.Material.Neon, buttress, false)
+		local fSpot = Instance.new("SpotLight")
+		fSpot.Face = Enum.NormalId.Bottom
+		fSpot.Angle = 110
+		fSpot.Range = 65
+		fSpot.Brightness = 3.5
+		fSpot.Color = Color3.fromRGB(255, 248, 235)
+		fSpot.Shadows = true
+		fSpot.Parent = fFixture
 	end
 
-	-- Leaderboard Surface GUI
+	-- Overhead Rotating Coolant Magnetic Rings
+	createPart("ReactorMagneticRingTop", Vector3.new(15, 1.2, 15), CFrame.new(0, 26, 0), Color3.fromRGB(56, 189, 248), Enum.Material.Neon, reactorFolder, false)
+	createPart("ReactorMagneticRingMid", Vector3.new(17, 1.0, 17), CFrame.new(0, 20, 0), Color3.fromRGB(245, 158, 11), Enum.Material.Neon, reactorFolder, false)
+
+	-- Leaderboard Array (Embedded smoothly into South face of reactor towards arrivals)
+	local lbBacking = createPart("LeaderboardBacking", Vector3.new(11, 14, 1.2), CFrame.new(0, 16.5, 6.2), Color3.fromRGB(15, 17, 26), Enum.Material.Metal, reactorFolder, true)
 	local sGui = Instance.new("SurfaceGui")
 	sGui.Name = "LeaderboardGui"
 	sGui.Face = Enum.NormalId.Front
-	sGui.CanvasSize = Vector2.new(400, 600)
-	sGui.LightInfluence = 0.4
-	sGui.Parent = monolith
+	sGui.CanvasSize = Vector2.new(450, 600)
+	sGui.LightInfluence = 0.2
+	sGui.Parent = lbBacking
 
 	local lbTitle = Instance.new("TextLabel")
-	lbTitle.Size = UDim2.new(1, 0, 0, 70)
-	lbTitle.BackgroundColor3 = Color3.fromRGB(15, 17, 26)
-	lbTitle.Text = "🏆 VAULT WARS: TOP NET WORTH"
-	lbTitle.TextColor3 = Color3.fromRGB(250, 204, 21)
-	lbTitle.TextSize = 20
-	lbTitle.Font = Enum.Font.GothamBlack
+	lbTitle.Size = UDim2.new(1, 0, 0, 65)
+	lbTitle.BackgroundColor3 = Color3.fromRGB(11, 13, 20)
+	lbTitle.Text = "TOP VAULT NET WORTH"
+	lbTitle.TextColor3 = Color3.fromRGB(56, 189, 248)
+	lbTitle.TextSize = 22
+	lbTitle.Font = Enum.Font.BuilderSansExtraBold
 	lbTitle.Parent = sGui
 
 	local lbFrame = Instance.new("Frame")
 	lbFrame.Name = "LeaderboardList"
-	lbFrame.Size = UDim2.new(1, 0, 1, -70)
-	lbFrame.Position = UDim2.new(0, 0, 0, 70)
-	lbFrame.BackgroundColor3 = Color3.fromRGB(24, 24, 27)
+	lbFrame.Size = UDim2.new(1, 0, 1, -65)
+	lbFrame.Position = UDim2.new(0, 0, 0, 65)
+	lbFrame.BackgroundColor3 = Color3.fromRGB(18, 22, 32)
+	lbFrame.BorderSizePixel = 0
 	lbFrame.Parent = sGui
 
-	-- ── 2.4. ELEVATED CENTRAL COMMAND ARRIVAL PLATFORM (South Mezzanine) ──
+	-- ── 2.4. SECTOR-7 TRANSIT DOCK (Authentic Subterranean Station Terminal) ──
 	local deckH = FLOOR_Y + 4.5 -- 8.5
-	local arrivalDeck = createPart(
+	local stationFolder = Instance.new("Folder")
+	stationFolder.Name = "Sector7TransitTerminal"
+	stationFolder.Parent = rootFolder
+
+	createPart(
 		"ArrivalDeck",
-		Vector3.new(26, 2.0, 18),
+		Vector3.new(34, 2.0, 20),
 		CFrame.new(0, deckH, 36),
 		Color3.fromRGB(24, 28, 40),
 		Enum.Material.DiamondPlate,
-		rootFolder,
+		stationFolder,
 		true
 	)
-	createPart("ArrivalDeckTrim", Vector3.new(26.6, 0.4, 18.6), CFrame.new(0, deckH + 1.0, 36), Color3.fromRGB(56, 189, 248), Enum.Material.Neon, rootFolder, false)
 
-	for _, xR in { -12.6, 12.6 } do
-		createPart(`DeckRailX_{xR}`, Vector3.new(0.6, 3.6, 18), CFrame.new(xR, deckH + 2.5, 36), Color3.fromRGB(51, 65, 85), Enum.Material.Metal, rootFolder, true)
+	-- Station Back Security Wall (Encloses the South boundary behind spawns)
+	local stationBackWall = createPart(
+		"StationBackWall",
+		Vector3.new(36, 16, 3.6),
+		CFrame.new(0, deckH + 8, 46.5),
+		Color3.fromRGB(30, 36, 48),
+		Enum.Material.Concrete,
+		stationFolder,
+		true
+	)
+	for _, pX in { -16, -8, 0, 8, 16 } do
+		createPart(`StationPilaster_{pX}`, Vector3.new(1.8, 16.5, 2.0), CFrame.new(pX, deckH + 8, 45.2), Color3.fromRGB(18, 22, 32), Enum.Material.Metal, stationBackWall, true)
 	end
-	createPart("DeckRailSouth", Vector3.new(26, 3.6, 0.6), CFrame.new(0, deckH + 2.5, 44.6), Color3.fromRGB(51, 65, 85), Enum.Material.Metal, rootFolder, true)
+	createPart("StationHazardStripe", Vector3.new(34, 1.2, 0.4), CFrame.new(0, deckH + 3.0, 44.5), Color3.fromRGB(245, 158, 11), Enum.Material.SmoothPlastic, stationBackWall, false)
 
-	-- Dual Wide Concrete Staircases Leading North Down to Plaza (FLOOR_Y = 4.0)
-	for _, xStair in { -6.5, 6.5 } do
+	-- Overhead High-Bay Station Floodlights
+	for _, lX in { -10, 0, 10 } do
+		local stFlood = createPart(`StationFlood_{lX}`, Vector3.new(3.0, 0.6, 2.0), CFrame.new(lX, deckH + 14.5, 43.5), Color3.fromRGB(254, 240, 138), Enum.Material.Neon, stationBackWall, false)
+		local sLight = Instance.new("SpotLight")
+		sLight.Face = Enum.NormalId.Bottom
+		sLight.Range = 40
+		sLight.Angle = 90
+		sLight.Brightness = 3.5
+		sLight.Color = Color3.fromRGB(255, 248, 230)
+		sLight.Shadows = true
+		sLight.Parent = stFlood
+	end
+
+	-- Left and Right Security Railings
+	createPart("DeckRailL", Vector3.new(0.6, 3.6, 20), CFrame.new(-16.7, deckH + 2.5, 36), Color3.fromRGB(51, 65, 85), Enum.Material.Metal, stationFolder, true)
+	createPart("DeckRailR", Vector3.new(0.6, 3.6, 20), CFrame.new(16.7, deckH + 2.5, 36), Color3.fromRGB(51, 65, 85), Enum.Material.Metal, stationFolder, true)
+
+	-- Twin Wide Concrete Staircases Leading Down to Plaza
+	for _, xStair in { -8.5, 8.5 } do
 		for step = 1, 6 do
 			local sY = deckH - (step * (4.5 / 6))
 			local sZ = 26 - (step * 2.0)
-			createPart(`ArrivalStep_{xStair}_{step}`, Vector3.new(9, 0.8, 2.2), CFrame.new(xStair, sY, sZ), Color3.fromRGB(38, 46, 60), Enum.Material.Concrete, rootFolder, true)
+			local stepPart = createPart(`ArrivalStep_{xStair}_{step}`, Vector3.new(11, 0.8, 2.2), CFrame.new(xStair, sY, sZ), Color3.fromRGB(38, 46, 60), Enum.Material.Concrete, stationFolder, true)
+			createPart(`StepTread_{xStair}_{step}`, Vector3.new(10.8, 0.1, 0.4), CFrame.new(xStair, sY + 0.45, sZ - 0.9), Color3.fromRGB(56, 189, 248), Enum.Material.Neon, stepPart, false)
 		end
 	end
 
-	-- Overhead Holographic Directional Sign
-	local signArch = createPart("ArrivalSignArch", Vector3.new(22, 1.2, 1.2), CFrame.new(0, deckH + 9, 44), Color3.fromRGB(15, 23, 42), Enum.Material.Metal, rootFolder, true)
+	-- Overhead Gantry Arch with Professional Signage (No Emojis!)
+	local signArch = createPart("ArrivalSignArch", Vector3.new(24, 1.4, 1.4), CFrame.new(0, deckH + 11, 26), Color3.fromRGB(15, 23, 42), Enum.Material.Metal, stationFolder, true)
 	local signGui = Instance.new("BillboardGui")
 	signGui.Name = "ArrivalSignGui"
-	signGui.Size = UDim2.new(0, 340, 0, 56)
-	signGui.StudsOffset = Vector3.new(0, 1.8, 0)
+	signGui.Size = UDim2.new(0, 360, 0, 50)
+	signGui.StudsOffset = Vector3.new(0, 2.2, 0)
 	signGui.AlwaysOnTop = true
 	signGui.Parent = signArch
+
 	local sFrame = Instance.new("Frame")
 	sFrame.Size = UDim2.fromScale(1, 1)
 	sFrame.BackgroundColor3 = Color3.fromRGB(15, 17, 26)
-	sFrame.BackgroundTransparency = 0.2
+	sFrame.BackgroundTransparency = 0.12
 	sFrame.Parent = signGui
-	Instance.new("UICorner", sFrame).CornerRadius = UDim.new(0, 10)
+	Instance.new("UICorner", sFrame).CornerRadius = UDim.new(0, 8)
 	local sStroke = Instance.new("UIStroke", sFrame)
 	sStroke.Color = Color3.fromRGB(56, 189, 248)
-	sStroke.Thickness = 1.6
+	sStroke.Thickness = 1.4
+
 	local sLbl = Instance.new("TextLabel")
 	sLbl.Size = UDim2.fromScale(1, 1)
 	sLbl.BackgroundTransparency = 1
-	sLbl.Text = "⚡ SECTOR-7 COMMAND ARRIVAL ⚡\n[ CHOOSE YOUR FORTIFIED VAULT BASE ]"
-	sLbl.TextColor3 = Color3.fromRGB(224, 242, 254)
+	sLbl.Text = "SECTOR-7 TRANSIT TERMINAL\nSELECT YOUR FORTIFIED VAULT"
+	sLbl.TextColor3 = Color3.fromRGB(248, 250, 252)
 	sLbl.TextSize = 13
-	sLbl.Font = Enum.Font.GothamBlack
+	sLbl.Font = Enum.Font.BuilderSansExtraBold
 	sLbl.Parent = sFrame
 
-	-- SpawnLocation centered on Arrival Deck facing North towards the Leaderboard Monolith
+	-- SpawnLocation centered on Arrival Deck facing North towards Plaza
 	local spawnPad = Instance.new("SpawnLocation")
 	spawnPad.Name = "PlazaSpawn"
 	spawnPad.Size = Vector3.new(16, 0.4, 12)
@@ -548,9 +597,101 @@ function PlotService.Init()
 	spawnPad.Anchored = true
 	spawnPad.CanCollide = true
 	spawnPad.Material = Enum.Material.SmoothPlastic
-	spawnPad.Color = Color3.fromRGB(56, 189, 248)
+	spawnPad.Color = Color3.fromRGB(30, 41, 59)
 	spawnPad.Duration = 0
-	spawnPad.Parent = rootFolder
+	spawnPad.Parent = stationFolder
+
+	-- ── 2.55. PLAZA SECURITY TRAINING DRONES (Immediate Combat Gameplay!) ──
+	local function createCombatTrainingDrone(name: string, spawnCF: CFrame)
+		local botModel = Instance.new("Model")
+		botModel.Name = name
+		botModel.Parent = rootFolder
+
+		local torso = createPart("Torso", Vector3.new(2.4, 2.6, 1.4), spawnCF * CFrame.new(0, 3.4, 0), Color3.fromRGB(30, 41, 59), Enum.Material.Metal, botModel, true)
+		botModel.PrimaryPart = torso
+
+		local head = createPart("Head", Vector3.new(1.4, 1.4, 1.4), torso.CFrame * CFrame.new(0, 1.9, 0), Color3.fromRGB(15, 23, 42), Enum.Material.SmoothPlastic, botModel, true)
+		createPart("Visor", Vector3.new(1.1, 0.4, 0.3), head.CFrame * CFrame.new(0, 0.2, -0.65), Color3.fromRGB(239, 68, 68), Enum.Material.Neon, botModel, false)
+
+		createPart("TargetPedestal", Vector3.new(4.5, 0.6, 4.5), spawnCF * CFrame.new(0, 0.3, 0), Color3.fromRGB(24, 28, 40), Enum.Material.DiamondPlate, botModel, true)
+		createPart("TargetRing", Vector3.new(5.0, 0.2, 5.0), spawnCF * CFrame.new(0, 0.55, 0), Color3.fromRGB(239, 68, 68), Enum.Material.Neon, botModel, false)
+
+		local hum = Instance.new("Humanoid")
+		hum.MaxHealth = 100
+		hum.Health = 100
+		hum.NameDisplayDistance = 0
+		hum.HealthDisplayDistance = 0
+		hum.Parent = botModel
+
+		local bGui = Instance.new("BillboardGui")
+		bGui.Name = "DroneBillboard"
+		bGui.Size = UDim2.new(0, 180, 0, 42)
+		bGui.StudsOffset = Vector3.new(0, 2.6, 0)
+		bGui.AlwaysOnTop = true
+		bGui.Parent = head
+
+		local dCard = Instance.new("Frame")
+		dCard.Size = UDim2.fromScale(1, 1)
+		dCard.BackgroundColor3 = Color3.fromRGB(15, 17, 26)
+		dCard.BackgroundTransparency = 0.15
+		dCard.Parent = bGui
+		Instance.new("UICorner", dCard).CornerRadius = UDim.new(0, 8)
+		local dStroke = Instance.new("UIStroke", dCard)
+		dStroke.Color = Color3.fromRGB(239, 68, 68)
+		dStroke.Thickness = 1.2
+
+		local dTitle = Instance.new("TextLabel")
+		dTitle.Size = UDim2.new(1, 0, 0, 18)
+		dTitle.Position = UDim2.new(0, 0, 0, 3)
+		dTitle.BackgroundTransparency = 1
+		dTitle.Text = "TRAINING DRONE"
+		dTitle.TextColor3 = Color3.fromRGB(248, 250, 252)
+		dTitle.TextSize = 11
+		dTitle.Font = Enum.Font.BuilderSansExtraBold
+		dTitle.Parent = dCard
+
+		local hpBg = Instance.new("Frame")
+		hpBg.Size = UDim2.new(1, -16, 0, 6)
+		hpBg.Position = UDim2.new(0, 8, 0, 25)
+		hpBg.BackgroundColor3 = Color3.fromRGB(11, 13, 20)
+		hpBg.BorderSizePixel = 0
+		hpBg.Parent = dCard
+		Instance.new("UICorner", hpBg).CornerRadius = UDim.new(1, 0)
+
+		local hpFill = Instance.new("Frame")
+		hpFill.Size = UDim2.fromScale(1, 1)
+		hpFill.BackgroundColor3 = Color3.fromRGB(239, 68, 68)
+		hpFill.BorderSizePixel = 0
+		hpFill.Parent = hpBg
+		Instance.new("UICorner", hpFill).CornerRadius = UDim.new(1, 0)
+
+		hum.HealthChanged:Connect(function(newHP)
+			local frac = math.clamp(newHP / 100, 0, 1)
+			hpFill.Size = UDim2.fromScale(frac, 1)
+			if newHP <= 0 then
+				task.wait(3.0)
+				hum.Health = 100
+				hpFill.Size = UDim2.fromScale(1, 1)
+			end
+		end)
+
+		torso.Touched:Connect(function(hit)
+			local tool = hit:FindFirstAncestorOfClass("Tool")
+			if tool and string.find(tool.Name, "Baton") then
+				local p = tool.Parent and Players:GetPlayerFromCharacter(tool.Parent)
+				if p and hum.Health > 0 then
+					hum:TakeDamage(35)
+					local dataSvc = getDataService()
+					if dataSvc then
+						dataSvc.AddCash(p, 25)
+					end
+				end
+			end
+		end)
+	end
+
+	createCombatTrainingDrone("TrainingDrone_1", CFrame.new(-18, FLOOR_Y, 8))
+	createCombatTrainingDrone("TrainingDrone_2", CFrame.new(18, FLOOR_Y, 8))
 
 	-- ── 2.5. CENTRAL PLAZA RELIC FUSION CHAMBER (North side of Central Core) ──
 	local openFusionEvt = ReplicatedStorage:FindFirstChild("OpenFusionModal") :: RemoteEvent?
@@ -645,48 +786,58 @@ function PlotService.Init()
 		-- 3.2. ELEVATED BUNKER FOUNDATION FLOOR (Top at Y=4.0, zero clipping)
 		local floor = createPart("PlotFloor", Vector3.new(pWidth, 2.0, pLen), faceCenterCF * CFrame.new(0, 1.0, 0), Color3.fromRGB(45, 52, 70), Enum.Material.Slate, pFolder)
 
+		-- Permanent Armored Compound Perimeter Walls & Corner Buttresses
+		createPart(`CompoundWallL_{i}`, Vector3.new(1.8, 12, pLen), faceCenterCF * CFrame.new(-pWidth / 2 + 0.9, 6.0, 0), Color3.fromRGB(42, 48, 64), Enum.Material.Concrete, pFolder, true)
+		createPart(`CompoundWallR_{i}`, Vector3.new(1.8, 12, pLen), faceCenterCF * CFrame.new(pWidth / 2 - 0.9, 6.0, 0), Color3.fromRGB(42, 48, 64), Enum.Material.Concrete, pFolder, true)
+		createPart(`CompoundWallBack_{i}`, Vector3.new(pWidth, 12, 1.8), faceCenterCF * CFrame.new(0, 6.0, pLen / 2 - 0.9), Color3.fromRGB(42, 48, 64), Enum.Material.Concrete, pFolder, true)
+
+		for _, xSide in { -pWidth / 2 + 0.9, pWidth / 2 - 0.9 } do
+			createPart(`CornerPilaster_{i}_{xSide}`, Vector3.new(2.6, 13, 2.6), faceCenterCF * CFrame.new(xSide, 6.5, pLen / 2 - 0.9), Color3.fromRGB(24, 28, 40), Enum.Material.Metal, pFolder, true)
+		end
+
 		-- 3.3. PERIMETER SAFETY CURBS WITH OPEN ENTRANCE PORTAL
-		-- Left & Right Flank Curbs
-		createPart("PlotCurbLeft", Vector3.new(1.2, 0.8, pLen), faceCenterCF * CFrame.new(-pWidth / 2 + 0.6, 2.4, 0), Color3.fromRGB(30, 41, 59), Enum.Material.DiamondPlate, pFolder, true)
-		createPart("PlotCurbRight", Vector3.new(1.2, 0.8, pLen), faceCenterCF * CFrame.new(pWidth / 2 - 0.6, 2.4, 0), Color3.fromRGB(30, 41, 59), Enum.Material.DiamondPlate, pFolder, true)
-		-- Rear Bulkhead Curb
-		createPart("PlotCurbBack", Vector3.new(pWidth, 0.8, 1.2), faceCenterCF * CFrame.new(0, 2.4, pLen / 2 - 0.6), Color3.fromRGB(30, 41, 59), Enum.Material.DiamondPlate, pFolder, true)
-		-- Front Entrance Curbs (Left & Right segments leaving an open 12-stud walk-in portal)
-		local curbFrontWidth = (pWidth - 12) / 2
-		createPart("PlotCurbFrontL", Vector3.new(curbFrontWidth, 0.8, 1.2), faceCenterCF * CFrame.new(-pWidth / 2 + curbFrontWidth / 2, 2.4, -pLen / 2 + 0.6), Color3.fromRGB(30, 41, 59), Enum.Material.DiamondPlate, pFolder, true)
-		createPart("PlotCurbFrontR", Vector3.new(curbFrontWidth, 0.8, 1.2), faceCenterCF * CFrame.new(pWidth / 2 - curbFrontWidth / 2, 2.4, -pLen / 2 + 0.6), Color3.fromRGB(30, 41, 59), Enum.Material.DiamondPlate, pFolder, true)
+		-- Front Entrance Curbs (Left & Right segments leaving an open 14-stud walk-in portal)
+		local curbFrontWidth = (pWidth - 14) / 2
+		createPart("PlotCurbFrontL", Vector3.new(curbFrontWidth, 1.0, 1.4), faceCenterCF * CFrame.new(-pWidth / 2 + curbFrontWidth / 2, 2.5, -pLen / 2 + 0.7), Color3.fromRGB(30, 41, 59), Enum.Material.DiamondPlate, pFolder, true)
+		createPart("PlotCurbFrontR", Vector3.new(curbFrontWidth, 1.0, 1.4), faceCenterCF * CFrame.new(pWidth / 2 - curbFrontWidth / 2, 2.5, -pLen / 2 + 0.7), Color3.fromRGB(30, 41, 59), Enum.Material.DiamondPlate, pFolder, true)
 
 		-- 3.4. ENTRANCE ARCH SIGN / BEACON
-		local archLintel = createPart(`EntranceArch_{i}`, Vector3.new(16, 1.6, 1.6), faceCenterCF * CFrame.new(0, 11, -pLen / 2 + 1), Color3.fromRGB(24, 28, 40), Enum.Material.Metal, pFolder, true)
-		-- Structural Arch Columns
-		createPart(`ArchColL_{i}`, Vector3.new(1.6, 11, 1.6), faceCenterCF * CFrame.new(-7.5, 5.5, -pLen / 2 + 1), Color3.fromRGB(30, 41, 59), Enum.Material.Metal, pFolder, true)
-		createPart(`ArchColR_{i}`, Vector3.new(1.6, 11, 1.6), faceCenterCF * CFrame.new(7.5, 5.5, -pLen / 2 + 1), Color3.fromRGB(30, 41, 59), Enum.Material.Metal, pFolder, true)
+		local archLintel = createPart(`EntranceArch_{i}`, Vector3.new(18, 2.0, 2.0), faceCenterCF * CFrame.new(0, 11, -pLen / 2 + 1), Color3.fromRGB(24, 28, 40), Enum.Material.Metal, pFolder, true)
+		createPart(`ArchColL_{i}`, Vector3.new(1.8, 11, 1.8), faceCenterCF * CFrame.new(-8.2, 5.5, -pLen / 2 + 1), Color3.fromRGB(30, 41, 59), Enum.Material.Metal, pFolder, true)
+		createPart(`ArchColR_{i}`, Vector3.new(1.8, 11, 1.8), faceCenterCF * CFrame.new(8.2, 5.5, -pLen / 2 + 1), Color3.fromRGB(30, 41, 59), Enum.Material.Metal, pFolder, true)
+
+		-- Entrance Arch Floodlights
+		local archLight = Instance.new("PointLight")
+		archLight.Color = Color3.fromRGB(56, 189, 248)
+		archLight.Range = 24
+		archLight.Brightness = 2.4
+		archLight.Parent = archLintel
 
 		local ownerGui = Instance.new("BillboardGui")
 		ownerGui.Name = "OwnerBillboard"
 		ownerGui.Size = UDim2.new(0, 260, 0, 52)
-		ownerGui.StudsOffset = Vector3.new(0, 2.6, 0)
+		ownerGui.StudsOffset = Vector3.new(0, 2.8, 0)
 		ownerGui.AlwaysOnTop = true
 		ownerGui.Parent = archLintel
 
 		local obCard = Instance.new("Frame")
 		obCard.Size = UDim2.fromScale(1, 1)
 		obCard.BackgroundColor3 = Color3.fromRGB(15, 17, 26)
-		obCard.BackgroundTransparency = 0.2
+		obCard.BackgroundTransparency = 0.15
 		obCard.Parent = ownerGui
 		Instance.new("UICorner", obCard).CornerRadius = UDim.new(0, 10)
 		local obStroke = Instance.new("UIStroke", obCard)
-		obStroke.Color = Color3.fromRGB(148, 163, 184)
+		obStroke.Color = Color3.fromRGB(16, 185, 129)
 		obStroke.Thickness = 1.6
 
 		local obText = Instance.new("TextLabel")
 		obText.Name = "OwnerNameLabel"
 		obText.Size = UDim2.fromScale(1, 1)
 		obText.BackgroundTransparency = 1
-		obText.Text = `[ ⚡ VAULT #{i}: VACANT ⚡ ]`
-		obText.TextColor3 = Color3.fromRGB(148, 163, 184)
+		obText.Text = `VAULT #{i} • AVAILABLE`
+		obText.TextColor3 = Color3.fromRGB(110, 231, 183)
 		obText.TextSize = 13
-		obText.Font = Enum.Font.GothamBlack
+		obText.Font = Enum.Font.BuilderSansExtraBold
 		obText.Parent = obCard
 
 		-- 3.5. IN-WORLD PHYSICAL BASE CLAIM PAD
@@ -698,6 +849,7 @@ function PlotService.Init()
 			Folder = pFolder,
 			Floor = floor,
 			CF = faceCenterCF,
+			ArchLintel = archLintel,
 			Owner = nil :: Player?,
 			OwnerLabel = obText,
 			OwnerStroke = obStroke,
@@ -769,9 +921,10 @@ function PlotService.ClaimPlot(player: Player, plotIndex: number)
 	plot.Owner = player
 	PlotService._playerPlots[player] = plotIndex
 
-	-- Update entrance banner
-	plot.OwnerLabel.Text = `👑 {string.upper(player.DisplayName)}'S FORTIFIED VAULT`
+	-- Update entrance banner (Clean Builder typography, zero emoji spam)
+	plot.OwnerLabel.Text = `{string.upper(player.DisplayName)}'S FORTIFIED VAULT`
 	plot.OwnerLabel.TextColor3 = Color3.fromRGB(56, 189, 248)
+	plot.OwnerLabel.Font = Enum.Font.BuilderSansExtraBold
 	if plot.OwnerStroke then
 		plot.OwnerStroke.Color = Color3.fromRGB(56, 189, 248)
 	end
@@ -782,11 +935,25 @@ function PlotService.ClaimPlot(player: Player, plotIndex: number)
 		plot.ClaimModel = nil
 	end
 
-	-- Celebration particles on player
+	-- Auto-unlock starter Mint Press & Bank Safe in playerData so income flows immediately!
+	local dataSvc = getDataService()
+	if dataSvc then
+		local data = dataSvc.GetData(player)
+		if data then
+			if not data.PurchasedUpgrades then
+				data.PurchasedUpgrades = {}
+			end
+			data.PurchasedUpgrades["MintPress"] = true
+			data.PurchasedUpgrades["BankSafe"] = true
+		end
+	end
+
+	-- Visual wayfinding guide: Glowing cyan beacon line leading player to their vault!
 	task.spawn(function()
 		local char = player.Character or player.CharacterAdded:Wait()
 		local root = char:WaitForChild("HumanoidRootPart", 10) :: BasePart?
-		if root then
+		if root and plot.ArchLintel then
+			-- Celebration burst on claim
 			local emitter = Instance.new("ParticleEmitter")
 			emitter.Rate = 0
 			emitter.Speed = NumberRange.new(10, 20)
@@ -794,8 +961,51 @@ function PlotService.ClaimPlot(player: Player, plotIndex: number)
 			emitter.Color = ColorSequence.new(Color3.fromRGB(56, 189, 248))
 			emitter.Parent = root
 			emitter:Emit(40)
+
+			-- Wayfinding attachment & beam
+			local pAtt = Instance.new("Attachment")
+			pAtt.Name = "VaultWaypointAtt"
+			pAtt.Position = Vector3.new(0, -2, 0)
+			pAtt.Parent = root
+
+			local vAtt = Instance.new("Attachment")
+			vAtt.Name = "VaultTargetAtt"
+			vAtt.Position = Vector3.new(0, -4, 0)
+			vAtt.Parent = plot.ArchLintel
+
+			local beam = Instance.new("Beam")
+			beam.Name = "VaultGuideBeam"
+			beam.Attachment0 = pAtt
+			beam.Attachment1 = vAtt
+			beam.Color = ColorSequence.new(Color3.fromRGB(56, 189, 248))
+			beam.Width0 = 0.6
+			beam.Width1 = 1.6
+			beam.FaceCamera = true
+			beam.Transparency = NumberSequence.new({
+				NumberSequenceKeypoint.new(0, 0.15),
+				NumberSequenceKeypoint.new(1, 0.45),
+			})
+			beam.Parent = root
+
+			-- Remove beam after 45 seconds or when player enters their vault
+			task.delay(45, function()
+				if beam and beam.Parent then beam:Destroy() end
+				if pAtt and pAtt.Parent then pAtt:Destroy() end
+				if vAtt and vAtt.Parent then vAtt:Destroy() end
+			end)
 		end
 	end)
+
+	-- Toast notification
+	local notifEvt = ReplicatedStorage:FindFirstChild("NotificationBroadcast") :: RemoteEvent?
+	if notifEvt then
+		notifEvt:FireClient(player, {
+			Type = "Success",
+			Title = "VAULT ASSIGNED",
+			Message = `Follow the cyan waypoint beacon to Vault #{plotIndex}!`,
+			Duration = 5,
+		})
+	end
 
 	-- Load saved upgrades & spawn next button
 	PlotService.LoadPlotForPlayer(plotIndex, player)
@@ -830,10 +1040,11 @@ function PlotService.ReleasePlot(player: Player)
 	local plot = PlotService._plots[plotIndex]
 	if plot then
 		plot.Owner = nil
-		plot.OwnerLabel.Text = `[ ⚡ VAULT #{plotIndex}: VACANT ⚡ ]`
-		plot.OwnerLabel.TextColor3 = Color3.fromRGB(148, 163, 184)
+		plot.OwnerLabel.Text = `VAULT #{plotIndex} • AVAILABLE`
+		plot.OwnerLabel.TextColor3 = Color3.fromRGB(110, 231, 183)
+		plot.OwnerLabel.Font = Enum.Font.BuilderSansExtraBold
 		if plot.OwnerStroke then
-			plot.OwnerStroke.Color = Color3.fromRGB(148, 163, 184)
+			plot.OwnerStroke.Color = Color3.fromRGB(16, 185, 129)
 		end
 
 		-- Clean up current button
@@ -879,6 +1090,14 @@ function PlotService.LoadPlotForPlayer(plotIndex: number, player: Player)
 	local dataSvc = getDataService()
 	local data = dataSvc and dataSvc.GetData(player)
 	local purchased = (data and data.PurchasedUpgrades) or {}
+
+	-- Ensure starter mint machine & safe exist for instant gameplay!
+	if not plot.BuiltObjects["MintPress"] then
+		UPGRADE_DEFS["MintPress"].Build(plot)
+	end
+	if not plot.BuiltObjects["BankSafe"] then
+		UPGRADE_DEFS["BankSafe"].Build(plot)
+	end
 
 	-- 1. Build all previously purchased upgrades
 	for _, upId in ORDERED_UPGRADES do

@@ -67,20 +67,20 @@ local function setupAtmosphericLighting()
 		Lighting.Technology = Enum.Technology.Future
 	end)
 
-	Lighting.ClockTime = 16.2
-	Lighting.TimeOfDay = "16:12:00"
-	Lighting.Brightness = 1.5
-	Lighting.Ambient = Color3.fromRGB(8, 8, 14)
-	Lighting.OutdoorAmbient = Color3.fromRGB(36, 42, 54)
-	Lighting.ColorShift_Top = Color3.fromRGB(255, 244, 228)
-	Lighting.ColorShift_Bottom = Color3.fromRGB(28, 32, 42)
-	Lighting.GeographicLatitude = 38
+	Lighting.ClockTime = 0.0
+	Lighting.TimeOfDay = "00:00:00"
+	Lighting.Brightness = 0.0
+	Lighting.Ambient = Color3.fromRGB(24, 28, 38)
+	Lighting.OutdoorAmbient = Color3.fromRGB(16, 20, 30)
+	Lighting.ColorShift_Top = Color3.fromRGB(180, 200, 230)
+	Lighting.ColorShift_Bottom = Color3.fromRGB(15, 18, 25)
+	Lighting.GeographicLatitude = 0
 	Lighting.GlobalShadows = true
-	Lighting.EnvironmentDiffuseScale = 1.0
-	Lighting.EnvironmentSpecularScale = 1.0
-	Lighting.FogStart = 350
-	Lighting.FogEnd = 1800
-	Lighting.FogColor = Color3.fromRGB(28, 34, 46)
+	Lighting.EnvironmentDiffuseScale = 0.4
+	Lighting.EnvironmentSpecularScale = 0.4
+	Lighting.FogStart = 250
+	Lighting.FogEnd = 1200
+	Lighting.FogColor = Color3.fromRGB(12, 15, 22)
 
 	for _, child in Lighting:GetChildren() do
 		if child:IsA("Sky") then
@@ -90,12 +90,13 @@ local function setupAtmosphericLighting()
 
 	local voidSky = Instance.new("Sky")
 	voidSky.Name = "SubterraneanAtmosphereSky"
-	voidSky.SkyboxBk = ""
-	voidSky.SkyboxDn = ""
-	voidSky.SkyboxFt = ""
-	voidSky.SkyboxLf = ""
-	voidSky.SkyboxRt = ""
-	voidSky.SkyboxUp = ""
+	-- Dark deep-space nebula asset IDs so no blue daytime sky can ever render
+	voidSky.SkyboxBk = "rbxassetid://159454299"
+	voidSky.SkyboxDn = "rbxassetid://159454299"
+	voidSky.SkyboxFt = "rbxassetid://159454299"
+	voidSky.SkyboxLf = "rbxassetid://159454299"
+	voidSky.SkyboxRt = "rbxassetid://159454299"
+	voidSky.SkyboxUp = "rbxassetid://159454299"
 	voidSky.SunAngularSize = 0
 	voidSky.MoonAngularSize = 0
 	voidSky.StarCount = 0
@@ -106,10 +107,10 @@ local function setupAtmosphericLighting()
 		atmosphere = Instance.new("Atmosphere")
 		atmosphere.Parent = Lighting
 	end
-	atmosphere.Density = 0.36
-	atmosphere.Offset = 0.22
-	atmosphere.Color = Color3.fromRGB(152, 168, 186)
-	atmosphere.Decay = Color3.fromRGB(72, 85, 106)
+	atmosphere.Density = 0.45
+	atmosphere.Offset = 0.20
+	atmosphere.Color = Color3.fromRGB(20, 24, 35)
+	atmosphere.Decay = Color3.fromRGB(10, 12, 18)
 	atmosphere.Glare = 0.0
 	atmosphere.Haze = 2.0
 
@@ -750,6 +751,17 @@ local function buildCavernCeilingCanopy(parent: Folder)
 			true
 		)
 	end
+
+	-- Full-Map Structural Cavern Cap (300x300 at Y=50, completely seals off open sky)
+	createPart(
+		"CavernFacilityCeilingCap",
+		Vector3.new(300, 4.0, 300),
+		CFrame.new(0, 50, 0),
+		Color3.fromRGB(15, 18, 26),
+		Enum.Material.Slate,
+		ceilingFolder,
+		true
+	)
 end
 
 -- ============================================================

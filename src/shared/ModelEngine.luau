@@ -892,10 +892,10 @@ function ModelEngine.CreateTycoonButton(
 	titleLbl.Size = UDim2.new(1, 0, 0.52, 0)
 	titleLbl.Position = UDim2.new(0, 0, 0.05, 0)
 	titleLbl.BackgroundTransparency = 1
-	titleLbl.Text = title
+	titleLbl.Text = string.upper(title)
 	titleLbl.TextColor3 = Color3.fromRGB(248, 250, 252)
-	titleLbl.TextSize = 13
-	titleLbl.Font = Enum.Font.GothamBlack
+	titleLbl.TextSize = 12
+	titleLbl.Font = Enum.Font.BuilderSansExtraBold
 	titleLbl.Parent = card
 
 	local costLbl = Instance.new("TextLabel")
@@ -903,10 +903,10 @@ function ModelEngine.CreateTycoonButton(
 	costLbl.Size = UDim2.new(1, 0, 0.42, 0)
 	costLbl.Position = UDim2.new(0, 0, 0.53, 0)
 	costLbl.BackgroundTransparency = 1
-	costLbl.Text = if cost == 0 then "🟢 FREE" else `💰 ${cost}`
+	costLbl.Text = if cost == 0 then "CLAIM FREE" else `$ {cost}`
 	costLbl.TextColor3 = if cost == 0 then Color3.fromRGB(16, 185, 129) else Color3.fromRGB(250, 204, 21)
-	costLbl.TextSize = 14
-	costLbl.Font = Enum.Font.GothamBlack
+	costLbl.TextSize = 13
+	costLbl.Font = Enum.Font.RobotoMono
 	costLbl.Parent = card
 
 	return model, pad, bGui, costLbl
@@ -925,10 +925,20 @@ function ModelEngine.CreateVaultClaimPad(parent: Instance, cf: CFrame, plotIndex
 
 	local pad = createPart("ClaimStepPad", Vector3.new(7.6, 0.5, 7.6), cf * CFrame.new(0, 0.55, 0), Color3.fromRGB(16, 185, 129), Enum.Material.Neon, model, false)
 
+	-- Vertical Emerald Beacon Column reaching into the cavern roof
+	local beacon = createCylinder("ClaimBeacon", Vector3.new(34, 2.4, 2.4), cf * CFrame.new(0, 17, 0) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(16, 185, 129), Enum.Material.Neon, model, false)
+	beacon.Transparency = 0.82
+
+	local bLight = Instance.new("PointLight")
+	bLight.Color = Color3.fromRGB(16, 185, 129)
+	bLight.Range = 22
+	bLight.Brightness = 2.4
+	bLight.Parent = pad
+
 	local bGui = Instance.new("BillboardGui")
 	bGui.Name = "ClaimBillboard"
 	bGui.Size = UDim2.new(0, 260, 0, 56)
-	bGui.StudsOffset = Vector3.new(0, 3.8, 0)
+	bGui.StudsOffset = Vector3.new(0, 4.2, 0)
 	bGui.AlwaysOnTop = true
 	bGui.Parent = pad
 
@@ -941,15 +951,15 @@ function ModelEngine.CreateVaultClaimPad(parent: Instance, cf: CFrame, plotIndex
 
 	local stroke = Instance.new("UIStroke", card)
 	stroke.Color = Color3.fromRGB(16, 185, 129)
-	stroke.Thickness = 2.0
+	stroke.Thickness = 1.8
 
 	local lbl = Instance.new("TextLabel")
 	lbl.Size = UDim2.fromScale(1, 1)
 	lbl.BackgroundTransparency = 1
-	lbl.Text = `[ 🟢 STEP TO CLAIM VAULT #{plotIndex} ]`
+	lbl.Text = `CLAIM VAULT #{plotIndex}\n[STEP TO ACTIVATE]`
 	lbl.TextColor3 = Color3.fromRGB(110, 231, 183)
 	lbl.TextSize = 13
-	lbl.Font = Enum.Font.GothamBlack
+	lbl.Font = Enum.Font.BuilderSansExtraBold
 	lbl.Parent = card
 
 	return model, pad

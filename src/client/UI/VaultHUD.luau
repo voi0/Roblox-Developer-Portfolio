@@ -212,7 +212,7 @@ function VaultHUD.Create()
 	bankedLabel.Text = "$0"
 	bankedLabel.TextColor3 = Color3.fromRGB(248, 250, 252)
 	bankedLabel.TextSize = 22
-	bankedLabel.Font = Enum.Font.BuilderMono
+	bankedLabel.Font = Enum.Font.RobotoMono
 	bankedLabel.TextXAlignment = Enum.TextXAlignment.Center
 	bankedLabel.Parent = netWorthBox
 	VaultHUD._bankedLabel = bankedLabel
@@ -253,7 +253,7 @@ function VaultHUD.Create()
 	incomeLabel.Text = "+$5/s"
 	incomeLabel.TextColor3 = Color3.fromRGB(110, 231, 183)
 	incomeLabel.TextSize = 12
-	incomeLabel.Font = Enum.Font.BuilderMono
+	incomeLabel.Font = Enum.Font.RobotoMono
 	incomeLabel.TextXAlignment = Enum.TextXAlignment.Center
 	incomeLabel.Parent = incomePill
 	VaultHUD._incomeLabel = incomeLabel
@@ -370,7 +370,7 @@ function VaultHUD.Create()
 		keyLbl.Text = keyText
 		keyLbl.TextColor3 = accentColor
 		keyLbl.TextSize = 9
-		keyLbl.Font = Enum.Font.BuilderMono
+		keyLbl.Font = Enum.Font.RobotoMono
 		keyLbl.TextXAlignment = Enum.TextXAlignment.Left
 		keyLbl.Parent = btn
 

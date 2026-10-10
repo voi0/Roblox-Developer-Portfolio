@@ -111,34 +111,17 @@ end
 -- CAMERA TRAUMA & BOB STEPPER
 -- ============================================================
 function AnimationEngine._onRenderStepped(dt: number)
-	local char = player.Character
-	local hum = char and char:FindFirstChildOfClass("Humanoid")
-	local root = char and char:FindFirstChild("HumanoidRootPart") :: BasePart?
-
 	-- 1. Step Springs
 	local camOffset = AnimationEngine._camSpring:Update(dt)
-	local swayOffset = AnimationEngine._swaySpring:Update(dt)
 
-	-- 2. Calculate Natural Footstep Bobbing if Moving
-	local bobCFrame = CFrame.new()
-	if hum and root and hum.Health > 0 and hum.MoveDirection.Magnitude > 0.1 then
-		local speed = root.AssemblyLinearVelocity.Magnitude
-		AnimationEngine._walkCycle += dt * math.clamp(speed * 0.75, 4, 14)
-		local bobX = math.cos(AnimationEngine._walkCycle * 0.5) * 0.04
-		local bobY = math.sin(AnimationEngine._walkCycle) * 0.05
-		bobCFrame = CFrame.Angles(bobY * 0.4, bobX * 0.5, bobX * 0.3)
-	else
-		AnimationEngine._walkCycle = 0
-	end
-
-	-- 3. Apply Procedural Shakes to Camera CFrame
-	if camera then
+	-- 2. Apply Trauma Shakes to Camera CFrame strictly when an impulse is active
+	if camera and camOffset.Magnitude > 0.005 then
 		local shakeRot = CFrame.Angles(
 			math.rad(camOffset.Y * 1.5),
 			math.rad(camOffset.X * 1.5),
 			math.rad(camOffset.Z * 1.2)
 		)
-		camera.CFrame = camera.CFrame * bobCFrame * shakeRot
+		camera.CFrame = camera.CFrame * shakeRot
 	end
 end
 

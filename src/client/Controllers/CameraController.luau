@@ -84,7 +84,7 @@ function CameraController.Init()
 	player.CameraMaxZoomDistance = 40.0
 	player.DevCameraOcclusionMode = Enum.DevCameraOcclusionMode.Zoom
 
-	-- 3. Jitter-Free Positional Walk Bobbing via Humanoid.CameraOffset
+	-- 3. Dynamic FOV and Camera Management (Zero head tracking sway)
 	RunService.RenderStepped:Connect(function(dt: number)
 		local currentCam = getCamera()
 		if not currentCam then return end
@@ -94,24 +94,11 @@ function CameraController.Init()
 			currentCam.FieldOfView = currentCam.FieldOfView + (CameraController._targetFOV - currentCam.FieldOfView) * math.clamp(dt * 8, 0, 1)
 		end
 
-		if CameraController._isCinematic then return end
-
+		-- Ensure Humanoid CameraOffset is reset so native camera is rock-solid
 		local char = player.Character
 		local hum = char and char:FindFirstChildOfClass("Humanoid")
-		local root = char and char:FindFirstChild("HumanoidRootPart") :: BasePart?
-		if not hum or not root then return end
-
-		local velocity = root.AssemblyLinearVelocity
-		local speed = Vector3.new(velocity.X, 0, velocity.Z).Magnitude
-
-		if speed > 2 and hum.MoveDirection.Magnitude > 0.1 and hum.FloorMaterial ~= Enum.Material.Air and not CameraController._isUIFocused then
-			bobCycle += dt * (speed * 0.85)
-			local bobX = math.cos(bobCycle * 0.5) * 0.06
-			local bobY = math.abs(math.sin(bobCycle)) * 0.065
-			hum.CameraOffset = hum.CameraOffset:Lerp(Vector3.new(bobX, bobY, 0), math.clamp(dt * 12, 0, 1))
-		else
-			bobCycle = 0
-			hum.CameraOffset = hum.CameraOffset:Lerp(Vector3.zero, math.clamp(dt * 12, 0, 1))
+		if hum and hum.CameraOffset ~= Vector3.zero then
+			hum.CameraOffset = Vector3.zero
 		end
 	end)
 

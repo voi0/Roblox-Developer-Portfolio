@@ -97,7 +97,7 @@ UILib.Fonts = {
 	Medium = Enum.Font.BuilderSansMedium,
 	Body   = Enum.Font.BuilderSans,
 	Alt    = Enum.Font.BuilderSansExtraBold,
-	Mono   = Enum.Font.BuilderMono,
+	Mono   = Enum.Font.RobotoMono,
 }
 
 UILib.Icons = {
