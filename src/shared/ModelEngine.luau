@@ -20,13 +20,91 @@ local ModelEngine = {}
 	otherwise falls back cleanly to the procedural high-fidelity engine.
 ]]
 function ModelEngine.GetOrBuild(modelName: string, parent: Instance, cf: CFrame, buildFallback: () -> Model): Model
+	-- Check ReplicatedStorage.Assets.Models first
 	local assets = ReplicatedStorage:FindFirstChild("Assets") :: Folder?
 	local models = assets and assets:FindFirstChild("Models") :: Folder?
-	local customAsset = models and models:FindFirstChild(modelName) :: Model?
-	if customAsset then
-		local clone = customAsset:Clone()
+	local customAsset = (models and models:FindFirstChild(modelName))
+		or (ReplicatedStorage:FindFirstChild(modelName))
+		or (workspace:FindFirstChild(modelName))
+
+	if customAsset and (customAsset:IsA("Model") or customAsset:IsA("BasePart")) then
+		local clone: Model
+		if customAsset:IsA("Model") then
+			clone = customAsset:Clone() :: Model
+		else
+			clone = Instance.new("Model")
+			clone.Name = modelName
+			local partClone = customAsset:Clone() :: BasePart
+			partClone.Parent = clone
+			clone.PrimaryPart = partClone
+		end
+
+		if not clone.PrimaryPart then
+			local firstPart = clone:FindFirstChildWhichIsA("BasePart", true)
+			if firstPart then clone.PrimaryPart = firstPart end
+		end
+
 		clone:PivotTo(cf)
 		clone.Parent = parent
+
+		-- HYBRID RIGGING: If custom asset lacks essential functional moving parts, inject them seamlessly!
+		if modelName == "MintMachine" then
+			-- Ensure StampingHead exists for hydraulic animation
+			if not clone:FindFirstChild("StampingHead") then
+				local head = createPart("StampingHead", Vector3.new(4.8, 1.6, 3.2), cf * CFrame.new(0, 5.8, -6.5), Color3.fromRGB(30, 41, 59), Enum.Material.Metal, clone, true)
+				createPart("HazardStripe", Vector3.new(4.85, 0.35, 3.25), head.CFrame * CFrame.new(0, -0.6, 0), Color3.fromRGB(245, 158, 11), Enum.Material.SmoothPlastic, head)
+				local ventL = Instance.new("Attachment")
+				ventL.Name = "SteamVentL"
+				ventL.Position = Vector3.new(-2.4, 0.3, 0)
+				ventL.Parent = head
+				local ventR = Instance.new("Attachment")
+				ventR.Name = "SteamVentR"
+				ventR.Position = Vector3.new(2.4, 0.3, 0)
+				ventR.Parent = head
+			end
+			-- Ensure animated Conveyor exists
+			if not clone:FindFirstChild("ConveyorBelt") and not clone:FindFirstChild("BaseChassis") then
+				local belt = createPart("ConveyorBelt", Vector3.new(5.2, 0.4, 27.2), cf * CFrame.new(0, 1.6, 0), Color3.fromRGB(18, 22, 28), Enum.Material.Slate, clone, true)
+				local tex = Instance.new("Texture")
+				tex.Name = "ConveyorTread"
+				tex.Face = Enum.NormalId.Top
+				tex.Texture = "rbxassetid://446111271"
+				tex.StudsPerTileU = 2
+				tex.StudsPerTileV = 4
+				tex.Parent = belt
+			end
+		elseif modelName == "VaultDoor" then
+			-- Ensure rotating CogWheelCenter exists for spin animation
+			if not clone:FindFirstChild("CogWheelCenter") then
+				local wheel = createCylinder("CogWheelCenter", Vector3.new(1.4, 3.2, 3.2), cf * CFrame.new(0, 7.5, -1.8) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(245, 158, 11), Enum.Material.Metal, clone)
+				for i = 1, 8 do
+					local angle = (i / 8) * (math.pi * 2)
+					local spokeDir = Vector3.new(math.cos(angle), math.sin(angle), 0)
+					createPart(`CogSpoke_{i}`, Vector3.new(0.4, 2.6, 0.4), cf * CFrame.new(Vector3.new(0, 7.5, -1.8) + spokeDir * 2.0) * CFrame.Angles(0, 0, angle + math.rad(90)), Color3.fromRGB(245, 158, 11), Enum.Material.Metal, clone)
+				end
+			end
+			-- Ensure DoorSlab exists for swing open
+			if not clone:FindFirstChild("DoorSlab") then
+				createCylinder("DoorSlab", Vector3.new(1.8, 11.2, 11.2), cf * CFrame.new(0, 7.5, -0.4) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(30, 41, 59), Enum.Material.Metal, clone, true)
+			end
+		elseif modelName == "DefenseTurret" then
+			-- Ensure TurretHead exists for azimuth tracking
+			if not clone:FindFirstChild("TurretHead") then
+				local headModel = Instance.new("Model")
+				headModel.Name = "TurretHead"
+				headModel.Parent = clone
+				local pod = createPart("WeaponPod", Vector3.new(2.4, 1.6, 3.2), cf * CFrame.new(0, -1.8, 0), Color3.fromRGB(15, 20, 30), Enum.Material.Metal, headModel, false)
+				headModel.PrimaryPart = pod
+				headModel:SetAttribute("RestCF", pod.CFrame)
+				local bLeft = createCylinder("BarrelLeft", Vector3.new(2.6, 0.4, 0.4), pod.CFrame * CFrame.new(-0.6, -0.1, -2.2) * CFrame.Angles(math.rad(90), 0, 0), Color3.fromRGB(71, 85, 105), Enum.Material.Metal, headModel, false)
+				local bRight = createCylinder("BarrelRight", Vector3.new(2.6, 0.4, 0.4), pod.CFrame * CFrame.new(0.6, -0.1, -2.2) * CFrame.Angles(math.rad(90), 0, 0), Color3.fromRGB(71, 85, 105), Enum.Material.Metal, headModel, false)
+				local muzz = Instance.new("Attachment")
+				muzz.Name = "MuzzleAttachment"
+				muzz.Position = Vector3.new(0, 0, -1.8)
+				muzz.Parent = pod
+			end
+		end
+
 		return clone
 	end
 	return buildFallback()
@@ -358,17 +436,112 @@ function ModelEngine.CreateBatonModel(): Tool
 	tool.CanBeDropped = false
 	tool.RequiresHandle = true
 
-	local handle = createPart("Handle", Vector3.new(0.4, 3.4, 0.4), CFrame.new(0, 0, 0), Color3.fromRGB(30, 41, 59), Enum.Material.Metal, tool, false)
-	-- Grip Ribs
-	for idx, yOff in { -1.0, -0.6, -0.2 } do
-		createCylinder(`GripRib_{idx}`, Vector3.new(0.2, 0.52, 0.52), CFrame.new(0, yOff, 0) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(15, 23, 42), Enum.Material.Slate, tool)
-	end
-	-- Tesla Coils at tip
-	local coil1 = createCylinder("TeslaCoil1", Vector3.new(0.25, 0.75, 0.75), CFrame.new(0, 1.1, 0) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(249, 115, 22), Enum.Material.Neon, tool)
-	local coil2 = createCylinder("TeslaCoil2", Vector3.new(0.25, 0.75, 0.75), CFrame.new(0, 1.45, 0) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(249, 115, 22), Enum.Material.Neon, tool)
-	-- Emitter Tip
-	local tip = createPart("BatonTip", Vector3.new(0.65, 0.6, 0.65), CFrame.new(0, 1.8, 0), Color3.fromRGB(56, 189, 248), Enum.Material.Neon, tool, false)
+	-- Check for custom imported 3D mesh
+	local assets = ReplicatedStorage:FindFirstChild("Assets") :: Folder?
+	local models = assets and assets:FindFirstChild("Models") :: Folder?
+	local customAsset = (models and models:FindFirstChild("StunBaton"))
+		or (ReplicatedStorage:FindFirstChild("StunBaton"))
+		or (workspace:FindFirstChild("StunBaton"))
 
+	local handle: BasePart
+	if customAsset and (customAsset:IsA("Model") or customAsset:IsA("BasePart")) then
+		local visual = customAsset:Clone()
+		visual.Name = "VisualMesh"
+		visual.Parent = tool
+		handle = Instance.new("Part")
+		handle.Name = "Handle"
+		handle.Size = Vector3.new(0.4, 3.4, 0.4)
+		handle.Transparency = 1
+		handle.CanCollide = false
+		handle.Massless = true
+		handle.Parent = tool
+
+		-- Weld custom mesh to handle
+		local targetPart = (visual:IsA("BasePart") and visual) or (visual:IsA("Model") and (visual.PrimaryPart or visual:FindFirstChildWhichIsA("BasePart", true)))
+		if targetPart then
+			targetPart.Anchored = false
+			targetPart.CanCollide = false
+			local w = Instance.new("WeldConstraint")
+			w.Part0 = handle
+			w.Part1 = targetPart
+			w.Parent = handle
+		end
+		for _, desc in visual:GetDescendants() do
+			if desc:IsA("BasePart") then
+				desc.Anchored = false
+				desc.CanCollide = false
+			end
+		end
+	else
+		-- High-fidelity procedural baton
+		handle = createPart("Handle", Vector3.new(0.4, 3.4, 0.4), CFrame.new(0, 0, 0), Color3.fromRGB(30, 41, 59), Enum.Material.Metal, tool, false)
+		handle.Anchored = false
+		for idx, yOff in { -1.0, -0.6, -0.2 } do
+			local rib = createCylinder(`GripRib_{idx}`, Vector3.new(0.2, 0.52, 0.52), CFrame.new(0, yOff, 0) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(15, 23, 42), Enum.Material.Slate, tool)
+			rib.Anchored = false
+			local w = Instance.new("WeldConstraint")
+			w.Part0 = handle
+			w.Part1 = rib
+			w.Parent = handle
+		end
+		for _, coilY in { 1.1, 1.45 } do
+			local coil = createCylinder("TeslaCoil", Vector3.new(0.25, 0.75, 0.75), CFrame.new(0, coilY, 0) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(249, 115, 22), Enum.Material.Neon, tool)
+			coil.Anchored = false
+			local w = Instance.new("WeldConstraint")
+			w.Part0 = handle
+			w.Part1 = coil
+			w.Parent = handle
+		end
+		local tip = createPart("BatonTip", Vector3.new(0.65, 0.6, 0.65), CFrame.new(0, 1.8, 0), Color3.fromRGB(56, 189, 248), Enum.Material.Neon, tool, false)
+		tip.Anchored = false
+		local wTip = Instance.new("WeldConstraint")
+		wTip.Part0 = handle
+		wTip.Part1 = tip
+		wTip.Parent = handle
+	end
+
+	-- Electric Spark Particles & Weapon Light
+	local sparkEmit = Instance.new("ParticleEmitter")
+	sparkEmit.Name = "ElectricSparks"
+	sparkEmit.Rate = 12
+	sparkEmit.Speed = NumberRange.new(2, 5)
+	sparkEmit.Lifetime = NumberRange.new(0.2, 0.45)
+	sparkEmit.Color = ColorSequence.new(Color3.fromRGB(56, 189, 248))
+	sparkEmit.Size = NumberSequence.new(0.2, 0.05)
+	sparkEmit.Parent = handle
+
+	local batonGlow = Instance.new("PointLight")
+	batonGlow.Name = "BatonLight"
+	batonGlow.Color = Color3.fromRGB(56, 189, 248)
+	batonGlow.Brightness = 1.8
+	batonGlow.Range = 10
+	batonGlow.Parent = handle
+
+	-- Kinetic Trail Attachments
+	local attTop = Instance.new("Attachment")
+	attTop.Name = "TrailAttTop"
+	attTop.Position = Vector3.new(0, 1.7, 0)
+	attTop.Parent = handle
+
+	local attBottom = Instance.new("Attachment")
+	attBottom.Name = "TrailAttBottom"
+	attBottom.Position = Vector3.new(0, 0.3, 0)
+	attBottom.Parent = handle
+
+	local trail = Instance.new("Trail")
+	trail.Name = "SwingTrail"
+	trail.Attachment0 = attTop
+	trail.Attachment1 = attBottom
+	trail.Color = ColorSequence.new(Color3.fromRGB(56, 189, 248))
+	trail.Lifetime = 0.2
+	trail.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.2),
+		NumberSequenceKeypoint.new(1, 1),
+	})
+	trail.Enabled = false
+	trail.Parent = handle
+
+	tool.Grip = CFrame.new(0, -0.6, 0) * CFrame.Angles(math.rad(-90), 0, 0)
 	return tool
 end
 
@@ -378,14 +551,74 @@ function ModelEngine.CreateJammerModel(): Tool
 	tool.CanBeDropped = false
 	tool.RequiresHandle = true
 
-	local handle = createPart("Handle", Vector3.new(0.8, 1.8, 0.6), CFrame.new(0, 0, 0), Color3.fromRGB(24, 24, 27), Enum.Material.Metal, tool, false)
-	-- Illuminated Scanner Screen
-	createPart("JammerScreen", Vector3.new(0.65, 0.7, 0.1), CFrame.new(0, 0.2, -0.32), Color3.fromRGB(16, 185, 129), Enum.Material.Neon, tool, false)
-	-- Folding Parabolic Dish
-	createCylinder("JammerDish", Vector3.new(0.25, 1.8, 1.8), CFrame.new(0, 1.3, 0) * CFrame.Angles(math.rad(30), 0, 0), Color3.fromRGB(245, 158, 11), Enum.Material.Neon, tool, false)
-	-- Antenna Needle
-	createPart("AntennaNeedle", Vector3.new(0.12, 1.2, 0.12), CFrame.new(0, 1.8, -0.3), Color3.fromRGB(226, 232, 240), Enum.Material.Metal, tool, false)
+	-- Check for custom imported 3D mesh
+	local assets = ReplicatedStorage:FindFirstChild("Assets") :: Folder?
+	local models = assets and assets:FindFirstChild("Models") :: Folder?
+	local customAsset = (models and models:FindFirstChild("EMPJammer"))
+		or (ReplicatedStorage:FindFirstChild("EMPJammer"))
+		or (workspace:FindFirstChild("EMPJammer"))
 
+	local handle: BasePart
+	if customAsset and (customAsset:IsA("Model") or customAsset:IsA("BasePart")) then
+		local visual = customAsset:Clone()
+		visual.Name = "VisualMesh"
+		visual.Parent = tool
+		handle = Instance.new("Part")
+		handle.Name = "Handle"
+		handle.Size = Vector3.new(0.8, 1.8, 0.6)
+		handle.Transparency = 1
+		handle.CanCollide = false
+		handle.Massless = true
+		handle.Parent = tool
+
+		local targetPart = (visual:IsA("BasePart") and visual) or (visual:IsA("Model") and (visual.PrimaryPart or visual:FindFirstChildWhichIsA("BasePart", true)))
+		if targetPart then
+			targetPart.Anchored = false
+			targetPart.CanCollide = false
+			local w = Instance.new("WeldConstraint")
+			w.Part0 = handle
+			w.Part1 = targetPart
+			w.Parent = handle
+		end
+		for _, desc in visual:GetDescendants() do
+			if desc:IsA("BasePart") then
+				desc.Anchored = false
+				desc.CanCollide = false
+			end
+		end
+	else
+		handle = createPart("Handle", Vector3.new(0.8, 1.8, 0.6), CFrame.new(0, 0, 0), Color3.fromRGB(24, 24, 27), Enum.Material.Metal, tool, false)
+		handle.Anchored = false
+		local screen = createPart("JammerScreen", Vector3.new(0.65, 0.7, 0.1), CFrame.new(0, 0.2, -0.32), Color3.fromRGB(16, 185, 129), Enum.Material.Neon, tool, false)
+		screen.Anchored = false
+		local w1 = Instance.new("WeldConstraint")
+		w1.Part0 = handle
+		w1.Part1 = screen
+		w1.Parent = handle
+
+		local dish = createCylinder("JammerDish", Vector3.new(0.25, 1.8, 1.8), CFrame.new(0, 1.3, 0) * CFrame.Angles(math.rad(30), 0, 0), Color3.fromRGB(245, 158, 11), Enum.Material.Neon, tool, false)
+		dish.Anchored = false
+		local w2 = Instance.new("WeldConstraint")
+		w2.Part0 = handle
+		w2.Part1 = dish
+		w2.Parent = handle
+
+		local needle = createPart("AntennaNeedle", Vector3.new(0.12, 1.2, 0.12), CFrame.new(0, 1.8, -0.3), Color3.fromRGB(226, 232, 240), Enum.Material.Metal, tool, false)
+		needle.Anchored = false
+		local w3 = Instance.new("WeldConstraint")
+		w3.Part0 = handle
+		w3.Part1 = needle
+		w3.Parent = handle
+	end
+
+	local pulseGlow = Instance.new("PointLight")
+	pulseGlow.Name = "JammerGlow"
+	pulseGlow.Color = Color3.fromRGB(16, 185, 129)
+	pulseGlow.Brightness = 1.4
+	pulseGlow.Range = 8
+	pulseGlow.Parent = handle
+
+	tool.Grip = CFrame.new(0, -0.4, 0) * CFrame.Angles(math.rad(-15), 0, 0)
 	return tool
 end
 

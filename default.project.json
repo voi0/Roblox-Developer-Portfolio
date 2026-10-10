@@ -6,6 +6,13 @@
       "$className": "ReplicatedStorage",
       "Shared": {
         "$path": "src/shared"
+      },
+      "Assets": {
+        "$className": "Folder",
+        "Models": {
+          "$className": "Folder",
+          "$path": "assets/Models"
+        }
       }
     },
     "ServerScriptService": {

@@ -87,14 +87,18 @@ function TurretService.Init()
 	end)
 
 function TurretService.RegisterTurret(plotIndex: number, turretModel: Model)
-	local head = turretModel:FindFirstChild("TurretHead") :: Model?
-	local pod = head and (head:FindFirstChild("WeaponPod") :: Part?)
+	local head = (turretModel:FindFirstChild("TurretHead") or turretModel:FindFirstChild("Head") or turretModel:FindFirstChildWhichIsA("Model")) :: Model?
+	local pod = (head and (head:FindFirstChild("WeaponPod") or head:FindFirstChildWhichIsA("BasePart")))
+		or turretModel:FindFirstChild("WeaponPod")
+		or turretModel.PrimaryPart
+		or turretModel:FindFirstChildWhichIsA("BasePart", true)
+
 	if pod then
-		local restCF = head:GetAttribute("RestCF") :: CFrame? or pod.CFrame
+		local restCF = (head and head:GetAttribute("RestCF") :: CFrame?) or pod.CFrame
 		TurretService._turrets[plotIndex] = {
 			PlotIndex = plotIndex,
 			Model = turretModel,
-			Head = head,
+			Head = head or turretModel,
 			Pod = pod,
 			RestCF = restCF,
 			CurrentTarget = nil :: Player?,
@@ -102,7 +106,7 @@ function TurretService.RegisterTurret(plotIndex: number, turretModel: Model)
 			LastFireTime = 0,
 			DisabledUntil = 0,
 		}
-		print(`  [TurretService] Registered dynamic turret for Plot #{plotIndex} ✓`)
+		print(`  [TurretService] Registered dynamic turret for Plot #{plotIndex} (Pod: {pod.Name}) ✓`)
 	end
 end
 

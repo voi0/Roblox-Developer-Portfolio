@@ -148,37 +148,77 @@ function AnimationEngine._bindTool(tool: Tool)
 end
 
 function AnimationEngine.PlayBatonSwing(tool: Tool)
-	-- Camera forward strike impulse
-	AnimationEngine.ShakeCamera(Vector3.new(0.5, -1.0, 0.4))
+	-- Camera strike impulse
+	AnimationEngine.ShakeCamera(Vector3.new(0.4, -0.8, 0.3))
+
+	local handle = tool:FindFirstChild("Handle") :: BasePart?
+	local trail = handle and handle:FindFirstChild("SwingTrail") :: Trail?
+	local sparks = handle and handle:FindFirstChild("ElectricSparks") :: ParticleEmitter?
+
+	if trail then
+		trail.Enabled = true
+	end
+	if sparks then
+		sparks:Emit(16)
+	end
 
 	local char = player.Character
-	local torso = char and (char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso"))
-	local rArm = char and (char:FindFirstChild("Right Arm") or char:FindFirstChild("RightUpperArm"))
-	if not char or not torso or not rArm then return end
+	if not char then return end
 
-	local shoulder = torso:FindFirstChild("Right Shoulder") :: Motor6D?
-	if shoulder then
-		local origC0 = shoulder.C0
-		-- Swift tactical swing arc
-		task.spawn(function()
-			for step = 1, 6 do
-				shoulder.C0 = origC0 * CFrame.Angles(math.rad(15 * step), math.rad(-10 * step), math.rad(5 * step))
-				RunService.RenderStepped:Wait()
-			end
-			task.wait(0.08)
-			for step = 5, 0, -1 do
-				shoulder.C0 = origC0 * CFrame.Angles(math.rad(15 * step), math.rad(-10 * step), math.rad(5 * step))
-				RunService.RenderStepped:Wait()
-			end
-			shoulder.C0 = origC0
-		end)
+	local humanoid = char:FindFirstChildOfClass("Humanoid")
+	local isR15 = humanoid and (humanoid.RigType == Enum.RigType.R15)
+
+	if isR15 then
+		local rUpperArm = char:FindFirstChild("RightUpperArm") :: BasePart?
+		local shoulder = rUpperArm and rUpperArm:FindFirstChild("RightShoulder") :: Motor6D?
+		if shoulder then
+			local origC0 = shoulder.C0
+			task.spawn(function()
+				for step = 1, 5 do
+					shoulder.C0 = origC0 * CFrame.Angles(math.rad(18 * step), math.rad(-8 * step), math.rad(12 * step))
+					RunService.RenderStepped:Wait()
+				end
+				task.wait(0.06)
+				for step = 4, 0, -1 do
+					shoulder.C0 = origC0 * CFrame.Angles(math.rad(18 * step), math.rad(-8 * step), math.rad(12 * step))
+					RunService.RenderStepped:Wait()
+				end
+				shoulder.C0 = origC0
+				if trail then trail.Enabled = false end
+			end)
+		else
+			if trail then task.delay(0.25, function() trail.Enabled = false end) end
+		end
+	else
+		-- R6 Avatar Swing
+		local torso = char:FindFirstChild("Torso") :: BasePart?
+		local shoulder = torso and torso:FindFirstChild("Right Shoulder") :: Motor6D?
+		if shoulder then
+			local origC0 = shoulder.C0
+			task.spawn(function()
+				for step = 1, 5 do
+					shoulder.C0 = origC0 * CFrame.Angles(math.rad(20 * step), math.rad(-10 * step), math.rad(10 * step))
+					RunService.RenderStepped:Wait()
+				end
+				task.wait(0.06)
+				for step = 4, 0, -1 do
+					shoulder.C0 = origC0 * CFrame.Angles(math.rad(20 * step), math.rad(-10 * step), math.rad(10 * step))
+					RunService.RenderStepped:Wait()
+				end
+				shoulder.C0 = origC0
+				if trail then trail.Enabled = false end
+			end)
+		else
+			if trail then task.delay(0.25, function() trail.Enabled = false end) end
+		end
 	end
 end
 
 function AnimationEngine.PlayJammerPulse(tool: Tool)
 	AnimationEngine.ShakeCamera(Vector3.new(0.3, 0.4, 0.2))
 
-	local dish = tool:FindFirstChild("JammerDish") :: Part?
+	local handle = tool:FindFirstChild("Handle") :: BasePart?
+	local dish = (tool:FindFirstChild("JammerDish") or (handle and handle:FindFirstChild("JammerDish"))) :: BasePart?
 	if dish then
 		local origCF = dish.CFrame
 		task.spawn(function()

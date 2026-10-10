@@ -1283,10 +1283,17 @@ function PlotService.AnimateVaultDoorOpen(plotIndex: number)
 	plot._isDoorOpening = true
 
 	local doorModel = plot.VaultDoorModel
-	local wheel = doorModel:FindFirstChild("CogWheelCenter") :: Part?
-	local doorSlab = doorModel:FindFirstChild("DoorSlab") :: Part?
-	local pinL = doorModel:FindFirstChild("LockingPinLeft") :: Part?
-	local pinR = doorModel:FindFirstChild("LockingPinRight") :: Part?
+	local wheel = (doorModel:FindFirstChild("CogWheelCenter")
+		or doorModel:FindFirstChild("Wheel")
+		or doorModel:FindFirstChild("Handle")) :: BasePart?
+
+	local doorSlab = (doorModel:FindFirstChild("DoorSlab")
+		or doorModel:FindFirstChild("Door")
+		or doorModel:FindFirstChild("Slab")
+		or doorModel.PrimaryPart) :: BasePart?
+
+	local pinL = (doorModel:FindFirstChild("LockingPinLeft") or doorModel:FindFirstChild("PinLeft")) :: BasePart?
+	local pinR = (doorModel:FindFirstChild("LockingPinRight") or doorModel:FindFirstChild("PinRight")) :: BasePart?
 
 	-- Spin cog wheel 360 degrees
 	if wheel then

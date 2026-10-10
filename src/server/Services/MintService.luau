@@ -55,6 +55,35 @@ function MintService.Init()
 	-- Start Minting Loop
 	task.spawn(MintService._mintLoop)
 
+	-- Conveyor Tread Texture Scrolling Animation Loop
+	task.spawn(function()
+		local RunService = game:GetService("RunService")
+		local offset = 0
+		while true do
+			local dt = task.wait(0.03)
+			offset = (offset + dt * 1.5) % 10
+			local plotSvc = getPlotService()
+			if plotSvc then
+				for i = 1, Config.Arena.PlotCount do
+					local plot = plotSvc.GetPlotByIndex(i)
+					if plot and plot.Belt then
+						local tex = plot.Belt:FindFirstChild("ConveyorTread") :: Texture?
+						if not tex then
+							tex = Instance.new("Texture")
+							tex.Name = "ConveyorTread"
+							tex.Face = Enum.NormalId.Top
+							tex.Texture = "rbxassetid://446111271"
+							tex.StudsPerTileU = 2
+							tex.StudsPerTileV = 4
+							tex.Parent = plot.Belt
+						end
+						tex.OffsetStudsV = offset
+					end
+				end
+			end
+		end
+	end)
+
 	print("  [MintService] Conveyor Mint Engine online ✓")
 end
 
