@@ -962,78 +962,119 @@ end
 -- 9.5. HIGH-TECH RELIC FUSION CHAMBER (ALMOST SCI-FI ALTAR)
 -- ============================================================
 function ModelEngine.CreateRelicFusionChamber(parent: Instance, baseCF: CFrame): (Model, Part, ProximityPrompt)
-	local model = Instance.new("Model")
-	model.Name = "RelicFusionChamber"
-	model.Parent = parent
+	-- Check for custom imported 3D mesh first (e.g. transmutation-altar.glb)
+	local assets = ReplicatedStorage:FindFirstChild("Assets") :: Folder?
+	local models = assets and assets:FindFirstChild("Models") :: Folder?
+	local customAsset = (models and (models:FindFirstChild("transmutation-altar") or models:FindFirstChild("RelicFusionChamber")))
+		or (ReplicatedStorage:FindFirstChild("transmutation-altar") or ReplicatedStorage:FindFirstChild("RelicFusionChamber"))
+		or (workspace:FindFirstChild("transmutation-altar") or workspace:FindFirstChild("RelicFusionChamber"))
 
-	-- 1. Stepped Octagonal Dais Foundation
-	local dais = createPart("FusionDaisLower", Vector3.new(18, 1.4, 18), baseCF * CFrame.new(0, 0.7, 0), Color3.fromRGB(24, 28, 40), Enum.Material.Slate, model, true)
-	model.PrimaryPart = dais
-	createPart("FusionDaisUpper", Vector3.new(14, 0.8, 14), baseCF * CFrame.new(0, 1.8, 0), Color3.fromRGB(38, 46, 64), Enum.Material.DiamondPlate, model, true)
+	local model: Model
+	local interactionPart: Part
 
-	-- Glowing Purple Inlay Circuit Rings
-	createPart("CircuitRingOuter", Vector3.new(15.5, 0.2, 15.5), baseCF * CFrame.new(0, 1.45, 0), Color3.fromRGB(168, 85, 247), Enum.Material.Neon, model, false)
-	createPart("CircuitRingInner", Vector3.new(11.5, 0.2, 11.5), baseCF * CFrame.new(0, 2.25, 0), Color3.fromRGB(192, 132, 252), Enum.Material.Neon, model, false)
-
-	-- 2. 4 Magnetic Containment Pylon Towers
-	for _, offset in { Vector3.new(6.8, 0, 6.8), Vector3.new(-6.8, 0, 6.8), Vector3.new(6.8, 0, -6.8), Vector3.new(-6.8, 0, -6.8) } do
-		createPart("PylonBase", Vector3.new(2.4, 1.2, 2.4), baseCF * CFrame.new(offset + Vector3.new(0, 2.2, 0)), Color3.fromRGB(30, 41, 59), Enum.Material.Metal, model, true)
-		createPart("PylonShaft", Vector3.new(1.6, 9.5, 1.6), baseCF * CFrame.new(offset + Vector3.new(0, 7.0, 0)), Color3.fromRGB(15, 23, 42), Enum.Material.Metal, model, true)
-		for cY = 4, 10, 2.2 do
-			createPart("CopperCoil", Vector3.new(2.2, 0.6, 2.2), baseCF * CFrame.new(offset + Vector3.new(0, cY, 0)), Color3.fromRGB(249, 115, 22), Enum.Material.Metal, model, false)
+	if customAsset and (customAsset:IsA("Model") or customAsset:IsA("BasePart")) then
+		if customAsset:IsA("Model") then
+			model = customAsset:Clone() :: Model
+		else
+			model = Instance.new("Model")
+			model.Name = "RelicFusionChamber"
+			local pc = customAsset:Clone() :: BasePart
+			pc.Parent = model
+			model.PrimaryPart = pc
 		end
-		local emitterCap = createPart("PlasmaCap", Vector3.new(2.0, 1.6, 2.0), baseCF * CFrame.new(offset + Vector3.new(0, 12.2, 0)), Color3.fromRGB(168, 85, 247), Enum.Material.Neon, model, false)
-		local pLight = Instance.new("PointLight")
-		pLight.Color = Color3.fromRGB(168, 85, 247)
-		pLight.Range = 25
-		pLight.Brightness = 2.8
-		pLight.Parent = emitterCap
+		model.Name = "RelicFusionChamber"
+		model:PivotTo(baseCF)
+		model.Parent = parent
+
+		interactionPart = model.PrimaryPart or model:FindFirstChildWhichIsA("BasePart", true) or createPart("InteractionAnchor", Vector3.new(2, 2, 2), baseCF * CFrame.new(0, 3, 0), Color3.fromRGB(24, 28, 40), Enum.Material.Metal, model, false)
+	else
+		-- High-fidelity dark industrial quantum synthesis chamber (zero neon pillar blocks!)
+		model = Instance.new("Model")
+		model.Name = "RelicFusionChamber"
+		model.Parent = parent
+
+		-- Heavy Diamond-Plate Base Plinth
+		local plinth = createPart("FusionPlinth", Vector3.new(12, 0.8, 12), baseCF * CFrame.new(0, 0.4, 0), Color3.fromRGB(26, 32, 44), Enum.Material.DiamondPlate, model, true)
+		model.PrimaryPart = plinth
+
+		-- Concrete Foundation Kerb with 45-degree Chamfers
+		createPart("FoundationKerb", Vector3.new(12.8, 0.4, 12.8), baseCF * CFrame.new(0, 0.2, 0), Color3.fromRGB(36, 42, 54), Enum.Material.Concrete, model, true)
+
+		-- 4 Heavy Cast Steel Corner Clamps with Bolts
+		for _, offset in { Vector3.new(4.8, 0, 4.8), Vector3.new(-4.8, 0, 4.8), Vector3.new(4.8, 0, -4.8), Vector3.new(-4.8, 0, -4.8) } do
+			local clampCF = baseCF * CFrame.new(offset + Vector3.new(0, 1.6, 0))
+			createPart("SteelClampPillar", Vector3.new(1.4, 2.4, 1.4), clampCF, Color3.fromRGB(38, 44, 58), Enum.Material.Metal, model, true)
+			createPart("ClampFlange", Vector3.new(1.8, 0.3, 1.8), clampCF * CFrame.new(0, 1.2, 0), Color3.fromRGB(71, 85, 105), Enum.Material.Metal, model, true)
+		end
+
+		-- Industrial Cylindrical Containment Vessel
+		local pedestal = createCylinder("ChamberPedestal", Vector3.new(1.2, 6.4, 6.4), baseCF * CFrame.new(0, 1.4, 0) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(20, 24, 34), Enum.Material.Metal, model, true)
+		createCylinder("ChamberCollar", Vector3.new(0.4, 6.8, 6.8), baseCF * CFrame.new(0, 2.0, 0) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(51, 65, 85), Enum.Material.Metal, model, true)
+
+		-- Tempered Glass Vacuum Chamber
+		local glassVessel = createCylinder("VacuumGlass", Vector3.new(5.2, 5.6, 5.6), baseCF * CFrame.new(0, 4.6, 0) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(15, 23, 42), Enum.Material.Glass, model, false)
+		glassVessel.Transparency = 0.65
+
+		-- Heavy Overhead Vacuum Seal Dome
+		createCylinder("VacuumDome", Vector3.new(0.8, 6.4, 6.4), baseCF * CFrame.new(0, 7.4, 0) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(30, 41, 59), Enum.Material.Metal, model, true)
+
+		-- Levitating Relic Singularity Shard inside Glass (Dark Arcane Crystal)
+		local shard = createPart("SynthesisRelicShard", Vector3.new(1.4, 1.8, 1.4), baseCF * CFrame.new(0, 4.6, 0) * CFrame.Angles(math.rad(45), math.rad(30), math.rad(45)), Color3.fromRGB(168, 85, 247), Enum.Material.Neon, model, false)
+		shard.Transparency = 0.25
+
+		-- Subtle Ambient Core Light (Subdued, non-blinding)
+		local coreLight = Instance.new("PointLight")
+		coreLight.Color = Color3.fromRGB(192, 132, 252)
+		coreLight.Range = 16
+		coreLight.Brightness = 1.4
+		coreLight.Parent = shard
+
+		-- Shimmering Quantum Particle Motes
+		local pe = Instance.new("ParticleEmitter")
+		pe.Name = "QuantumMotes"
+		pe.Rate = 8
+		pe.Speed = NumberRange.new(0.5, 1.5)
+		pe.Lifetime = NumberRange.new(1.2, 2.2)
+		pe.Size = NumberSequence.new(0.2, 0.05)
+		pe.Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0.2),
+			NumberSequenceKeypoint.new(1, 1),
+		})
+		pe.Color = ColorSequence.new(Color3.fromRGB(192, 132, 252))
+		pe.LightEmission = 0.6
+		pe.Parent = shard
+
+		-- Slanted Operator Keypad Console on Front Edge
+		local console = createPart("ConsoleHousing", Vector3.new(2.4, 1.2, 1.4), baseCF * CFrame.new(0, 1.8, 4.2) * CFrame.Angles(math.rad(-25), 0, 0), Color3.fromRGB(18, 22, 32), Enum.Material.Metal, model, true)
+		createPart("ConsoleScreen", Vector3.new(2.0, 0.6, 0.1), console.CFrame * CFrame.new(0, 0.2, -0.65), Color3.fromRGB(56, 189, 248), Enum.Material.Neon, model, false)
+
+		interactionPart = pedestal
 	end
 
-	-- 3. Central Holographic Fusion Pedestal
-	local pedestal = createPart("FusionPedestal", Vector3.new(4.2, 3.2, 4.2), baseCF * CFrame.new(0, 3.8, 0), Color3.fromRGB(24, 24, 32), Enum.Material.Metal, model, true)
-	createPart("PedestalTrim", Vector3.new(4.5, 0.4, 4.5), baseCF * CFrame.new(0, 5.5, 0), Color3.fromRGB(192, 132, 252), Enum.Material.Neon, model, false)
-
-	-- Levitating Shimmering Containment Core
-	local coreOrb = createPart("FusionCoreOrb", Vector3.new(2.4, 2.4, 2.4), baseCF * CFrame.new(0, 7.8, 0), Color3.fromRGB(216, 180, 254), Enum.Material.Neon, model, false)
-	local coreLight = Instance.new("PointLight")
-	coreLight.Color = Color3.fromRGB(192, 132, 252)
-	coreLight.Range = 35
-	coreLight.Brightness = 4.0
-	coreLight.Parent = coreOrb
-
-	local beamSpot = Instance.new("SpotLight")
-	beamSpot.Face = Enum.NormalId.Bottom
-	beamSpot.Angle = 60
-	beamSpot.Range = 40
-	beamSpot.Brightness = 5.0
-	beamSpot.Color = Color3.fromRGB(216, 180, 254)
-	beamSpot.Parent = coreOrb
-
-	-- Overhead Holographic 3D Billboard
+	-- Modern Sleek Floating Holographic Card
 	local bGui = Instance.new("BillboardGui")
 	bGui.Name = "FusionBillboard"
-	bGui.Size = UDim2.new(0, 280, 0, 58)
-	bGui.StudsOffset = Vector3.new(0, 4.2, 0)
+	bGui.Size = UDim2.new(0, 240, 0, 44)
+	bGui.StudsOffset = Vector3.new(0, 8.2, 0)
 	bGui.AlwaysOnTop = true
-	bGui.Parent = coreOrb
+	bGui.Parent = interactionPart
 
 	local bFrame = Instance.new("Frame")
 	bFrame.Size = UDim2.fromScale(1, 1)
 	bFrame.BackgroundColor3 = Color3.fromRGB(15, 17, 26)
-	bFrame.BackgroundTransparency = 0.2
+	bFrame.BackgroundTransparency = 0.15
 	bFrame.Parent = bGui
-	Instance.new("UICorner", bFrame).CornerRadius = UDim.new(0, 12)
+	Instance.new("UICorner", bFrame).CornerRadius = UDim.new(0, 8)
 	local bStroke = Instance.new("UIStroke", bFrame)
 	bStroke.Color = Color3.fromRGB(168, 85, 247)
-	bStroke.Thickness = 1.6
+	bStroke.Thickness = 1.2
 
 	local bLabel = Instance.new("TextLabel")
 	bLabel.Size = UDim2.fromScale(1, 1)
 	bLabel.BackgroundTransparency = 1
 	bLabel.Text = "RELIC FUSION CHAMBER\nSYNTHESIZE 3x IDENTICAL RELICS"
-	bLabel.TextColor3 = Color3.fromRGB(233, 213, 255)
-	bLabel.TextSize = 13
+	bLabel.TextColor3 = Color3.fromRGB(243, 232, 255)
+	bLabel.TextSize = 11
 	bLabel.Font = Enum.Font.BuilderSansExtraBold
 	bLabel.Parent = bFrame
 
@@ -1044,10 +1085,9 @@ function ModelEngine.CreateRelicFusionChamber(parent: Instance, baseCF: CFrame):
 	prompt.HoldDuration = 0
 	prompt.MaxActivationDistance = 16
 	prompt.RequiresLineOfSight = false
-	prompt.Style = Enum.ProximityPromptStyle.Custom
-	prompt.Parent = pedestal
+	prompt.Parent = interactionPart
 
-	return model, coreOrb, prompt
+	return model, interactionPart, prompt
 end
 
 -- ============================================================

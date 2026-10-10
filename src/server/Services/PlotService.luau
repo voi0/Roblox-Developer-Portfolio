@@ -425,67 +425,136 @@ function PlotService.Init()
 	end
 
 	-- ── 2. CENTRAL SUBTERRANEAN CYBER-REACTOR & COMMAND VAULT ──
-	local reactorFolder = Instance.new("Folder")
-	reactorFolder.Name = "CentralCyberReactor"
-	reactorFolder.Parent = rootFolder
+	local reactorCF = CFrame.new(0, 4.6, 0)
+	local reactorFolder = ModelEngine.GetOrBuild("ReactorCore", rootFolder, reactorCF, function()
+		local folder = Instance.new("Model")
+		folder.Name = "CentralCyberReactor"
+		folder.Parent = rootFolder
 
-	-- Heavy Octagonal Cast-Concrete Plinth
-	createPart("ReactorBaseTier1", Vector3.new(24, 1.8, 24), CFrame.new(0, 5.0, 0), Color3.fromRGB(24, 28, 40), Enum.Material.Concrete, reactorFolder, true)
-	createPart("ReactorBaseTier2", Vector3.new(20, 1.4, 20), CFrame.new(0, 6.4, 0), Color3.fromRGB(30, 41, 59), Enum.Material.DiamondPlate, reactorFolder, true)
-	createPart("ReactorCautionBorder", Vector3.new(20.4, 0.3, 20.4), CFrame.new(0, 7.15, 0), Color3.fromRGB(245, 158, 11), Enum.Material.SmoothPlastic, reactorFolder, false)
+		-- Multi-Tier Concrete Seismic Plinth with Yellow Hazard Warning Border
+		local plinth1 = createPart("SeismicPlinthBase", Vector3.new(28, 2.2, 28), reactorCF * CFrame.new(0, 1.1, 0), Color3.fromRGB(32, 36, 46), Enum.Material.Concrete, folder, true)
+		folder.PrimaryPart = plinth1
+		createPart("SeismicPlinthUpper", Vector3.new(24, 1.6, 24), reactorCF * CFrame.new(0, 3.0, 0), Color3.fromRGB(48, 56, 70), Enum.Material.DiamondPlate, folder, true)
+		createPart("PlinthCautionTrim", Vector3.new(24.4, 0.2, 24.4), reactorCF * CFrame.new(0, 3.85, 0), Color3.fromRGB(245, 158, 11), Enum.Material.SmoothPlastic, folder, false)
 
-	-- Central Plasma Energy Chamber: Tempered Glass Shell with Internal Glowing Plasma Rod
-	local innerPlasmaRod = createPart("ReactorPlasmaRod", Vector3.new(3.4, 18, 3.4), CFrame.new(0, 17.5, 0), Color3.fromRGB(14, 165, 233), Enum.Material.Neon, reactorFolder, false)
-	Instance.new("CylinderMesh", innerPlasmaRod)
+		-- 4 Heavy Steel Structural Buttress Pylons with 45° Knee Braces & Sodium Floodlights
+		for _, angleDeg in { 45, 135, 225, 315 } do
+			local rad = math.rad(angleDeg)
+			local pX = math.cos(rad) * 13.5
+			local pZ = math.sin(rad) * 13.5
+			local pCF = reactorCF * CFrame.new(pX, 15 + 3.0, pZ) * CFrame.Angles(0, -rad, 0)
 
-	local glassChamber = createPart("ReactorGlassChamber", Vector3.new(7.6, 19, 7.6), CFrame.new(0, 17.5, 0), Color3.fromRGB(15, 23, 42), Enum.Material.Glass, reactorFolder, false)
-	glassChamber.Transparency = 0.55
-	Instance.new("CylinderMesh", glassChamber)
+			local pylon = createPart(`ButtressColumn_{angleDeg}`, Vector3.new(3.6, 30, 3.6), pCF, Color3.fromRGB(38, 44, 56), Enum.Material.Metal, folder, true)
 
-	local coreLight = Instance.new("PointLight")
-	coreLight.Color = Color3.fromRGB(56, 189, 248)
-	coreLight.Range = 36
-	coreLight.Brightness = 2.0
-	coreLight.Parent = innerPlasmaRod
+			-- 45-Degree Knee Brace
+			local braceCF = pCF * CFrame.new(0, -6, -3.8) * CFrame.Angles(math.rad(45), 0, 0)
+			createPart(`KneeBrace_{angleDeg}`, Vector3.new(2.8, 12, 2.8), braceCF, Color3.fromRGB(24, 28, 38), Enum.Material.Metal, pylon, true)
 
-	-- Slotted Dark Steel Reactor Containment Cage around Core (8 Structural Pillars)
-	for a = 0, 7 do
-		local radAngle = a * (math.pi / 4)
-		local pX = math.cos(radAngle) * 5.6
-		local pZ = math.sin(radAngle) * 5.6
-		createPart(`ReactorCagePillar_{a}`, Vector3.new(1.4, 20, 1.4), CFrame.new(pX, 17.5, pZ), Color3.fromRGB(15, 23, 42), Enum.Material.Metal, reactorFolder, true)
-	end
+			-- Sodium Vapor Work Floodlight
+			local fHousing = createPart(`PylonFlood_{angleDeg}`, Vector3.new(2.4, 1.0, 2.4), pCF * CFrame.new(0, 14, -1.8) * CFrame.Angles(math.rad(-25), 0, 0), Color3.fromRGB(24, 24, 27), Enum.Material.Metal, pylon, false)
+			local fLens = createPart("Lens", Vector3.new(2.0, 0.2, 2.0), fHousing.CFrame * CFrame.new(0, -0.5, 0), Color3.fromRGB(254, 240, 138), Enum.Material.Neon, fHousing, false)
+			local spot = Instance.new("SpotLight")
+			spot.Face = Enum.NormalId.Bottom
+			spot.Range = 65
+			spot.Angle = 80
+			spot.Brightness = 2.6
+			spot.Color = Color3.fromRGB(255, 214, 138)
+			spot.Shadows = true
+			spot.Parent = fLens
+		end
 
-	-- 4 Heavy Steel Structural Pylon Buttresses (North, South, East, West)
-	for _, dir in { Vector3.new(1, 0, 0), Vector3.new(-1, 0, 0), Vector3.new(0, 0, 1), Vector3.new(0, 0, -1) } do
-		local buttress = createPart("ReactorButtressPylon", Vector3.new(3.2, 24, 3.2), CFrame.new(dir * 11 + Vector3.new(0, 17.5, 0)), Color3.fromRGB(38, 46, 60), Enum.Material.Metal, reactorFolder, true)
-		createPart("ButtressHazardTrim", Vector3.new(3.4, 6.0, 0.3), buttress.CFrame * CFrame.new(0, -6.0, 1.7), Color3.fromRGB(245, 158, 11), Enum.Material.SmoothPlastic, buttress, false)
+		-- Toroidal Cryo Coolant Distribution Manifold Loop (16 segments)
+		local manifoldRadius = 8.5
+		local manifoldHeight = 5.6
+		for i = 1, 16 do
+			local segAngle = (i / 16) * (math.pi * 2)
+			local nextAngle = ((i + 1) / 16) * (math.pi * 2)
+			local p1 = Vector3.new(math.cos(segAngle) * manifoldRadius, manifoldHeight, math.sin(segAngle) * manifoldRadius)
+			local p2 = Vector3.new(math.cos(nextAngle) * manifoldRadius, manifoldHeight, math.sin(nextAngle) * manifoldRadius)
+			local mid = (p1 + p2) / 2
+			local segLen = (p2 - p1).Magnitude
+			local segCF = reactorCF * CFrame.lookAt(mid, mid + Vector3.new(math.cos(segAngle), 0, math.sin(segAngle))) * CFrame.Angles(0, math.rad(90), 0)
+			createCylinder(`CoolantManifold_{i}`, Vector3.new(segLen + 0.2, 1.8, 1.8), segCF * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(38, 44, 56), Enum.Material.Metal, folder, true)
+		end
 
-		-- Downward Sodium Floodlights on Pylons
-		local fFixture = createPart("ReactorFloodFixture", Vector3.new(2.4, 0.8, 2.4), CFrame.new(dir * 11 + Vector3.new(0, 28, 0)), Color3.fromRGB(254, 240, 138), Enum.Material.Neon, buttress, false)
-		local fSpot = Instance.new("SpotLight")
-		fSpot.Face = Enum.NormalId.Bottom
-		fSpot.Angle = 110
-		fSpot.Range = 55
-		fSpot.Brightness = 2.8
-		fSpot.Color = Color3.fromRGB(255, 248, 235)
-		fSpot.Shadows = true
-		fSpot.Parent = fFixture
-	end
+		-- Slotted Magnetic Containment Cage (8 Dark Steel Pillars)
+		local cageRadius = 6.2
+		local cageHeight = 22.0
+		local coreCenterY = 18.0
+		for a = 1, 8 do
+			local angle = (a / 8) * (math.pi * 2)
+			local cX = math.cos(angle) * cageRadius
+			local cZ = math.sin(angle) * cageRadius
+			local pillarCF = reactorCF * CFrame.new(cX, coreCenterY, cZ) * CFrame.Angles(0, -angle, 0)
+			createPart(`CagePillar_{a}`, Vector3.new(1.6, cageHeight, 1.6), pillarCF, Color3.fromRGB(38, 44, 56), Enum.Material.Metal, folder, true)
+		end
 
-	-- Overhead Segmented Magnetic Containment Collars (Mechanical rings with thin recessed LED strips)
-	for a = 0, 7 do
-		local radAngle = a * (math.pi / 4)
-		-- Top cyan collar at Y=26, radius 7.5
-		local topCF = CFrame.new(0, 26, 0) * CFrame.Angles(0, radAngle, 0) * CFrame.new(0, 0, 7.5)
-		createPart(`CollarTopSeg_{a}`, Vector3.new(5.8, 1.2, 1.0), topCF, Color3.fromRGB(30, 41, 59), Enum.Material.Metal, reactorFolder, true)
-		createPart(`CollarTopTrim_{a}`, Vector3.new(5.6, 0.15, 0.2), topCF * CFrame.new(0, 0, 0.55), Color3.fromRGB(56, 189, 248), Enum.Material.Neon, reactorFolder, false)
+		-- 3 Horizontal Confinement Rings (Dark metal with hazard stripes)
+		for _, yOff in { -7.0, 0.0, 7.0 } do
+			for a = 1, 8 do
+				local angle = (a / 8) * (math.pi * 2)
+				local collarCF = reactorCF * CFrame.new(0, coreCenterY + yOff, 0) * CFrame.Angles(0, angle, 0) * CFrame.new(0, 0, cageRadius + 0.6)
+				createPart(`Collar_{yOff}_{a}`, Vector3.new(5.2, 1.2, 1.2), collarCF, Color3.fromRGB(24, 28, 38), Enum.Material.Metal, folder, true)
+				createPart(`CollarHazard_{yOff}_{a}`, Vector3.new(5.0, 0.25, 0.2), collarCF * CFrame.new(0, 0, 0.65), Color3.fromRGB(245, 158, 11), Enum.Material.SmoothPlastic, folder, false)
+			end
+		end
 
-		-- Mid amber collar at Y=20, radius 8.5
-		local midCF = CFrame.new(0, 20, 0) * CFrame.Angles(0, radAngle, 0) * CFrame.new(0, 0, 8.5)
-		createPart(`CollarMidSeg_{a}`, Vector3.new(6.6, 1.0, 1.0), midCF, Color3.fromRGB(30, 41, 59), Enum.Material.Metal, reactorFolder, true)
-		createPart(`CollarMidTrim_{a}`, Vector3.new(6.4, 0.15, 0.2), midCF * CFrame.new(0, 0, 0.55), Color3.fromRGB(245, 158, 11), Enum.Material.Neon, reactorFolder, false)
-	end
+		-- Tempered Glass Vacuum Chamber Cylinder
+		local glassChamber = createCylinder("VacuumChamberGlass", Vector3.new(cageHeight - 1, (cageRadius - 0.6) * 2, (cageRadius - 0.6) * 2), reactorCF * CFrame.new(0, coreCenterY, 0) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(15, 23, 42), Enum.Material.Glass, folder, false)
+		glassChamber.Transparency = 0.62
+		glassChamber.Reflectance = 0.35
+
+		-- Inner Plasma Column (Cherenkov Coolant Core)
+		local plasma = createCylinder("InnerPlasmaColumn", Vector3.new(cageHeight - 3, 3.8, 3.8), reactorCF * CFrame.new(0, coreCenterY, 0) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(14, 165, 233), Enum.Material.Neon, folder, false)
+		plasma.Transparency = 0.20
+
+		local filament = createCylinder("CoreFilament", Vector3.new(cageHeight - 4, 1.6, 1.6), reactorCF * CFrame.new(0, coreCenterY, 0) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(224, 242, 254), Enum.Material.Neon, plasma, false)
+
+		local coreLight = Instance.new("PointLight")
+		coreLight.Name = "PlasmaCoreLight"
+		coreLight.Color = Color3.fromRGB(56, 189, 248)
+		coreLight.Range = 45
+		coreLight.Brightness = 2.4
+		coreLight.Shadows = true
+		coreLight.Parent = filament
+
+		-- Ionized Plasma Motes
+		local motes = Instance.new("ParticleEmitter")
+		motes.Name = "IonizationMotes"
+		motes.Rate = 18
+		motes.Speed = NumberRange.new(1.5, 4.0)
+		motes.Lifetime = NumberRange.new(1.2, 2.5)
+		motes.SpreadAngle = Vector2.new(180, 180)
+		motes.Size = NumberSequence.new(0.3, 0.0)
+		motes.Color = ColorSequence.new(Color3.fromRGB(56, 189, 248))
+		motes.LightEmission = 0.8
+		motes.Parent = filament
+
+		-- Volumetric Steam Exhaust Vents around Plinth Base
+		for _, vPos in { Vector3.new(10, 3.2, 0), Vector3.new(-10, 3.2, 0), Vector3.new(0, 3.2, 10), Vector3.new(0, 3.2, -10) } do
+			local ventShroud = createPart("PlinthSteamVent", Vector3.new(1.8, 1.4, 1.8), reactorCF * CFrame.new(vPos), Color3.fromRGB(24, 28, 38), Enum.Material.Metal, folder, true)
+			local pe = Instance.new("ParticleEmitter")
+			pe.Rate = 6
+			pe.Speed = NumberRange.new(4, 7)
+			pe.Lifetime = NumberRange.new(2.0, 3.0)
+			pe.Size = NumberSequence.new({
+				NumberSequenceKeypoint.new(0, 0.5),
+				NumberSequenceKeypoint.new(0.4, 2.2),
+				NumberSequenceKeypoint.new(1.0, 4.8),
+			})
+			pe.Transparency = NumberSequence.new({
+				NumberSequenceKeypoint.new(0, 0.4),
+				NumberSequenceKeypoint.new(0.7, 0.75),
+				NumberSequenceKeypoint.new(1.0, 1.0),
+			})
+			pe.Color = ColorSequence.new(Color3.fromRGB(210, 225, 238))
+			pe.Acceleration = Vector3.new(0, 3.2, 0)
+			pe.EmissionDirection = Enum.NormalId.Top
+			pe.Parent = ventShroud
+		end
+
+		return folder
+	end)
 
 	-- Leaderboard Array (Embedded smoothly into South face of reactor towards arrivals)
 	local lbBacking = createPart("LeaderboardBacking", Vector3.new(11, 14, 1.2), CFrame.new(0, 16.5, 6.2), Color3.fromRGB(15, 17, 26), Enum.Material.Metal, reactorFolder, true)
@@ -613,31 +682,63 @@ function PlotService.Init()
 
 	-- ── 2.55. PLAZA SECURITY TRAINING DRONES (Immediate Combat Gameplay!) ──
 	local function createCombatTrainingDrone(name: string, spawnCF: CFrame)
-		local botModel = Instance.new("Model")
-		botModel.Name = name
-		botModel.Parent = rootFolder
+		local botModel = ModelEngine.GetOrBuild("SecurityDrone", rootFolder, spawnCF * CFrame.new(0, 3.4, 0), function()
+			local model = Instance.new("Model")
+			model.Name = name
+			model.Parent = rootFolder
 
-		local torso = createPart("Torso", Vector3.new(2.4, 2.6, 1.4), spawnCF * CFrame.new(0, 3.4, 0), Color3.fromRGB(30, 41, 59), Enum.Material.Metal, botModel, true)
-		botModel.PrimaryPart = torso
+			-- Aerodynamic Dark Carbon Torso
+			local torso = createPart("Torso", Vector3.new(2.4, 2.4, 1.4), spawnCF * CFrame.new(0, 3.4, 0), Color3.fromRGB(24, 28, 38), Enum.Material.Metal, model, true)
+			model.PrimaryPart = torso
 
-		-- Side Thruster Turbines
-		createPart("ThrusterL", Vector3.new(0.6, 1.6, 0.8), torso.CFrame * CFrame.new(-1.5, 0, 0), Color3.fromRGB(15, 23, 42), Enum.Material.Metal, botModel, true)
-		createPart("ThrusterR", Vector3.new(0.6, 1.6, 0.8), torso.CFrame * CFrame.new(1.5, 0, 0), Color3.fromRGB(15, 23, 42), Enum.Material.Metal, botModel, true)
-		createPart("NozzleL", Vector3.new(0.5, 0.1, 0.6), torso.CFrame * CFrame.new(-1.5, -0.85, 0), Color3.fromRGB(56, 189, 248), Enum.Material.Neon, botModel, false)
-		createPart("NozzleR", Vector3.new(0.5, 0.1, 0.6), torso.CFrame * CFrame.new(1.5, -0.85, 0), Color3.fromRGB(56, 189, 248), Enum.Material.Neon, botModel, false)
+			-- Dual Ducted Thruster Turbines (Left and Right)
+			local turbL = createCylinder("TurbineL", Vector3.new(1.2, 1.6, 1.6), torso.CFrame * CFrame.new(-1.8, 0, 0) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(38, 44, 56), Enum.Material.Metal, model, true)
+			local turbR = createCylinder("TurbineR", Vector3.new(1.2, 1.6, 1.6), torso.CFrame * CFrame.new(1.8, 0, 0) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(38, 44, 56), Enum.Material.Metal, model, true)
 
-		local head = createPart("Head", Vector3.new(1.4, 1.2, 1.4), torso.CFrame * CFrame.new(0, 1.9, 0), Color3.fromRGB(15, 23, 42), Enum.Material.SmoothPlastic, botModel, true)
-		createPart("Visor", Vector3.new(1.1, 0.3, 0.2), head.CFrame * CFrame.new(0, 0.15, -0.7), Color3.fromRGB(239, 68, 68), Enum.Material.Neon, botModel, false)
+			-- Downward Thruster Exhaust Heat Motes
+			local pL = Instance.new("ParticleEmitter")
+			pL.Rate = 4
+			pL.Speed = NumberRange.new(2, 4)
+			pL.Lifetime = NumberRange.new(0.3, 0.6)
+			pL.Size = NumberSequence.new(0.3, 0.05)
+			pL.Color = ColorSequence.new(Color3.fromRGB(56, 189, 248))
+			pL.EmissionDirection = Enum.NormalId.Bottom
+			pL.Parent = turbL
 
-		-- Diamond Plate Combat Ring Pedestal with Thin 0.15-stud Hazard Border (No solid neon blocks!)
-		local ped = createPart("TargetPedestal", Vector3.new(4.8, 0.4, 4.8), spawnCF * CFrame.new(0, 0.2, 0), Color3.fromRGB(24, 28, 40), Enum.Material.DiamondPlate, botModel, true)
-		for _, edgeOffset in {
-			CFrame.new(0, 0.22, -2.35),
-			CFrame.new(0, 0.22, 2.35),
-			CFrame.new(-2.35, 0.22, 0) * CFrame.Angles(0, math.rad(90), 0),
-			CFrame.new(2.35, 0.22, 0) * CFrame.Angles(0, math.rad(90), 0),
-		} do
-			createPart("TargetEdgeTrim", Vector3.new(4.6, 0.05, 0.15), ped.CFrame * edgeOffset, Color3.fromRGB(239, 68, 68), Enum.Material.Neon, botModel, false)
+			local pR = pL:Clone()
+			pR.Parent = turbR
+
+			-- Armored Sensor Cowl & Thin Red Optical Scanner Slit (Not a solid red block!)
+			local head = createPart("Head", Vector3.new(1.4, 1.0, 1.4), torso.CFrame * CFrame.new(0, 1.6, 0), Color3.fromRGB(15, 20, 30), Enum.Material.Metal, model, true)
+			createPart("VisorSlit", Vector3.new(1.1, 0.08, 0.1), head.CFrame * CFrame.new(0, 0.1, -0.72), Color3.fromRGB(239, 68, 68), Enum.Material.Neon, model, false)
+
+			-- Underside Stun Taser Prongs
+			createCylinder("TaserL", Vector3.new(0.8, 0.15, 0.15), torso.CFrame * CFrame.new(-0.6, -1.5, 0.2), Color3.fromRGB(180, 195, 210), Enum.Material.Metal, model, false)
+			createCylinder("TaserR", Vector3.new(0.8, 0.15, 0.15), torso.CFrame * CFrame.new(0.6, -1.5, 0.2), Color3.fromRGB(180, 195, 210), Enum.Material.Metal, model, false)
+
+			return model
+		end)
+
+		-- Heavy Concrete Combat Ring Pedestal with Hazard Warning Border
+		local ped = createPart("TargetPedestal", Vector3.new(5.4, 0.4, 5.4), spawnCF * CFrame.new(0, 0.2, 0), Color3.fromRGB(28, 34, 46), Enum.Material.DiamondPlate, rootFolder, true)
+		createPart("TargetCautionBorder", Vector3.new(5.6, 0.1, 5.6), spawnCF * CFrame.new(0, 0.42, 0), Color3.fromRGB(245, 158, 11), Enum.Material.SmoothPlastic, rootFolder, false)
+
+		-- Hovering Bob Tween
+		local torsoPart = botModel.PrimaryPart or botModel:FindFirstChildWhichIsA("BasePart", true)
+		if torsoPart then
+			local baseCF = torsoPart.CFrame
+			task.spawn(function()
+				while botModel.Parent do
+					TweenService:Create(torsoPart, TweenInfo.new(1.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
+						CFrame = baseCF * CFrame.new(0, 0.35, 0)
+					}):Play()
+					task.wait(1.2)
+					TweenService:Create(torsoPart, TweenInfo.new(1.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
+						CFrame = baseCF * CFrame.new(0, -0.35, 0)
+					}):Play()
+					task.wait(1.2)
+				end
+			end)
 		end
 
 		local hum = Instance.new("Humanoid")

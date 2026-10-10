@@ -635,60 +635,115 @@ local function buildOverheadCraneGantries(parent: Folder)
 	gantryFolder.Name = "OverheadIndustrialGantries"
 	gantryFolder.Parent = parent
 
-	local gantryHeights = { 28, 32 }
-	local zOffsets = { -35, 0, 35 }
+	local gantryHeights = { 32, 36 }
+	local zOffsets = { -45, 0, 45 }
 
 	for idx, zOff in zOffsets do
 		local beamHeight = gantryHeights[(idx % 2) + 1]
-		local spanLen = 220
+		local spanLen = 224
 
+		-- Massive Industrial Yellow Crane Box Girder
 		local girder = createPart(
 			`CraneGirder_{idx}`,
-			Vector3.new(spanLen, 4.0, 5.0),
+			Vector3.new(spanLen, 3.8, 3.4),
 			CFrame.new(0, beamHeight, zOff),
-			Color3.fromRGB(24, 28, 40),
-			Enum.Material.DiamondPlate,
+			Color3.fromRGB(245, 158, 11),
+			Enum.Material.Metal,
 			gantryFolder,
 			true
 		)
 
+		-- Top & Bottom Heavy Steel Flange Plates
 		createPart(
-			`CraneRailL_{idx}`,
-			Vector3.new(spanLen, 0.8, 0.8),
-			CFrame.new(0, beamHeight + 2.2, zOff - 1.8),
-			Color3.fromRGB(245, 158, 11),
+			`CraneFlangeTop_{idx}`,
+			Vector3.new(spanLen, 0.4, 4.4),
+			CFrame.new(0, beamHeight + 2.0, zOff),
+			Color3.fromRGB(38, 44, 56),
 			Enum.Material.Metal,
 			girder,
-			false
+			true
+		)
+		createPart(
+			`CraneFlangeBottom_{idx}`,
+			Vector3.new(spanLen, 0.4, 4.4),
+			CFrame.new(0, beamHeight - 2.0, zOff),
+			Color3.fromRGB(38, 44, 56),
+			Enum.Material.Metal,
+			girder,
+			true
 		)
 
-		for _, xPos in { -50, -18, 18, 50 } do
+		-- Yellow and Black Hazard Striping along Girder Sides
+		for sX = -90, 90, 15 do
 			createPart(
+				`HazardChevron_{idx}_{sX}`,
+				Vector3.new(6.0, 1.4, 0.15),
+				CFrame.new(sX, beamHeight, zOff + 1.8),
+				(math.abs(sX) % 30 == 0) and Color3.fromRGB(24, 24, 27) or Color3.fromRGB(245, 158, 11),
+				Enum.Material.SmoothPlastic,
+				girder,
+				false
+			)
+		end
+
+		-- Suspended Motorized Crane Trolley Carriage (Positioned at different points along the rail)
+		local trolleyX = (idx == 1 and -30) or (idx == 2 and 40) or -10
+		local trolleyCF = CFrame.new(trolleyX, beamHeight - 3.2, zOff)
+		local trolley = createPart(
+			`CraneTrolley_{idx}`,
+			Vector3.new(8.0, 2.2, 5.5),
+			trolleyCF,
+			Color3.fromRGB(30, 36, 48),
+			Enum.Material.Metal,
+			girder,
+			true
+		)
+
+		-- Dual Hanging Steel Hoist Cables
+		createCylinder(`HoistCableL_{idx}`, Vector3.new(12.0, 0.2, 0.2), trolleyCF * CFrame.new(-1.8, -6.5, 0), Color3.fromRGB(180, 195, 210), Enum.Material.Metal, trolley, false)
+		createCylinder(`HoistCableR_{idx}`, Vector3.new(12.0, 0.2, 0.2), trolleyCF * CFrame.new(1.8, -6.5, 0), Color3.fromRGB(180, 195, 210), Enum.Material.Metal, trolley, false)
+
+		-- Heavy Industrial Cargo Hook Block
+		local hookBlock = createPart(
+			`HookBlock_{idx}`,
+			Vector3.new(4.2, 2.8, 3.2),
+			trolleyCF * CFrame.new(0, -13.0, 0),
+			Color3.fromRGB(245, 158, 11),
+			Enum.Material.Metal,
+			trolley,
+			true
+		)
+		createPart("HookSheave", Vector3.new(2.4, 1.8, 1.8), hookBlock.CFrame * CFrame.new(0, -1.8, 0), Color3.fromRGB(24, 24, 27), Enum.Material.Metal, hookBlock, false)
+
+		-- High-Bay Halogen Floodlights on Girder
+		for _, xPos in { -65, -20, 20, 65 } do
+			local bayShroud = createPart(
 				`HighBayShroud_{idx}_{xPos}`,
-				Vector3.new(3.8, 1.2, 3.8),
-				CFrame.new(xPos, beamHeight - 2.0, zOff),
-				Color3.fromRGB(15, 20, 28),
+				Vector3.new(3.2, 1.0, 3.2),
+				CFrame.new(xPos, beamHeight - 2.2, zOff),
+				Color3.fromRGB(24, 28, 38),
 				Enum.Material.Metal,
 				girder,
 				false
 			)
-
-			local bayLightPart = createPart(
+			local bayLens = createPart(
 				`HighBayLight_{idx}_{xPos}`,
-				Vector3.new(3.0, 0.4, 3.0),
-				CFrame.new(xPos, beamHeight - 2.6, zOff),
+				Vector3.new(2.6, 0.2, 2.6),
+				CFrame.new(xPos, beamHeight - 2.7, zOff),
 				Color3.fromRGB(254, 240, 138),
 				Enum.Material.Neon,
 				girder,
 				false
 			)
-			local point = Instance.new("PointLight")
-			point.Name = "ArenaHighBayIllumination"
-			point.Color = Color3.fromRGB(255, 248, 235)
-			point.Range = 95
-			point.Brightness = 3.6
-			point.Shadows = true
-			point.Parent = bayLightPart
+			local spot = Instance.new("SpotLight")
+			spot.Name = "ArenaWorkFlood"
+			spot.Face = Enum.NormalId.Bottom
+			spot.Range = 90
+			spot.Angle = 85
+			spot.Brightness = 2.4
+			spot.Color = Color3.fromRGB(255, 225, 160)
+			spot.Shadows = true
+			spot.Parent = bayLens
 		end
 	end
 end
