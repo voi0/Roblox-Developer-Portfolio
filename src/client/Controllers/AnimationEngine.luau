@@ -31,10 +31,7 @@ function AnimationEngine.Init()
 	AnimationEngine._camSpring = Spring.new(Vector3.zero, 28, 0.72)
 	AnimationEngine._swaySpring = Spring.new(Vector3.zero, 18, 0.8)
 
-	-- 2. Hook RenderStepped for Camera Bob & Spring Updates
-	RunService.RenderStepped:Connect(AnimationEngine._onRenderStepped)
-
-	-- 3. Character Tool Tracking
+	-- 2. Character Tool Tracking
 	local function onCharacter(char: Model)
 		char.ChildAdded:Connect(function(child)
 			if child:IsA("Tool") then
@@ -108,30 +105,10 @@ function AnimationEngine.Init()
 end
 
 -- ============================================================
--- CAMERA TRAUMA & BOB STEPPER
--- ============================================================
-function AnimationEngine._onRenderStepped(dt: number)
-	-- 1. Step Springs
-	local camOffset = AnimationEngine._camSpring:Update(dt)
-
-	-- 2. Apply Trauma Shakes to Camera CFrame strictly when an impulse is active
-	if camera and camOffset.Magnitude > 0.005 then
-		local shakeRot = CFrame.Angles(
-			math.rad(camOffset.Y * 1.5),
-			math.rad(camOffset.X * 1.5),
-			math.rad(camOffset.Z * 1.2)
-		)
-		camera.CFrame = camera.CFrame * shakeRot
-	end
-end
-
--- ============================================================
--- SHAKE CAMERA IMPULSE
+-- SHAKE CAMERA IMPULSE (Safe placeholder - camera preserved)
 -- ============================================================
 function AnimationEngine.ShakeCamera(force: Vector3)
-	if AnimationEngine._camSpring then
-		AnimationEngine._camSpring:Impulse(force)
-	end
+	-- Preserved as no-op to ensure 100% stable native Roblox camera
 end
 
 -- ============================================================

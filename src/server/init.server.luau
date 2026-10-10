@@ -14,7 +14,7 @@ if not servicesFolder then
 end
 
 print("========================================")
-print("  ⚡ VAULT WARS Server Booting...")
+print("  VAULT WARS Server Booting...")
 print("========================================")
 
 local serviceNames = {
@@ -73,5 +73,5 @@ for _, name in serviceNames do
 end
 
 print("========================================")
-print("  ✅ VAULT WARS Server Online!")
+print("  VAULT WARS Server Online!")
 print("========================================")

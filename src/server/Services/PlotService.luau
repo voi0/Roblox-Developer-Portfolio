@@ -104,13 +104,16 @@ local UPGRADE_DEFS: { [string]: any } = {
 			if plot.BuiltObjects["BankSafe"] then return end
 
 			-- Collector safe at conveyor terminus
-			local safeModel = Instance.new("Model")
-			safeModel.Name = "BankSafeCollector"
-			safeModel.Parent = plot.Folder
-
-			local hopper = createPart("SafeHopper", Vector3.new(5.0, 5.0, 5.0), plot.CF * CFrame.new(8, 4.5, 10), Color3.fromRGB(30, 41, 59), Enum.Material.Metal, safeModel, true)
-			safeModel.PrimaryPart = hopper
-			createPart("HopperTrim", Vector3.new(5.4, 0.4, 5.4), plot.CF * CFrame.new(8, 7.2, 10), Color3.fromRGB(16, 185, 129), Enum.Material.Neon, safeModel, false)
+			local safeCF = plot.CF * CFrame.new(8, 2, 10)
+			local safeModel = ModelEngine.GetOrBuild("BankSafeCollector", plot.Folder, safeCF, function()
+				local m = Instance.new("Model")
+				m.Name = "BankSafeCollector"
+				m.Parent = plot.Folder
+				local hopper = createPart("SafeHopper", Vector3.new(5.0, 5.0, 5.0), safeCF * CFrame.new(0, 2.5, 0), Color3.fromRGB(30, 41, 59), Enum.Material.Metal, m, true)
+				m.PrimaryPart = hopper
+				createPart("HopperTrim", Vector3.new(5.4, 0.4, 5.4), safeCF * CFrame.new(0, 5.2, 0), Color3.fromRGB(16, 185, 129), Enum.Material.Neon, m, false)
+				return m
+			end)
 
 			-- Deposit plunger floor pad
 			local pLen = Config.Arena.PlotLength
@@ -118,7 +121,7 @@ local UPGRADE_DEFS: { [string]: any } = {
 				plot.Folder,
 				plot.CF * CFrame.new(0, 2, pLen / 2 - 9),
 				Color3.fromRGB(16, 185, 129),
-				"📥 STEP TO BANK $"
+				"STEP TO BANK CASH"
 			)
 			plot.SafePad = safePad
 			plot.BuiltObjects["BankSafe"] = safeModel
@@ -170,6 +173,9 @@ local UPGRADE_DEFS: { [string]: any } = {
 			local shell = ModelEngine.GetOrBuild("BunkerShell", plot.Folder, shellCF, function()
 				return ModelEngine.CreateBunkerShell(plot.Folder, shellCF, Config.Arena.PlotWidth, Config.Arena.PlotLength, Config.Arena.WallHeight)
 			end)
+			local pWidth = Config.Arena.PlotWidth
+			ModelEngine.CreateServerRack(plot.Folder, plot.CF * CFrame.new(-pWidth / 2 + 3.2, 2.0, -4))
+			ModelEngine.CreateServerRack(plot.Folder, plot.CF * CFrame.new(-pWidth / 2 + 3.2, 2.0, 4))
 			plot.BuiltObjects["BlastWalls"] = shell
 		end,
 	},
@@ -263,7 +269,7 @@ local UPGRADE_DEFS: { [string]: any } = {
 			if plot.BuiltObjects["DefenseTurret"] then return end
 			local pLen = Config.Arena.PlotLength
 			local turretCF = plot.CF * CFrame.new(0, Config.Arena.WallHeight + 2.2, -pLen / 2 + 2.6)
-			local turret = ModelEngine.GetOrBuild("SecurityTurret", plot.Folder, turretCF, function()
+			local turret = ModelEngine.GetOrBuild("DefenseTurret", plot.Folder, turretCF, function()
 				return ModelEngine.CreateSecurityTurret(plot.Folder, turretCF)
 			end)
 			local turretSvc = getTurretService()
@@ -298,7 +304,7 @@ local UPGRADE_DEFS: { [string]: any } = {
 			local sLabel = Instance.new("TextLabel")
 			sLabel.Size = UDim2.new(1, 0, 1, 0)
 			sLabel.BackgroundTransparency = 1
-			sLabel.Text = "👑 PRIZED RELIC\n[EMPTY]"
+			sLabel.Text = "PRIZED RELIC\n[EMPTY]"
 			sLabel.TextColor3 = Color3.fromRGB(148, 163, 184)
 			sLabel.TextSize = 11
 			sLabel.Font = Enum.Font.GothamBlack
@@ -350,7 +356,10 @@ local UPGRADE_DEFS: { [string]: any } = {
 function PlotService.Init()
 	print("  [PlotService] Constructing Cyber-Industrial Plaza & 6 Fortified Bunker Bases...")
 
-	-- ── 0. BASEPLATE CLEANUP (Eliminates ground flickering & Z-fighting) ──
+	-- ── 0. INGEST STUDIO 3D MODELS ──
+	ModelEngine.IngestStudioModels()
+
+	-- ── 0.1 BASEPLATE CLEANUP (Eliminates ground flickering & Z-fighting) ──
 	for _, child in Workspace:GetChildren() do
 		if child:IsA("BasePart") then
 			local lowerName = child.Name:lower()
@@ -1278,7 +1287,7 @@ function PlotService.SpawnNextButton(plotIndex: number)
 		local lbl = Instance.new("TextLabel")
 		lbl.Size = UDim2.fromScale(1, 1)
 		lbl.BackgroundTransparency = 1
-		lbl.Text = "👑 VAULT FULLY MAXED OUT 👑"
+		lbl.Text = "VAULT FULLY MAXED OUT"
 		lbl.TextColor3 = Color3.fromRGB(254, 240, 138)
 		lbl.TextSize = 14
 		lbl.Font = Enum.Font.GothamBlack
@@ -1451,7 +1460,7 @@ function PlotService.UpdateShowcase(plotIndex: number)
 	if not owner then
 		plot.ShowcaseGem.Transparency = 0.8
 		plot.ShowcaseGem.Color = Color3.fromRGB(100, 116, 139)
-		plot.ShowcaseLabel.Text = "👑 PRIZED RELIC\n[VACANT]"
+		plot.ShowcaseLabel.Text = "PRIZED RELIC\n[VACANT]"
 		plot.ShowcaseLabel.TextColor3 = Color3.fromRGB(148, 163, 184)
 		if plot.ShowcaseRing then plot.ShowcaseRing.Color = Color3.fromRGB(71, 85, 105) end
 		return
@@ -1487,13 +1496,13 @@ function PlotService.UpdateShowcase(plotIndex: number)
 		plot.CurrentShowcaseModel = relicModel
 
 		plot.ShowcaseGem.Transparency = 1
-		plot.ShowcaseLabel.Text = `👑 PRIZED RELIC\n{def.Name}`
+		plot.ShowcaseLabel.Text = `PRIZED RELIC\n{def.Name}`
 		plot.ShowcaseLabel.TextColor3 = def.Color
 		if plot.ShowcaseRing then plot.ShowcaseRing.Color = def.Color end
 	else
 		plot.ShowcaseGem.Transparency = 0.6
 		plot.ShowcaseGem.Color = Color3.fromRGB(148, 163, 184)
-		plot.ShowcaseLabel.Text = "👑 PRIZED RELIC\n[NO RELICS]"
+		plot.ShowcaseLabel.Text = "PRIZED RELIC\n[NO RELICS]"
 		plot.ShowcaseLabel.TextColor3 = Color3.fromRGB(148, 163, 184)
 		if plot.ShowcaseRing then plot.ShowcaseRing.Color = Color3.fromRGB(56, 189, 248) end
 	end

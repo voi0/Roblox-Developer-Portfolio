@@ -44,7 +44,7 @@ function DailyModal.Create(parentGui: ScreenGui)
 	header.Parent = frame
 
 	local title = Instance.new("TextLabel")
-	title.Text = "📅 7-DAY RETENTION STREAK CALENDAR"
+	title.Text = "7-DAY RETENTION STREAK CALENDAR"
 	title.TextColor3 = Color3.fromRGB(250, 204, 21)
 	title.TextSize = 18
 	title.Font = Enum.Font.GothamBlack
@@ -114,7 +114,7 @@ function DailyModal.Create(parentGui: ScreenGui)
 
 		-- Day Header
 		local dLabel = Instance.new("TextLabel")
-		dLabel.Text = isJackpotDay and `👑 DAY {dayNum} (JACKPOT)` or `DAY {dayNum}`
+		dLabel.Text = isJackpotDay and `DAY {dayNum} (JACKPOT)` or `DAY {dayNum}`
 		dLabel.TextColor3 = isJackpotDay and Color3.fromRGB(250, 204, 21) or Color3.fromRGB(56, 189, 248)
 		dLabel.TextSize = 11
 		dLabel.Font = Enum.Font.GothamBlack
@@ -170,7 +170,7 @@ function DailyModal.Create(parentGui: ScreenGui)
 		-- Status Pill (Claimed / Ready / Locked)
 		local statusPill = Instance.new("TextLabel")
 		statusPill.Name = "StatusPill"
-		statusPill.Text = "🔒 LOCKED"
+		statusPill.Text = "LOCKED"
 		statusPill.TextColor3 = Color3.fromRGB(148, 163, 184)
 		statusPill.TextSize = 10
 		statusPill.Font = Enum.Font.GothamBlack
@@ -196,7 +196,7 @@ function DailyModal.Create(parentGui: ScreenGui)
 	timerLabel.Size = UDim2.new(0, 360, 1, 0)
 	timerLabel.Position = UDim2.new(0, 0, 0, 0)
 	timerLabel.BackgroundTransparency = 1
-	timerLabel.Text = "⏳ Next reward ready in: --:--"
+	timerLabel.Text = "Next reward ready in: --:--"
 	timerLabel.TextColor3 = Color3.fromRGB(148, 163, 184)
 	timerLabel.TextSize = 12
 	timerLabel.Font = Enum.Font.GothamBold
@@ -209,7 +209,7 @@ function DailyModal.Create(parentGui: ScreenGui)
 	claimBtn.Size = UDim2.new(0, 210, 0, 44)
 	claimBtn.Position = UDim2.new(1, -210, 0, 4)
 	claimBtn.BackgroundColor3 = Color3.fromRGB(16, 185, 129)
-	claimBtn.Text = "🎁 CLAIM TODAY'S REWARD"
+	claimBtn.Text = "CLAIM TODAY'S REWARD"
 	claimBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 	claimBtn.TextSize = 12
 	claimBtn.Font = Enum.Font.GothamBlack
@@ -287,7 +287,7 @@ function DailyModal.Refresh()
 
 			elseif dayNum == streak + 1 and canClaim then
 				-- Ready to claim now
-				pill.Text = "⚡ CLAIM NOW!"
+				pill.Text = "CLAIM NOW!"
 				pill.TextColor3 = Color3.fromRGB(250, 204, 21)
 				pill.BackgroundColor3 = Color3.fromRGB(120, 53, 15)
 				card.BackgroundTransparency = 0
@@ -295,7 +295,7 @@ function DailyModal.Refresh()
 
 			else
 				-- Locked
-				pill.Text = "🔒 LOCKED"
+				pill.Text = "LOCKED"
 				pill.TextColor3 = Color3.fromRGB(148, 163, 184)
 				pill.BackgroundColor3 = Color3.fromRGB(15, 17, 26)
 				card.BackgroundTransparency = 0.1
@@ -307,7 +307,7 @@ function DailyModal.Refresh()
 		if DailyModal._claimBtn then
 			if canClaim then
 				DailyModal._claimBtn.BackgroundColor3 = Color3.fromRGB(16, 185, 129)
-				DailyModal._claimBtn.Text = `🎁 CLAIM DAY {streak + 1} REWARD`
+				DailyModal._claimBtn.Text = `CLAIM DAY {streak + 1} REWARD`
 				DailyModal._claimBtn.AutoButtonColor = true
 			else
 				DailyModal._claimBtn.BackgroundColor3 = Color3.fromRGB(51, 65, 85)
@@ -318,12 +318,12 @@ function DailyModal.Refresh()
 
 		if DailyModal._timerLabel then
 			if canClaim then
-				DailyModal._timerLabel.Text = "✅ Daily streak reward is ready to claim!"
+				DailyModal._timerLabel.Text = "Daily streak reward is ready to claim!"
 				DailyModal._timerLabel.TextColor3 = Color3.fromRGB(16, 185, 129)
 			else
 				local hrs = math.floor(timeRem / 3600)
 				local mins = math.floor((timeRem % 3600) / 60)
-				DailyModal._timerLabel.Text = `⏳ Next reward available in: {hrs}h {mins}m`
+				DailyModal._timerLabel.Text = `Next reward available in: {hrs}h {mins}m`
 				DailyModal._timerLabel.TextColor3 = Color3.fromRGB(148, 163, 184)
 			end
 		end

@@ -59,7 +59,7 @@ function UpgradesModal.Create(parentGui: ScreenGui)
 	title.Size = UDim2.new(1, -60, 1, 0)
 	title.Position = UDim2.new(0, 20, 0, 0)
 	title.BackgroundTransparency = 1
-	title.Text = "⚡ VAULT BASE UPGRADES"
+	title.Text = "VAULT BASE UPGRADES"
 	title.TextColor3 = Color3.fromRGB(250, 204, 21)
 	title.TextSize = 16
 	title.Font = Enum.Font.GothamBlack
@@ -101,9 +101,9 @@ function UpgradesModal.Create(parentGui: ScreenGui)
 
 	-- Create 3 Upgrade Cards
 	local upgradeDefs = {
-		{ Type = "Conveyor", Title = "Mint Conveyor Engine", Icon = "⚙️", Color = Color3.fromRGB(56, 189, 248) },
-		{ Type = "Laser", Title = "Laser Security Grid", Icon = "🚨", Color = Color3.fromRGB(239, 68, 68) },
-		{ Type = "VaultInterest", Title = "Vault Compound Interest", Icon = "📈", Color = Color3.fromRGB(16, 185, 129) },
+		{ Type = "Conveyor", Title = "Mint Conveyor Engine", Icon = "ENG", Color = Color3.fromRGB(56, 189, 248) },
+		{ Type = "Laser", Title = "Laser Security Grid", Icon = "SEC", Color = Color3.fromRGB(239, 68, 68) },
+		{ Type = "VaultInterest", Title = "Vault Compound Interest", Icon = "ROI", Color = Color3.fromRGB(16, 185, 129) },
 	}
 
 	for _, uDef in upgradeDefs do

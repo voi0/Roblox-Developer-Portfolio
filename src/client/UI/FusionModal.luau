@@ -60,7 +60,7 @@ function FusionModal.Create(parentGui: ScreenGui)
 	title.Size = UDim2.new(1, -60, 0, 28)
 	title.Position = UDim2.new(0, 20, 0, 6)
 	title.BackgroundTransparency = 1
-	title.Text = "🔮 RELIC FUSION ALTAR"
+	title.Text = "RELIC FUSION ALTAR"
 	title.TextColor3 = Color3.fromRGB(216, 180, 254)
 	title.TextSize = 16
 	title.Font = Enum.Font.GothamBlack
@@ -313,7 +313,7 @@ function FusionModal.Update(data: Types.PlayerData)
 			cardData.CountPill.TextColor3 = Color3.fromRGB(16, 185, 129)
 			cardData.FuseBtn.BackgroundColor3 = Color3.fromRGB(168, 85, 247)
 			cardData.FuseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-			cardData.FuseBtn.Text = "🔮 FUSE 3x"
+			cardData.FuseBtn.Text = "FUSE 3x"
 			cardData.Stroke.Color = Color3.fromRGB(168, 85, 247)
 		else
 			cardData.CountPill.TextColor3 = Color3.fromRGB(148, 163, 184)
@@ -336,7 +336,7 @@ function FusionModal.OnFuseClick(relicId: string)
 	local count = inv[relicId] or 0
 	if count < 3 then
 		if FusionModal._statusLabel then
-			FusionModal._statusLabel.Text = `⚠️ Need 3 copies to synthesize. You have {count}.`
+			FusionModal._statusLabel.Text = `Need 3 copies to synthesize. You have {count}.`
 			FusionModal._statusLabel.TextColor3 = Color3.fromRGB(245, 158, 11)
 		end
 		return

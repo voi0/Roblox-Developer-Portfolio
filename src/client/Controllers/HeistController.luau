@@ -49,7 +49,7 @@ function HeistController.Init()
 
 			local notif = getNotificationUI()
 			if notif then
-				notif.ShowToast("Heist", "🚨 SECURITY BREACH!", `{intruderName} has entered your vault!`)
+				notif.ShowToast("Heist", "SECURITY BREACH!", `{intruderName} has entered your vault!`)
 			end
 
 			local snd = getSoundController()
@@ -66,7 +66,7 @@ function HeistController.Init()
 		relicEvt.OnClientEvent:Connect(function(ownerName: string, relicName: string, tier: string, value: number)
 			local notif = getNotificationUI()
 			if notif then
-				notif.ShowToast("Relic", `🌟 {tier} Relic Minted!`, `{ownerName} discovered {relicName} (+${value})`)
+				notif.ShowToast("Relic", `{tier} Relic Minted!`, `{ownerName} discovered {relicName} (+${value})`)
 			end
 
 			local snd = getSoundController()
@@ -84,7 +84,7 @@ function HeistController.Init()
 
 			if itemName == "TACKLE_STOPPED" then
 				if notif then
-					notif.ShowToast("Defense", "⚡ Thief Tackled!", `{thiefName} zapped {victimName} and recovered ${value}!`)
+					notif.ShowToast("Defense", "Thief Tackled!", `{thiefName} zapped {victimName} and recovered ${value}!`)
 				end
 				if snd then snd.Play("TackleHit") end
 				if vfx and player.Character then
@@ -93,7 +93,7 @@ function HeistController.Init()
 				end
 			else
 				if notif then
-					notif.ShowToast("Heist", "🚨 Successful Heist!", `{thiefName} stole {itemName} (+${value}) from {victimName}!`)
+					notif.ShowToast("Heist", "Successful Heist!", `{thiefName} stole {itemName} (+${value}) from {victimName}!`)
 				end
 				if snd then snd.Play("CashCollect") end
 			end
@@ -110,9 +110,9 @@ function HeistController.Init()
 
 			if notif then
 				if isRadiant then
-					notif.ShowToast("Fusion", "🌟 Radiant Mutation!", `{playerName} forged Radiant {relicName}! (+${bonusCash} Bonus)`)
+					notif.ShowToast("Fusion", "Radiant Mutation!", `{playerName} forged Radiant {relicName}! (+${bonusCash} Bonus)`)
 				else
-					notif.ShowToast("Fusion", "🔮 Relic Synthesis", `{playerName} synthesized {relicName}!`)
+					notif.ShowToast("Fusion", "Relic Synthesis", `{playerName} synthesized {relicName}!`)
 				end
 			end
 			if snd then snd.Play("FusionSynth") end

@@ -147,7 +147,7 @@ function AirdropService.SpawnAirdrop()
 	local bLabel = Instance.new("TextLabel")
 	bLabel.Size = UDim2.new(1, 0, 1, 0)
 	bLabel.BackgroundTransparency = 1
-	bLabel.Text = "📦 GOLDEN VAULT AIRDROP INBOUND..."
+	bLabel.Text = "GOLDEN VAULT AIRDROP INBOUND..."
 	bLabel.TextColor3 = Color3.fromRGB(250, 204, 21)
 	bLabel.TextSize = 14
 	bLabel.Font = Enum.Font.GothamBlack
@@ -157,7 +157,7 @@ function AirdropService.SpawnAirdrop()
 	local notifEvt = ReplicatedStorage:FindFirstChild("NotificationBroadcast") :: RemoteEvent?
 	if notifEvt then
 		notifEvt:FireAllClients({
-			Title = "🌟 GOLDEN AIRDROP INBOUND!",
+			Title = "GOLDEN AIRDROP INBOUND!",
 			Message = "A massive vault crate is descending onto the Central Plaza!",
 			Type = "Airdrop",
 			Duration = 5,
@@ -263,7 +263,7 @@ function AirdropService.CrackAirdrop(winner: Player, crateModel: Model, pos: Vec
 	local notifEvt = ReplicatedStorage:FindFirstChild("NotificationBroadcast") :: RemoteEvent?
 	if notifEvt then
 		notifEvt:FireAllClients({
-			Title = "🏆 AIRDROP CRACKED!",
+			Title = "AIRDROP CRACKED!",
 			Message = `{winner.DisplayName} cracked the Golden Crate! ($250K + {relicDef.Name})`,
 			Type = "Jackpot",
 			Duration = 7,

@@ -146,7 +146,7 @@ function DailyRewardService.Claim(player: Player): any
 		if reward.Tokens and reward.Tokens > 0 then desc ..= ` + {reward.Tokens} Tokens` end
 
 		notifEvt:FireClient(player, {
-			Title = `📅 DAY {newStreak} STREAK CLAIMED!`,
+			Title = `DAY {newStreak} STREAK CLAIMED!`,
 			Message = desc,
 			Type = "Daily",
 			Duration = 5,

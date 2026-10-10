@@ -14,9 +14,12 @@
 ]]
 
 local Lighting = game:GetService("Lighting")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local Workspace = game:GetService("Workspace")
+
+local ModelEngine = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("ModelEngine"))
 
 local EnvironmentService = {}
 EnvironmentService._folder = nil :: Folder?
@@ -816,10 +819,335 @@ local function buildCavernCeilingCanopy(parent: Folder)
 end
 
 -- ============================================================
+-- 9. ELEVATED PERIMETER INDUSTRIAL CATWALK SYSTEM (Y=22)
+-- ============================================================
+local function buildElevatedCatwalkSystem(parent: Folder)
+	local catwalkFolder = Instance.new("Folder")
+	catwalkFolder.Name = "ElevatedPerimeterCatwalks"
+	catwalkFolder.Parent = parent
+
+	local numCatwalkSegs = 16
+	local catwalkRadius = 102
+	local catwalkY = 22.0
+	local halfAngle = math.pi / numCatwalkSegs
+	local segWidth = 2 * catwalkRadius * math.sin(halfAngle) + 4
+
+	for i = 1, numCatwalkSegs do
+		local angle = (i - 0.5) * (math.pi * 2 / numCatwalkSegs)
+		local pos = Vector3.new(math.cos(angle) * catwalkRadius, catwalkY, math.sin(angle) * catwalkRadius)
+		local lookCenterCF = CFrame.lookAt(pos, Vector3.new(0, catwalkY, 0))
+
+		-- Grated Metal Deck
+		createPart(
+			`CatwalkDeck_{i}`,
+			Vector3.new(segWidth, 0.6, 6.0),
+			lookCenterCF,
+			Color3.fromRGB(38, 46, 60),
+			Enum.Material.DiamondPlate,
+			catwalkFolder,
+			true
+		)
+
+		-- Heavy Under-Deck Steel Support Girder
+		createPart(
+			`CatwalkGirder_{i}`,
+			Vector3.new(segWidth, 1.4, 1.2),
+			lookCenterCF * CFrame.new(0, -1.0, 0),
+			Color3.fromRGB(24, 28, 40),
+			Enum.Material.Metal,
+			catwalkFolder,
+			true
+		)
+
+		-- Inner Safety Handrail
+		createPart(
+			`CatwalkInnerRail_{i}`,
+			Vector3.new(segWidth, 3.2, 0.3),
+			lookCenterCF * CFrame.new(0, 1.9, 2.85),
+			Color3.fromRGB(51, 65, 85),
+			Enum.Material.Metal,
+			catwalkFolder,
+			true
+		)
+
+		-- Outer Safety Handrail
+		createPart(
+			`CatwalkOuterRail_{i}`,
+			Vector3.new(segWidth, 3.2, 0.3),
+			lookCenterCF * CFrame.new(0, 1.9, -2.85),
+			Color3.fromRGB(51, 65, 85),
+			Enum.Material.Metal,
+			catwalkFolder,
+			true
+		)
+
+		-- Downward Catwalk Worklights (Every 2nd segment)
+		if i % 2 == 0 then
+			local lightPart = createPart(
+				`CatwalkWorkLight_{i}`,
+				Vector3.new(1.8, 0.6, 1.8),
+				lookCenterCF * CFrame.new(0, -1.4, 0),
+				Color3.fromRGB(254, 240, 138),
+				Enum.Material.Neon,
+				catwalkFolder,
+				false
+			)
+			local spot = Instance.new("SpotLight")
+			spot.Face = Enum.NormalId.Bottom
+			spot.Range = 45
+			spot.Angle = 75
+			spot.Brightness = 1.8
+			spot.Color = Color3.fromRGB(255, 220, 150)
+			spot.Parent = lightPart
+		end
+	end
+
+	-- 2 Industrial Access Staircases Connecting Ground to Catwalk
+	local stairAngles = { math.rad(55), math.rad(235) }
+	for sIdx, sAngle in stairAngles do
+		local stairStartDist = 92
+		local sPos = Vector3.new(math.cos(sAngle) * stairStartDist, 2.0, math.sin(sAngle) * stairStartDist)
+		local sLook = CFrame.lookAt(sPos, sPos + Vector3.new(-math.sin(sAngle), 0, math.cos(sAngle)))
+
+		local numSteps = 20
+		local stepHeight = (catwalkY - 2.0) / numSteps
+		local stepDepth = 2.4
+
+		for step = 1, numSteps do
+			local stepCF = sLook * CFrame.new(0, step * stepHeight, -step * stepDepth)
+			createPart(
+				`StairTread_{sIdx}_{step}`,
+				Vector3.new(5.5, 0.4, stepDepth),
+				stepCF,
+				Color3.fromRGB(38, 46, 60),
+				Enum.Material.DiamondPlate,
+				catwalkFolder,
+				true
+			)
+			createPart(
+				`StairNose_{sIdx}_{step}`,
+				Vector3.new(5.6, 0.45, 0.3),
+				stepCF * CFrame.new(0, 0.05, -stepDepth / 2),
+				Color3.fromRGB(245, 158, 11),
+				Enum.Material.SmoothPlastic,
+				catwalkFolder,
+				false
+			)
+		end
+	end
+end
+
+-- ============================================================
+-- 10. SYNDICATE BLACK MARKET & SMUGGLER ENCLAVE (black_market_vision.jpg)
+-- ============================================================
+local function buildSyndicateBlackMarketAlcove(parent: Folder)
+	local marketFolder = Instance.new("Folder")
+	marketFolder.Name = "SyndicateBlackMarketAlcove"
+	marketFolder.Parent = parent
+
+	local centerCF = CFrame.new(0, 2.0, -96)
+
+	-- Arched Bedrock Tunnel Vaulting (5 Heavy Structural Arches)
+	for a = -2, 2 do
+		local archZ = a * 8
+		local archCF = centerCF * CFrame.new(0, 0, archZ)
+
+		createPart(`ArchColL_{a}`, Vector3.new(3.2, 22, 3.2), archCF * CFrame.new(-16, 11, 0), Color3.fromRGB(24, 28, 40), Enum.Material.Metal, marketFolder, true)
+		createPart(`ArchColR_{a}`, Vector3.new(3.2, 22, 3.2), archCF * CFrame.new(16, 11, 0), Color3.fromRGB(24, 28, 40), Enum.Material.Metal, marketFolder, true)
+		createPart(`ArchTop_{a}`, Vector3.new(32, 2.8, 3.4), archCF * CFrame.new(0, 22, 0), Color3.fromRGB(38, 46, 60), Enum.Material.Metal, marketFolder, true)
+
+		local cableMid = archCF * CFrame.new(0, 18, 0)
+		createCylinder(`HangingCable_{a}`, Vector3.new(28, 0.25, 0.25), cableMid * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(20, 24, 30), Enum.Material.Metal, marketFolder, false)
+	end
+
+	-- Smuggler Counter & Signboard
+	local counterCF = centerCF * CFrame.new(0, 0, -12)
+	createPart("SmugglerCounter", Vector3.new(20, 3.6, 4.0), counterCF * CFrame.new(0, 1.8, 0), Color3.fromRGB(24, 30, 42), Enum.Material.Metal, marketFolder, true)
+	createPart("CounterTrim", Vector3.new(20.4, 0.4, 4.4), counterCF * CFrame.new(0, 3.7, 0), Color3.fromRGB(245, 158, 11), Enum.Material.DiamondPlate, marketFolder, true)
+
+	local signBoard = createPart("MarketSign", Vector3.new(18, 2.8, 0.4), counterCF * CFrame.new(0, 9.5, 0), Color3.fromRGB(15, 23, 42), Enum.Material.Metal, marketFolder, true)
+	local sGui = Instance.new("SurfaceGui")
+	sGui.Face = Enum.NormalId.Front
+	sGui.CanvasSize = Vector2.new(600, 100)
+	sGui.LightInfluence = 0.0
+	sGui.Parent = signBoard
+
+	local sLbl = Instance.new("TextLabel")
+	sLbl.Size = UDim2.fromScale(1, 1)
+	sLbl.BackgroundColor3 = Color3.fromRGB(15, 23, 42)
+	sLbl.Text = "SYNDICATE BLACK MARKET // CYBER ARSENAL"
+	sLbl.TextColor3 = Color3.fromRGB(251, 191, 36)
+	sLbl.TextSize = 22
+	sLbl.Font = Enum.Font.BuilderSansExtraBold
+	sLbl.Parent = sGui
+
+	-- 3 Holographic Weapon Display Pedestals
+	local weaponOffers = {
+		{ Name = "Security Stun Baton", Price = 250, ModelKey = "StunBaton", X = -6 },
+		{ Name = "EMP Laser Jammer", Price = 1500, ModelKey = "EMPJammer", X = 0 },
+		{ Name = "Laser Breach Cutter", Price = 5000, ModelKey = "LaserCutter", X = 6 },
+	}
+
+	for _, wData in weaponOffers do
+		local pedCF = counterCF * CFrame.new(wData.X, 0, 7)
+
+		createCylinder(`PedBase_{wData.ModelKey}`, Vector3.new(1.8, 3.6, 3.6), pedCF * CFrame.new(0, 0.9, 0) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(30, 41, 59), Enum.Material.Metal, marketFolder, true)
+		createCylinder(`PedTrim_{wData.ModelKey}`, Vector3.new(0.25, 3.8, 3.8), pedCF * CFrame.new(0, 1.85, 0) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(56, 189, 248), Enum.Material.Neon, marketFolder, false)
+
+		local holoBeam = createCylinder(`HoloBeam_{wData.ModelKey}`, Vector3.new(3.2, 2.4, 2.4), pedCF * CFrame.new(0, 3.5, 0) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(56, 189, 248), Enum.Material.Neon, marketFolder, false)
+		holoBeam.Transparency = 0.85
+
+		ModelEngine.GetOrBuild(wData.ModelKey, marketFolder, pedCF * CFrame.new(0, 3.4, 0) * CFrame.Angles(0, math.rad(45), 0), function()
+			local fallbackModel = Instance.new("Model")
+			fallbackModel.Name = wData.ModelKey
+			fallbackModel.Parent = marketFolder
+			createPart("WeaponMock", Vector3.new(0.8, 3.2, 0.8), pedCF * CFrame.new(0, 3.4, 0), Color3.fromRGB(56, 189, 248), Enum.Material.Neon, fallbackModel, false)
+			return fallbackModel
+		end)
+
+		local promptPart = createPart(`PromptPart_{wData.ModelKey}`, Vector3.new(1, 1, 1), pedCF * CFrame.new(0, 2.5, 0), Color3.fromRGB(0, 0, 0), Enum.Material.SmoothPlastic, marketFolder, false)
+		promptPart.Transparency = 1.0
+
+		local prompt = Instance.new("ProximityPrompt")
+		prompt.ActionText = `EQUIP // ${wData.Price}`
+		prompt.ObjectText = wData.Name
+		prompt.HoldDuration = 0.25
+		prompt.MaxActivationDistance = 8.0
+		prompt.RequiresLineOfSight = false
+		prompt.Parent = promptPart
+
+		prompt.Triggered:Connect(function(triggerPlayer)
+			local toolSvc = script.Parent:FindFirstChild("ToolService")
+			if toolSvc then
+				local svc = require(toolSvc :: ModuleScript)
+				if svc and svc.GiveLoadout then
+					svc.GiveLoadout(triggerPlayer)
+				end
+			end
+		end)
+	end
+
+	-- Stacked Industrial Crates and Barrels
+	ModelEngine.CreateIndustrialCrate(marketFolder, centerCF * CFrame.new(-12, 0, -6), 1.2)
+	ModelEngine.CreateIndustrialCrate(marketFolder, centerCF * CFrame.new(-12, 0, -11), 1.0)
+	ModelEngine.CreateIndustrialBarrel(marketFolder, centerCF * CFrame.new(12, 0, -6))
+	ModelEngine.CreateIndustrialBarrel(marketFolder, centerCF * CFrame.new(13.5, 0, -8))
+
+	-- Ground Fog / Ambient Mist Emitter
+	local fogEmitterPart = createPart("MarketFogEmitter", Vector3.new(24, 0.2, 16), centerCF * CFrame.new(0, 0.2, 0), Color3.fromRGB(0, 0, 0), Enum.Material.SmoothPlastic, marketFolder, false)
+	fogEmitterPart.Transparency = 1.0
+
+	local mist = Instance.new("ParticleEmitter")
+	mist.Rate = 5
+	mist.Speed = NumberRange.new(0.8, 1.8)
+	mist.Lifetime = NumberRange.new(3.0, 5.0)
+	mist.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 2.0), NumberSequenceKeypoint.new(1, 8.0) })
+	mist.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.8), NumberSequenceKeypoint.new(0.5, 0.6), NumberSequenceKeypoint.new(1, 1.0) })
+	mist.Color = ColorSequence.new(Color3.fromRGB(56, 189, 248))
+	mist.EmissionDirection = Enum.NormalId.Top
+	mist.Parent = fogEmitterPart
+end
+
+-- ============================================================
+-- 11. RELIC FUSION ALTAR ENCLAVE (transmutation-altar.glb)
+-- ============================================================
+local function buildRelicFusionAltarChamber(parent: Folder)
+	local altarFolder = Instance.new("Folder")
+	altarFolder.Name = "RelicFusionAltarChamber"
+	altarFolder.Parent = parent
+
+	local altarCF = CFrame.new(-75, 2.0, -75) * CFrame.Angles(0, math.rad(45), 0)
+
+	createPart("AltarPlinthBase", Vector3.new(22, 1.4, 22), altarCF * CFrame.new(0, 0.7, 0), Color3.fromRGB(15, 20, 28), Enum.Material.Slate, altarFolder, true)
+	createPart("AltarPlinthTier2", Vector3.new(18, 1.0, 18), altarCF * CFrame.new(0, 1.8, 0), Color3.fromRGB(30, 41, 59), Enum.Material.DiamondPlate, altarFolder, true)
+
+	for i = 1, 8 do
+		local ang = (i / 8) * (math.pi * 2)
+		local pX = math.cos(ang) * 9.5
+		local pZ = math.sin(ang) * 9.5
+		createPart(`AltarRune_{i}`, Vector3.new(2.4, 0.2, 0.6), altarCF * CFrame.new(pX, 2.35, pZ) * CFrame.Angles(0, -ang, 0), Color3.fromRGB(168, 85, 247), Enum.Material.Neon, altarFolder, false)
+	end
+
+	ModelEngine.GetOrBuild("TransmutationAltar", altarFolder, altarCF * CFrame.new(0, 2.3, 0), function()
+		local m = Instance.new("Model")
+		m.Name = "TransmutationAltar"
+		m.Parent = altarFolder
+
+		local pedestal = createPart("CentralSpire", Vector3.new(5.0, 7.0, 5.0), altarCF * CFrame.new(0, 5.5, 0), Color3.fromRGB(24, 28, 40), Enum.Material.Slate, m, true)
+		m.PrimaryPart = pedestal
+
+		local vortexGlow = createCylinder("VortexCore", Vector3.new(1.2, 3.8, 3.8), altarCF * CFrame.new(0, 9.2, 0) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(168, 85, 247), Enum.Material.Neon, m, false)
+		vortexGlow.Transparency = 0.3
+
+		local pLight = Instance.new("PointLight")
+		pLight.Color = Color3.fromRGB(192, 132, 252)
+		pLight.Range = 22
+		pLight.Brightness = 2.2
+		pLight.Parent = vortexGlow
+
+		return m
+	end)
+
+	local promptPart = createPart("AltarPromptPart", Vector3.new(2, 2, 2), altarCF * CFrame.new(0, 4.5, 0), Color3.fromRGB(0, 0, 0), Enum.Material.SmoothPlastic, altarFolder, false)
+	promptPart.Transparency = 1.0
+
+	local prompt = Instance.new("ProximityPrompt")
+	prompt.ActionText = "ACCESS RELIC FUSION"
+	prompt.ObjectText = "TRANSMUTATION ALTAR"
+	prompt.HoldDuration = 0.3
+	prompt.MaxActivationDistance = 10.0
+	prompt.RequiresLineOfSight = false
+	prompt.Parent = promptPart
+
+	ModelEngine.CreateRockBoulder(altarFolder, altarCF * CFrame.new(-12, 0, 4), Vector3.new(8, 7, 8))
+	ModelEngine.CreateRockBoulder(altarFolder, altarCF * CFrame.new(12, 0, 4), Vector3.new(9, 8, 9))
+end
+
+-- ============================================================
+-- 12. NATURAL CAVERN ROCK FORMATIONS (reactor_cavern_vision.jpg)
+-- ============================================================
+local function buildNaturalRockCavernFormations(parent: Folder)
+	local rocksFolder = Instance.new("Folder")
+	rocksFolder.Name = "CavernRockFormations"
+	rocksFolder.Parent = parent
+
+	for i = 1, 16 do
+		local angle = (i / 16) * (math.pi * 2)
+		local rockDist = 110
+		local rockPos = Vector3.new(math.cos(angle) * rockDist, 2.0, math.sin(angle) * rockDist)
+		local rockCF = CFrame.new(rockPos) * CFrame.Angles(0, angle + math.rad(25), 0)
+
+		local scale = 1.0 + (i % 3) * 0.4
+		ModelEngine.CreateRockBoulder(rocksFolder, rockCF, Vector3.new(12 * scale, 14 * scale, 10 * scale))
+	end
+end
+
+-- ============================================================
+-- 13. STUDIO CUSTOM WORLD DECOR INTEGRATION
+-- ============================================================
+local function integrateCustomWorldDecor()
+	local customFolder = Workspace:FindFirstChild("CustomWorldDecor")
+	if not customFolder then
+		customFolder = Instance.new("Folder")
+		customFolder.Name = "CustomWorldDecor"
+		customFolder.Parent = Workspace
+	end
+
+	for _, desc in customFolder:GetDescendants() do
+		if desc:IsA("BasePart") then
+			desc.Anchored = true
+		end
+	end
+end
+
+-- ============================================================
 -- MAIN INITIALIZATION
 -- ============================================================
 function EnvironmentService.Init()
-	print("  [EnvironmentService] Constructing Continuous Subterranean Cyber-Facility...")
+	print("  [EnvironmentService] Ingesting Studio 3D Models & Building Cyber-Cavern...")
+
+	-- 0. Auto-ingest any 3D models imported into Workspace by user
+	ModelEngine.IngestStudioModels()
 
 	-- 1. Baseplate cleanup
 	cleanupBaseplates()
@@ -836,15 +1164,20 @@ function EnvironmentService.Init()
 	cavernFolder.Parent = Workspace
 	EnvironmentService._folder = cavernFolder
 
-	-- 4. Full-World Architecture
+	-- 4. Full-World Architecture (Matching Vision Renders)
 	buildContinuousBedrockDeck(cavernFolder)
 	buildCavernEnclosure(cavernFolder)
+	buildNaturalRockCavernFormations(cavernFolder)
 	buildCavernCeilingCanopy(cavernFolder)
+	buildElevatedCatwalkSystem(cavernFolder)
 	buildRotatingWallTurbines(cavernFolder)
 	buildPerimeterIndustrialProps(cavernFolder)
 	buildOverheadCraneGantries(cavernFolder)
+	buildSyndicateBlackMarketAlcove(cavernFolder)
+	buildRelicFusionAltarChamber(cavernFolder)
+	integrateCustomWorldDecor()
 
-	print("  [EnvironmentService] Bedrock deck, perimeter walls, ceiling canopy, cargo depots, and volumetric lighting initialized ✓")
+	print("  [EnvironmentService] Catwalks, Black Market, Altar, Rock formations, and Industrial assets online ✓")
 end
 
 return EnvironmentService

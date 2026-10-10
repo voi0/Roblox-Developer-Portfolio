@@ -112,7 +112,7 @@ function HeistService.StartHeist(thief: Player, itemPart: Part, sourcePlot: any)
 	local sLabel = Instance.new("TextLabel")
 	sLabel.Size = UDim2.new(1, 0, 1, 0)
 	sLabel.BackgroundTransparency = 1
-	sLabel.Text = `🚨 STOLEN: {itemName}\n+${value}`
+	sLabel.Text = `STOLEN: {itemName}\n+${value}`
 	sLabel.TextColor3 = Color3.fromRGB(239, 68, 68)
 	sLabel.TextSize = 12
 	sLabel.Font = Enum.Font.GothamBlack

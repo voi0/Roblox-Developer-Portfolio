@@ -37,7 +37,7 @@ function EconomyService.Init()
 
 		local pId = receiptInfo.ProductId
 
-		-- ⚡ 25 R$ Adrenaline Surge
+		-- 25 R$ Adrenaline Surge
 		if pId == Config.Monetization.DevProducts.AdrenalineSurge.Id then
 			local char = player.Character
 			local hum = char and char:FindFirstChildOfClass("Humanoid")

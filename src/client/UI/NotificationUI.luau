@@ -77,19 +77,19 @@ function NotificationUI.Create()
 		if toolEvt then
 			toolEvt.OnClientEvent:Connect(function(action: string, arg1: any)
 				if action == "BatonHitLoot" then
-					NotificationUI.ShowToast("Defense", "⚡ BATON SMASH!", `Hit {arg1} and forced loot drop!`, 3.5)
+					NotificationUI.ShowToast("Defense", "BATON SMASH!", `Hit {arg1} and forced loot drop!`, 3.5)
 				elseif action == "BatonDropVictim" then
-					NotificationUI.ShowToast("Heist", "⚡ STUNNED!", `{arg1} struck you with a Baton! Loot dropped!`, 4)
+					NotificationUI.ShowToast("Heist", "STUNNED!", `{arg1} struck you with a Baton! Loot dropped!`, 4)
 				elseif action == "BatonHit" then
-					NotificationUI.ShowToast("Defense", "⚡ BATON HIT", `Stunned {arg1}!`, 2.5)
+					NotificationUI.ShowToast("Defense", "BATON HIT", `Stunned {arg1}!`, 2.5)
 				elseif action == "JamSuccess" then
-					NotificationUI.ShowToast("Success", "📡 EMP ACTIVE", `Enemy lasers disabled for {arg1}s! Breach now!`, 4)
+					NotificationUI.ShowToast("Success", "EMP ACTIVE", `Enemy lasers disabled for {arg1}s! Breach now!`, 4)
 				elseif action == "JamAlert" then
-					NotificationUI.ShowToast("Heist", "🚨 LASERS JAMMED!", `{arg1} disabled your lasers with an EMP!`, 4)
+					NotificationUI.ShowToast("Heist", "LASERS JAMMED!", `{arg1} disabled your lasers with an EMP!`, 4)
 				elseif action == "Cooldown" then
-					NotificationUI.ShowToast("Info", "⏳ COOLDOWN", `Device recharging ({arg1}s remaining)`, 2)
+					NotificationUI.ShowToast("Info", "COOLDOWN", `Device recharging ({arg1}s remaining)`, 2)
 				elseif action == "JamNoTarget" then
-					NotificationUI.ShowToast("Info", "📡 NO TARGET", "No enemy lasers within 22 studs", 2.5)
+					NotificationUI.ShowToast("Info", "NO TARGET", "No enemy lasers within 22 studs", 2.5)
 				end
 			end)
 		end

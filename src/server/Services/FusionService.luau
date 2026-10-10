@@ -150,7 +150,7 @@ function FusionService.FuseRelics(player: Player, relicId: string): (boolean, st
 	end
 
 	local msg = isRadiant 
-		and `🌟 RADIANT MUTATION! Forged {nextDef.Name} with +${bonusCash} bonus!`
+		and `RADIANT MUTATION! Forged {nextDef.Name} with +${bonusCash} bonus!`
 		or `Successfully synthesized {nextDef.Name}!`
 
 	print(`  [FusionService] {player.Name} fused 3x {currentDef.Name} -> {nextDef.Name} (Radiant: {isRadiant})`)

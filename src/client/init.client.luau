@@ -25,7 +25,7 @@ task.spawn(function()
 end)
 
 print("========================================")
-print("  ⚡ VAULT WARS Client Starting...")
+print("  VAULT WARS Client Starting...")
 print("========================================")
 
 local controllersFolder = (script:FindFirstChild("Controllers") or script:WaitForChild("Controllers", 5)) :: Folder?
@@ -277,7 +277,7 @@ task.spawn(function()
 			end
 			if NotificationUI then
 				NotificationUI.Show({
-					Title = "🌟 LEVEL UP!",
+					Title = "LEVEL UP!",
 					Message = `Promoted to Level {level} ({string.upper(rankTitle)})!\n+1 Skill Point available!`,
 					Type = "Daily",
 					Duration = 6,
@@ -315,7 +315,7 @@ task.spawn(function()
 			if CameraController then CameraController.Shake(0.7, 0.4) end
 			if NotificationUI then
 				NotificationUI.Show({
-					Title = "📡 EMP DISRUPTION!",
+					Title = "EMP DISRUPTION!",
 					Message = `Base Turret #{plotIdx} offline for {dur}s!`,
 					Type = "Heist",
 					Duration = 3,
@@ -395,7 +395,7 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
 			end
 		end
 
-	-- ⚡ [F] SECURITY TACKLE / ZAP INTRUDER
+	-- [F] SECURITY TACKLE / ZAP INTRUDER
 	elseif input.KeyCode == Enum.KeyCode.F then
 		local tackleRF = ReplicatedStorage:FindFirstChild("SecurityTackle") :: RemoteFunction?
 		if tackleRF then
@@ -410,5 +410,5 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
 end)
 
 print("========================================")
-print("  ✅ VAULT WARS Client Online!")
+print("  VAULT WARS Client Online!")
 print("========================================")

@@ -2,8 +2,8 @@
 --[[
 	ToolService.luau — Tactical Physical Arsenal for VAULT WARS: STEAL & DEFEND TYCOON
 	Provides players with:
-	1. ⚡ Security Stun Baton: Close-quarters defense, 20 dmg, 38 knocback, forces thief to drop stolen loot.
-	2. 📡 EMP Laser Jammer: Breaches enemy base security, disables laser grid for 6.0s.
+	1. Security Stun Baton: Close-quarters defense, 20 dmg, 38 knocback, forces thief to drop stolen loot.
+	2. EMP Laser Jammer: Breaches enemy base security, disables laser grid for 6.0s.
 	Located in: ServerScriptService.Server.Services.ToolService
 ]]
 
@@ -91,7 +91,7 @@ function ToolService.GiveLoadout(player: Player)
 	if not backpack then return end
 
 	-- Check if tools already exist
-	if not backpack:FindFirstChild("⚡ Stun Baton") and not (player.Character and player.Character:FindFirstChild("⚡ Stun Baton")) then
+	if not backpack:FindFirstChild("Security Stun Baton") and not (player.Character and player.Character:FindFirstChild("Security Stun Baton")) then
 		local baton = ToolService.CreateStunBatonTool()
 		baton.Activated:Connect(function()
 			ToolService.UseStunBaton(player)
@@ -99,7 +99,7 @@ function ToolService.GiveLoadout(player: Player)
 		baton.Parent = backpack
 	end
 
-	if not backpack:FindFirstChild("📡 EMP Jammer") and not (player.Character and player.Character:FindFirstChild("📡 EMP Jammer")) then
+	if not backpack:FindFirstChild("EMP Laser Jammer") and not (player.Character and player.Character:FindFirstChild("EMP Laser Jammer")) then
 		local jammer = ToolService.CreateEMPJammerTool()
 		jammer.Activated:Connect(function()
 			ToolService.UseEMPJammer(player)

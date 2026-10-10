@@ -102,13 +102,13 @@ function LeaderboardService.UpdateDisplay()
 		local rankPrefix = `#` .. tostring(rank)
 		if rank == 1 then
 			rankColor = Color3.fromRGB(250, 204, 21)
-			rankPrefix = "👑 #1"
+			rankPrefix = "#1"
 		elseif rank == 2 then
 			rankColor = Color3.fromRGB(226, 232, 240)
-			rankPrefix = "🥈 #2"
+			rankPrefix = "#2"
 		elseif rank == 3 then
 			rankColor = Color3.fromRGB(245, 158, 11)
-			rankPrefix = "🥉 #3"
+			rankPrefix = "#3"
 		end
 
 		local rankLabel = Instance.new("TextLabel")

@@ -93,32 +93,9 @@ function CameraController.Init()
 		if not CameraController._isCinematic and math.abs(currentCam.FieldOfView - CameraController._targetFOV) > 0.05 then
 			currentCam.FieldOfView = currentCam.FieldOfView + (CameraController._targetFOV - currentCam.FieldOfView) * math.clamp(dt * 8, 0, 1)
 		end
-
-		-- Ensure Humanoid CameraOffset is reset so native camera is rock-solid
-		local char = player.Character
-		local hum = char and char:FindFirstChildOfClass("Humanoid")
-		if hum and hum.CameraOffset ~= Vector3.zero then
-			hum.CameraOffset = Vector3.zero
-		end
 	end)
 
-	-- 4. Rotational Camera Shake bound at RenderPriority.Camera.Value + 1
-	RunService:BindToRenderStep("PostCameraShake", Enum.RenderPriority.Camera.Value + 1, function(dt: number)
-		local currentCam = getCamera()
-		if not currentCam or currentCam.CameraType ~= Enum.CameraType.Custom then return end
-
-		local shakePos = shakeSpring:Update(dt) :: Vector3
-		if shakePos.Magnitude > 0.005 then
-			local shakeAngles = CFrame.Angles(
-				math.rad(shakePos.X),
-				math.rad(shakePos.Y),
-				math.rad(shakePos.Z)
-			)
-			currentCam.CFrame = currentCam.CFrame * shakeAngles
-		end
-	end)
-
-	print("  [CameraController] AAA Camera Engine online ✓")
+	print("  [CameraController] Rock-Solid Native Roblox Camera online ✓")
 end
 
 -- ============================================================

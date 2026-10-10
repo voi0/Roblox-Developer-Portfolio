@@ -14,102 +14,9 @@ local Workspace = game:GetService("Workspace")
 
 local ModelEngine = {}
 
---[[
-	Custom Mesh Hookup: If custom imported models exist in
-	ReplicatedStorage.Assets.Models[modelName], instantiates the custom asset;
-	otherwise falls back cleanly to the procedural high-fidelity engine.
-]]
-function ModelEngine.GetOrBuild(modelName: string, parent: Instance, cf: CFrame, buildFallback: () -> Model): Model
-	-- Check ReplicatedStorage.Assets.Models first
-	local assets = ReplicatedStorage:FindFirstChild("Assets") :: Folder?
-	local models = assets and assets:FindFirstChild("Models") :: Folder?
-	local customAsset = (models and models:FindFirstChild(modelName))
-		or (ReplicatedStorage:FindFirstChild(modelName))
-		or (workspace:FindFirstChild(modelName))
-
-	if customAsset and (customAsset:IsA("Model") or customAsset:IsA("BasePart")) then
-		local clone: Model
-		if customAsset:IsA("Model") then
-			clone = customAsset:Clone() :: Model
-		else
-			clone = Instance.new("Model")
-			clone.Name = modelName
-			local partClone = customAsset:Clone() :: BasePart
-			partClone.Parent = clone
-			clone.PrimaryPart = partClone
-		end
-
-		if not clone.PrimaryPart then
-			local firstPart = clone:FindFirstChildWhichIsA("BasePart", true)
-			if firstPart then clone.PrimaryPart = firstPart end
-		end
-
-		clone:PivotTo(cf)
-		clone.Parent = parent
-
-		-- HYBRID RIGGING: If custom asset lacks essential functional moving parts, inject them seamlessly!
-		if modelName == "MintMachine" then
-			-- Ensure StampingHead exists for hydraulic animation
-			if not clone:FindFirstChild("StampingHead") then
-				local head = createPart("StampingHead", Vector3.new(4.8, 1.6, 3.2), cf * CFrame.new(0, 5.8, -6.5), Color3.fromRGB(30, 41, 59), Enum.Material.Metal, clone, true)
-				createPart("HazardStripe", Vector3.new(4.85, 0.35, 3.25), head.CFrame * CFrame.new(0, -0.6, 0), Color3.fromRGB(245, 158, 11), Enum.Material.SmoothPlastic, head)
-				local ventL = Instance.new("Attachment")
-				ventL.Name = "SteamVentL"
-				ventL.Position = Vector3.new(-2.4, 0.3, 0)
-				ventL.Parent = head
-				local ventR = Instance.new("Attachment")
-				ventR.Name = "SteamVentR"
-				ventR.Position = Vector3.new(2.4, 0.3, 0)
-				ventR.Parent = head
-			end
-			-- Ensure animated Conveyor exists
-			if not clone:FindFirstChild("ConveyorBelt") and not clone:FindFirstChild("BaseChassis") then
-				local belt = createPart("ConveyorBelt", Vector3.new(5.2, 0.4, 27.2), cf * CFrame.new(0, 1.6, 0), Color3.fromRGB(18, 22, 28), Enum.Material.Slate, clone, true)
-				local tex = Instance.new("Texture")
-				tex.Name = "ConveyorTread"
-				tex.Face = Enum.NormalId.Top
-				tex.Texture = "rbxassetid://446111271"
-				tex.StudsPerTileU = 2
-				tex.StudsPerTileV = 4
-				tex.Parent = belt
-			end
-		elseif modelName == "VaultDoor" then
-			-- Ensure rotating CogWheelCenter exists for spin animation
-			if not clone:FindFirstChild("CogWheelCenter") then
-				local wheel = createCylinder("CogWheelCenter", Vector3.new(1.4, 3.2, 3.2), cf * CFrame.new(0, 7.5, -1.8) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(245, 158, 11), Enum.Material.Metal, clone)
-				for i = 1, 8 do
-					local angle = (i / 8) * (math.pi * 2)
-					local spokeDir = Vector3.new(math.cos(angle), math.sin(angle), 0)
-					createPart(`CogSpoke_{i}`, Vector3.new(0.4, 2.6, 0.4), cf * CFrame.new(Vector3.new(0, 7.5, -1.8) + spokeDir * 2.0) * CFrame.Angles(0, 0, angle + math.rad(90)), Color3.fromRGB(245, 158, 11), Enum.Material.Metal, clone)
-				end
-			end
-			-- Ensure DoorSlab exists for swing open
-			if not clone:FindFirstChild("DoorSlab") then
-				createCylinder("DoorSlab", Vector3.new(1.8, 11.2, 11.2), cf * CFrame.new(0, 7.5, -0.4) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(30, 41, 59), Enum.Material.Metal, clone, true)
-			end
-		elseif modelName == "DefenseTurret" then
-			-- Ensure TurretHead exists for azimuth tracking
-			if not clone:FindFirstChild("TurretHead") then
-				local headModel = Instance.new("Model")
-				headModel.Name = "TurretHead"
-				headModel.Parent = clone
-				local pod = createPart("WeaponPod", Vector3.new(2.4, 1.6, 3.2), cf * CFrame.new(0, -1.8, 0), Color3.fromRGB(15, 20, 30), Enum.Material.Metal, headModel, false)
-				headModel.PrimaryPart = pod
-				headModel:SetAttribute("RestCF", pod.CFrame)
-				local bLeft = createCylinder("BarrelLeft", Vector3.new(2.6, 0.4, 0.4), pod.CFrame * CFrame.new(-0.6, -0.1, -2.2) * CFrame.Angles(math.rad(90), 0, 0), Color3.fromRGB(71, 85, 105), Enum.Material.Metal, headModel, false)
-				local bRight = createCylinder("BarrelRight", Vector3.new(2.6, 0.4, 0.4), pod.CFrame * CFrame.new(0.6, -0.1, -2.2) * CFrame.Angles(math.rad(90), 0, 0), Color3.fromRGB(71, 85, 105), Enum.Material.Metal, headModel, false)
-				local muzz = Instance.new("Attachment")
-				muzz.Name = "MuzzleAttachment"
-				muzz.Position = Vector3.new(0, 0, -1.8)
-				muzz.Parent = pod
-			end
-		end
-
-		return clone
-	end
-	return buildFallback()
-end
-
+-- ============================================================
+-- 0. PRIMITIVE & MESH ASSET CREATION HELPERS
+-- ============================================================
 local function createPart(name: string, size: Vector3, cf: CFrame, color: Color3, mat: Enum.Material, parent: Instance, canCollide: boolean?): Part
 	local p = Instance.new("Part")
 	p.Name = name
@@ -145,6 +52,295 @@ local function createWedge(name: string, size: Vector3, cf: CFrame, color: Color
 	w.BottomSurface = Enum.SurfaceType.Smooth
 	w.Parent = parent
 	return w
+end
+
+local function createMeshPart(name: string, meshId: string, textureId: string?, size: Vector3, cf: CFrame, parent: Instance, canCollide: boolean?): Part
+	local p = Instance.new("Part")
+	p.Name = name
+	p.Size = size
+	p.CFrame = cf
+	p.Color = Color3.fromRGB(38, 46, 60)
+	p.Material = Enum.Material.Metal
+	p.Anchored = true
+	p.CanCollide = (canCollide == true)
+	p.TopSurface = Enum.SurfaceType.Smooth
+	p.BottomSurface = Enum.SurfaceType.Smooth
+
+	local mesh = Instance.new("SpecialMesh")
+	mesh.MeshType = Enum.MeshType.FileMesh
+	mesh.MeshId = meshId
+	if textureId and textureId ~= "" then
+		mesh.TextureId = textureId
+	end
+	mesh.Parent = p
+	p.Parent = parent
+	return p
+end
+
+-- ============================================================
+-- 0.1. STUDIO 3D AUTO-INGEST PIPELINE
+-- Moves user-imported .glb models from Workspace into ReplicatedStorage.Assets.Models
+-- ============================================================
+function ModelEngine.IngestStudioModels()
+	local assets = ReplicatedStorage:FindFirstChild("Assets") :: Folder?
+	if not assets then
+		assets = Instance.new("Folder")
+		assets.Name = "Assets"
+		assets.Parent = ReplicatedStorage
+	end
+
+	local models = assets:FindFirstChild("Models") :: Folder?
+	if not models then
+		models = Instance.new("Folder")
+		models.Name = "Models"
+		models.Parent = assets
+	end
+
+	local KEYWORD_MAP = {
+		{ keywords = { "mint", "stamper", "press" }, target = "MintMachine" },
+		{ keywords = { "vault", "bulkhead", "cog", "vaultdoor" }, target = "VaultDoor" },
+		{ keywords = { "turret", "sentry", "defenseturret" }, target = "DefenseTurret" },
+		{ keywords = { "drone", "securitydrone", "patrol" }, target = "SecurityDrone" },
+		{ keywords = { "reactor", "tokamak", "fusion" }, target = "ReactorCore" },
+		{ keywords = { "safe", "collector", "hopper", "banksafe" }, target = "BankSafeCollector" },
+		{ keywords = { "baton", "stun" }, target = "StunBaton" },
+		{ keywords = { "jammer", "emp" }, target = "EMPJammer" },
+		{ keywords = { "altar", "transmutation", "gate", "portal" }, target = "TransmutationAltar" },
+		{ keywords = { "market", "gazebo", "stall", "merchant" }, target = "BlackMarketStall" },
+	}
+
+	local function matchTarget(name: string): string?
+		local lower = name:lower()
+		for _, entry in KEYWORD_MAP do
+			for _, kw in entry.keywords do
+				if lower:find(kw) then
+					return entry.target
+				end
+			end
+		end
+		return nil
+	end
+
+	local reservedNames = {
+		Terrain = true,
+		Camera = true,
+		SubterraneanFacility = true,
+		VaultPlots = true,
+		CustomWorldDecor = true,
+		AirdropZone = true,
+		SpawnLocation = true,
+		BedrockFacilityFloor = true,
+		PerimeterBlastWalls = true,
+		Baseplate = true,
+	}
+
+	for _, child in Workspace:GetChildren() do
+		if not reservedNames[child.Name] and (child:IsA("Model") or child:IsA("BasePart") or child:IsA("Folder")) then
+			local lowerName = child.Name:lower()
+			if lowerName:find("prop") or lowerName:find("part-") or lowerName:find("kit") or lowerName:find("industrial") then
+				child.Parent = models
+				print(`  [ModelEngine] Ingested Environmental Prop from Workspace: {child.Name}`)
+			else
+				local matched = matchTarget(child.Name)
+				if not matched and child:IsA("Model") then
+					for _, descendant in child:GetDescendants() do
+						if descendant:IsA("MeshPart") or descendant:IsA("BasePart") then
+							matched = matchTarget(descendant.Name)
+							if matched then break end
+						end
+					end
+				end
+
+				if matched then
+					child.Name = matched
+					child.Parent = models
+					print(`  [ModelEngine] Ingested & Registered 3D Model: {matched} (from Workspace.{child.Name})`)
+				elseif child:IsA("Model") and not child.Name:find("Baseplate") and not child.Name:find("Script") then
+					local pivot = child:GetPivot()
+					if (pivot.Position - Vector3.zero).Magnitude < 45 then
+						child.Parent = models
+						print(`  [ModelEngine] Relocated origin model to Assets.Models: {child.Name}`)
+					end
+				end
+			end
+		end
+	end
+end
+
+-- ============================================================
+-- 0.2. GET OR BUILD WITH FUZZY RESOLUTION & HYBRID RIGGING
+-- ============================================================
+function ModelEngine.GetOrBuild(modelName: string, parent: Instance, cf: CFrame, buildFallback: () -> Model): Model
+	local assets = ReplicatedStorage:FindFirstChild("Assets") :: Folder?
+	local models = assets and assets:FindFirstChild("Models") :: Folder?
+
+	-- 1. Exact match in Assets.Models
+	local customAsset: Instance? = models and models:FindFirstChild(modelName)
+
+	-- 2. Fuzzy match in Assets.Models
+	if not customAsset and models then
+		local lowerTarget = modelName:lower()
+		for _, child in models:GetChildren() do
+			local childLower = child.Name:lower()
+			if childLower:find(lowerTarget) or lowerTarget:find(childLower) then
+				customAsset = child
+				break
+			end
+		end
+	end
+
+	-- 3. ReplicatedStorage top-level
+	if not customAsset then
+		customAsset = ReplicatedStorage:FindFirstChild(modelName)
+	end
+
+	-- 4. Workspace top-level
+	if not customAsset then
+		customAsset = Workspace:FindFirstChild(modelName)
+	end
+
+	if customAsset and (customAsset:IsA("Model") or customAsset:IsA("BasePart")) then
+		local clone: Model
+		if customAsset:IsA("Model") then
+			clone = customAsset:Clone() :: Model
+		else
+			clone = Instance.new("Model")
+			clone.Name = modelName
+			local partClone = customAsset:Clone() :: BasePart
+			partClone.Parent = clone
+			clone.PrimaryPart = partClone
+		end
+
+		for _, p in clone:GetDescendants() do
+			if p:IsA("BasePart") then
+				p.Anchored = true
+			end
+		end
+
+		if not clone.PrimaryPart then
+			local firstPart = clone:FindFirstChildWhichIsA("BasePart", true)
+			if firstPart then clone.PrimaryPart = firstPart end
+		end
+
+		clone:PivotTo(cf)
+		clone.Parent = parent
+
+		-- HYBRID RIGGING: Ensure functional animated components exist on custom meshes
+		if modelName == "MintMachine" then
+			if not clone:FindFirstChild("StampingHead") then
+				local head = createPart("StampingHead", Vector3.new(4.8, 1.6, 3.2), cf * CFrame.new(0, 5.8, -6.5), Color3.fromRGB(30, 41, 59), Enum.Material.Metal, clone, true)
+				createPart("HazardStripe", Vector3.new(4.85, 0.35, 3.25), head.CFrame * CFrame.new(0, -0.6, 0), Color3.fromRGB(245, 158, 11), Enum.Material.SmoothPlastic, head)
+				local ventL = Instance.new("Attachment")
+				ventL.Name = "SteamVentL"
+				ventL.Position = Vector3.new(-2.4, 0.3, 0)
+				ventL.Parent = head
+				local ventR = Instance.new("Attachment")
+				ventR.Name = "SteamVentR"
+				ventR.Position = Vector3.new(2.4, 0.3, 0)
+				ventR.Parent = head
+			end
+			if not clone:FindFirstChild("ConveyorBelt") and not clone:FindFirstChild("BaseChassis") then
+				local belt = createPart("ConveyorBelt", Vector3.new(5.2, 0.4, 27.2), cf * CFrame.new(0, 1.6, 0), Color3.fromRGB(18, 22, 28), Enum.Material.Slate, clone, true)
+				local tex = Instance.new("Texture")
+				tex.Name = "ConveyorTread"
+				tex.Face = Enum.NormalId.Top
+				tex.Texture = "rbxassetid://446111271"
+				tex.StudsPerTileU = 2
+				tex.StudsPerTileV = 4
+				tex.Parent = belt
+			end
+		elseif modelName == "VaultDoor" then
+			if not clone:FindFirstChild("CogWheelCenter") then
+				local wheel = createCylinder("CogWheelCenter", Vector3.new(1.4, 3.2, 3.2), cf * CFrame.new(0, 7.5, -1.8) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(245, 158, 11), Enum.Material.Metal, clone)
+				for i = 1, 8 do
+					local angle = (i / 8) * (math.pi * 2)
+					local spokeDir = Vector3.new(math.cos(angle), math.sin(angle), 0)
+					createPart(`CogSpoke_{i}`, Vector3.new(0.4, 2.6, 0.4), cf * CFrame.new(Vector3.new(0, 7.5, -1.8) + spokeDir * 2.0) * CFrame.Angles(0, 0, angle + math.rad(90)), Color3.fromRGB(245, 158, 11), Enum.Material.Metal, clone)
+				end
+			end
+			if not clone:FindFirstChild("DoorSlab") then
+				createCylinder("DoorSlab", Vector3.new(1.8, 11.2, 11.2), cf * CFrame.new(0, 7.5, -0.4) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(30, 41, 59), Enum.Material.Metal, clone, true)
+			end
+		elseif modelName == "DefenseTurret" or modelName == "SecurityTurret" then
+			if not clone:FindFirstChild("TurretHead") then
+				local headModel = Instance.new("Model")
+				headModel.Name = "TurretHead"
+				headModel.Parent = clone
+				local pod = createPart("WeaponPod", Vector3.new(2.4, 1.6, 3.2), cf * CFrame.new(0, -1.8, 0), Color3.fromRGB(15, 20, 30), Enum.Material.Metal, headModel, false)
+				headModel.PrimaryPart = pod
+				headModel:SetAttribute("RestCF", pod.CFrame)
+				local bLeft = createCylinder("BarrelLeft", Vector3.new(2.6, 0.4, 0.4), pod.CFrame * CFrame.new(-0.6, -0.1, -2.2) * CFrame.Angles(math.rad(90), 0, 0), Color3.fromRGB(71, 85, 105), Enum.Material.Metal, headModel, false)
+				local bRight = createCylinder("BarrelRight", Vector3.new(2.6, 0.4, 0.4), pod.CFrame * CFrame.new(0.6, -0.1, -2.2) * CFrame.Angles(math.rad(90), 0, 0), Color3.fromRGB(71, 85, 105), Enum.Material.Metal, headModel, false)
+				local muzz = Instance.new("Attachment")
+				muzz.Name = "MuzzleAttachment"
+				muzz.Position = Vector3.new(0, 0, -1.8)
+				muzz.Parent = pod
+			end
+		elseif modelName == "BankSafeCollector" then
+			if not clone:FindFirstChild("SafeHopper") and not clone.PrimaryPart then
+				local hopper = createPart("SafeHopper", Vector3.new(5.0, 5.0, 5.0), cf * CFrame.new(0, 2.5, 0), Color3.fromRGB(30, 41, 59), Enum.Material.Metal, clone, true)
+				clone.PrimaryPart = hopper
+			end
+		end
+
+		return clone
+	end
+	return buildFallback()
+end
+
+-- ============================================================
+-- 0.3. MARKETPLACE 3D MESH PROPS & PREFABS
+-- ============================================================
+function ModelEngine.CreateServerRack(parent: Instance, cf: CFrame): Model
+	local m = Instance.new("Model")
+	m.Name = "ServerRackCabinet"
+	m.Parent = parent
+
+	local cabinet = createPart("CabinetFrame", Vector3.new(3.6, 9.0, 2.8), cf * CFrame.new(0, 4.5, 0), Color3.fromRGB(15, 20, 28), Enum.Material.Metal, m, true)
+	m.PrimaryPart = cabinet
+	createMeshPart("ServerRackMesh", "rbxassetid://497042045", "rbxassetid://497042055", Vector3.new(3.4, 8.6, 0.4), cf * CFrame.new(0, 4.5, -1.3), m, true)
+
+	local ledRow = createPart("StatusLEDs", Vector3.new(2.8, 0.2, 0.1), cf * CFrame.new(0, 8.2, -1.42), Color3.fromRGB(56, 189, 248), Enum.Material.Neon, m, false)
+	local ledLight = Instance.new("PointLight")
+	ledLight.Color = Color3.fromRGB(56, 189, 248)
+	ledLight.Range = 6
+	ledLight.Brightness = 0.4
+	ledLight.Parent = ledRow
+
+	return m
+end
+
+function ModelEngine.CreateIndustrialCrate(parent: Instance, cf: CFrame, scale: number?): Model
+	local s = scale or 1.0
+	local m = Instance.new("Model")
+	m.Name = "IndustrialCrate"
+	m.Parent = parent
+
+	local crate = createMeshPart("CrateMesh", "rbxassetid://473523554", "rbxassetid://473523565", Vector3.new(4 * s, 4 * s, 4 * s), cf * CFrame.new(0, 2 * s, 0), m, true)
+	m.PrimaryPart = crate
+	return m
+end
+
+function ModelEngine.CreateIndustrialBarrel(parent: Instance, cf: CFrame): Model
+	local m = Instance.new("Model")
+	m.Name = "IndustrialBarrel"
+	m.Parent = parent
+
+	local barrel = createMeshPart("BarrelMesh", "rbxassetid://430343017", "rbxassetid://430343027", Vector3.new(2.4, 3.8, 2.4), cf * CFrame.new(0, 1.9, 0), m, true)
+	m.PrimaryPart = barrel
+	return m
+end
+
+function ModelEngine.CreateRockBoulder(parent: Instance, cf: CFrame, size: Vector3): Model
+	local m = Instance.new("Model")
+	m.Name = "CavernRockBoulder"
+	m.Parent = parent
+
+	local rock = createMeshPart("RockMesh", "rbxassetid://486469248", "rbxassetid://486469259", size, cf, m, true)
+	rock.Material = Enum.Material.Slate
+	rock.Color = Color3.fromRGB(24, 28, 38)
+	m.PrimaryPart = rock
+	return m
 end
 
 -- ============================================================
@@ -432,7 +628,7 @@ end
 -- ============================================================
 function ModelEngine.CreateBatonModel(): Tool
 	local tool = Instance.new("Tool")
-	tool.Name = "⚡ Stun Baton"
+	tool.Name = "Security Stun Baton"
 	tool.CanBeDropped = false
 	tool.RequiresHandle = true
 
@@ -547,7 +743,7 @@ end
 
 function ModelEngine.CreateJammerModel(): Tool
 	local tool = Instance.new("Tool")
-	tool.Name = "📡 EMP Jammer"
+	tool.Name = "EMP Laser Jammer"
 	tool.CanBeDropped = false
 	tool.RequiresHandle = true
 
@@ -941,7 +1137,7 @@ function ModelEngine.CreateSyndicateKiosk(parent: Instance, baseCF: CFrame): Mod
 	local sLabel = Instance.new("TextLabel")
 	sLabel.Size = UDim2.fromScale(1, 1)
 	sLabel.BackgroundTransparency = 1
-	sLabel.Text = "⚡ SYNDICATE BLACK MARKET ⚡"
+	sLabel.Text = "SYNDICATE BLACK MARKET"
 	sLabel.TextColor3 = Color3.fromRGB(254, 240, 138)
 	sLabel.TextSize = 24
 	sLabel.Font = Enum.Font.GothamBlack

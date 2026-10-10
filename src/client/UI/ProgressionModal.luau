@@ -103,7 +103,7 @@ function ProgressionModal.Create(parentGui: ScreenGui)
 	title.Size = UDim2.new(1, -60, 1, 0)
 	title.Position = UDim2.new(0, 20, 0, 0)
 	title.BackgroundTransparency = 1
-	title.Text = "🌟 SYNDICATE MASTERY & SKILL TREE"
+	title.Text = "SYNDICATE MASTERY & SKILL TREE"
 	title.TextColor3 = Color3.fromRGB(250, 204, 21)
 	title.TextSize = 16
 	title.Font = Enum.Font.GothamBlack
@@ -171,7 +171,7 @@ function ProgressionModal.Create(parentGui: ScreenGui)
 	spLabel.Size = UDim2.new(0, 180, 0, 26)
 	spLabel.Position = UDim2.new(1, -196, 0, 10)
 	spLabel.BackgroundTransparency = 1
-	spLabel.Text = "🌟 AVAILABLE SP: 0"
+	spLabel.Text = "AVAILABLE SP: 0"
 	spLabel.TextColor3 = Color3.fromRGB(250, 204, 21)
 	spLabel.TextSize = 14
 	spLabel.Font = Enum.Font.GothamBlack
@@ -233,21 +233,21 @@ function ProgressionModal.Create(parentGui: ScreenGui)
 	local branchData = {
 		{
 			Branch = "Infiltrator",
-			Title = "⚡ INFILTRATOR",
+			Title = "INFILTRATOR",
 			Subtitle = "Stealth, Speed & Evasion",
 			Accent = BRANCH_COLORS.Infiltrator,
 			PerkIds = { "LightfootProtocol", "SilentProwler", "OverclockedEMP", "PhantomDash" }
 		},
 		{
 			Branch = "Enforcer",
-			Title = "🛡️ ENFORCER",
+			Title = "ENFORCER",
 			Subtitle = "Baton Combat & Bounties",
 			Accent = BRANCH_COLORS.Enforcer,
 			PerkIds = { "HeavySwing", "HardenedCarapace", "BountyHunter", "ShockwaveSlam" }
 		},
 		{
 			Branch = "Tycoon",
-			Title = "💰 TYCOON",
+			Title = "TYCOON",
 			Subtitle = "Economy, Mints & Relics",
 			Accent = BRANCH_COLORS.Tycoon,
 			PerkIds = { "OverchargedPress", "MidasTouch", "CompoundingTreasury", "AlchemicalResonance" }
@@ -337,7 +337,7 @@ function ProgressionModal.Create(parentGui: ScreenGui)
 			nTier.Size = UDim2.new(1, -16, 0, 14)
 			nTier.Position = UDim2.new(0, 8, 0, 22)
 			nTier.BackgroundTransparency = 1
-			nTier.Text = (pDef.Tier == 4) and "⭐ CAPSTONE ABILITY" or `Tier {pDef.Tier}`
+			nTier.Text = (pDef.Tier == 4) and "CAPSTONE ABILITY" or `Tier {pDef.Tier}`
 			nTier.TextColor3 = (pDef.Tier == 4) and Color3.fromRGB(250, 204, 21) or Color3.fromRGB(113, 113, 122)
 			nTier.TextSize = 9
 			nTier.Font = Enum.Font.GothamMedium
@@ -477,7 +477,7 @@ function ProgressionModal.RefreshInspectButton()
 		buyBtn.BackgroundColor3 = Color3.fromRGB(39, 39, 42)
 		buyBtn.TextColor3 = Color3.fromRGB(161, 161, 170)
 	elseif not reqMet then
-		buyBtn.Text = "🔒 PREREQ REQUIRED"
+		buyBtn.Text = "PREREQ REQUIRED"
 		buyBtn.BackgroundColor3 = Color3.fromRGB(24, 24, 27)
 		buyBtn.TextColor3 = Color3.fromRGB(113, 113, 122)
 	elseif sp < pDef.CostSP then
@@ -530,7 +530,7 @@ function ProgressionModal.Update(data: any)
 	end
 
 	if ProgressionModal._spLabel then
-		ProgressionModal._spLabel.Text = `🌟 AVAILABLE SP: {sp}`
+		ProgressionModal._spLabel.Text = `AVAILABLE SP: {sp}`
 	end
 
 	if ProgressionModal._xpBarFill then

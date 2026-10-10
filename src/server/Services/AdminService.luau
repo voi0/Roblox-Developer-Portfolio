@@ -57,7 +57,7 @@ local function notify(player: Player, title: string, message: string)
 	local notifEvt = ReplicatedStorage:FindFirstChild("NotificationBroadcast") :: RemoteEvent?
 	if notifEvt then
 		notifEvt:FireClient(player, {
-			Title = `🛠️ [DEV] {title}`,
+			Title = `[DEV] {title}`,
 			Message = message,
 			Type = "System",
 			Duration = 4,

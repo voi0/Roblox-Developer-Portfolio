@@ -64,7 +64,7 @@ function ContractModal.Create(parentGui: ScreenGui)
 	local title = Instance.new("TextLabel")
 	title.Size = UDim2.new(0.65, 0, 0, 28)
 	title.BackgroundTransparency = 1
-	title.Text = "⚡ SYNDICATE BLACK MARKET OPERATIONS"
+	title.Text = "SYNDICATE BLACK MARKET OPERATIONS"
 	title.TextColor3 = Color3.fromRGB(250, 204, 21)
 	title.TextSize = 20
 	title.Font = Enum.Font.GothamBlack
@@ -103,7 +103,7 @@ function ContractModal.Create(parentGui: ScreenGui)
 	tbText.Name = "TokenText"
 	tbText.Size = UDim2.new(1, 0, 1, 0)
 	tbText.BackgroundTransparency = 1
-	tbText.Text = "⚡ TOKENS: 0"
+	tbText.Text = "TOKENS: 0"
 	tbText.TextColor3 = Color3.fromRGB(250, 204, 21)
 	tbText.TextSize = 13
 	tbText.Font = Enum.Font.GothamBlack
@@ -177,7 +177,7 @@ function ContractModal.Create(parentGui: ScreenGui)
 	bHeader.Size = UDim2.new(1, -16, 0, 36)
 	bHeader.Position = UDim2.new(0, 8, 0, 8)
 	bHeader.BackgroundTransparency = 1
-	bHeader.Text = "🎯 WANTED BURGLARS"
+	bHeader.Text = "WANTED BURGLARS"
 	bHeader.TextColor3 = Color3.fromRGB(239, 68, 68)
 	bHeader.TextSize = 14
 	bHeader.Font = Enum.Font.GothamBlack
@@ -226,7 +226,7 @@ function ContractModal.Refresh()
 		task.spawn(function()
 			local data = dataRF:InvokeServer()
 			if data and ContractModal._tokenLabel then
-				ContractModal._tokenLabel.Text = `⚡ TOKENS: {data.SyndicateTokens or 0}`
+				ContractModal._tokenLabel.Text = `TOKENS: {data.SyndicateTokens or 0}`
 			end
 		end)
 	end
@@ -320,7 +320,7 @@ function ContractModal.Refresh()
 		rText.Size = UDim2.new(0.3, 0, 0, 48)
 		rText.Position = UDim2.new(0.68, 0, 0, 10)
 		rText.BackgroundTransparency = 1
-		rText.Text = `+${contract.RewardCash} Cash\n+{contract.RewardXP} XP\n+{contract.RewardTokens} ⚡ Tokens`
+		rText.Text = `+${contract.RewardCash} Cash\n+{contract.RewardXP} XP\n+{contract.RewardTokens} Tokens`
 		rText.TextColor3 = Color3.fromRGB(250, 204, 21)
 		rText.TextSize = 11
 		rText.Font = Enum.Font.GothamBold
