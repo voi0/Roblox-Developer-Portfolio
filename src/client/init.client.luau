@@ -88,6 +88,16 @@ if AnimationEngine then
 	pcall(function() AnimationEngine.Init() end)
 end
 
+local CustomPromptController = safeRequire(controllersFolder, "CustomPromptController")
+if CustomPromptController then
+	pcall(function() CustomPromptController.Init() end)
+end
+
+local DialogueController = safeRequire(controllersFolder, "DialogueController")
+if DialogueController then
+	pcall(function() DialogueController.Init() end)
+end
+
 local NotificationUI = safeRequire(uiFolder, "NotificationUI")
 if NotificationUI then
 	pcall(function() NotificationUI.Create() end)

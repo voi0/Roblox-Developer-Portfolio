@@ -1,13 +1,11 @@
 --!strict
 --[[
-	CameraController.luau — Dynamic Camera & UI Focus Engine for VAULT WARS
-	Provides:
-	- First-frame spawn alignment (frames character smoothly from behind)
-	- UI Focus Mode: Smoothly activates Lighting.BlurEffect and shifts camera focus when modals open
-	- Dynamic FOV engine (Base 70, Sprint 78, Modal focus 62)
-	- Subtle head & walk sway on RenderStepped
-	- Camera Shake: Procedural exponential decay shake for impacts & alarms
-	- Tuned occlusion & zoom limits (no ceiling/wall popping)
+	CameraController.luau — Production Camera, Cinematic Framing & Shake Engine for VAULT WARS
+	Engineered for AAA Stability:
+	1. Zero Locomotion Jitter: Walk bobbing uses Humanoid.CameraOffset (100% collision-safe, zero CameraModule desync).
+	2. Non-Destructive Rotational Shake: Bound additively at RenderPriority.Camera.Value + 1 using second-order Spring physics.
+	3. Cinematic Over-The-Shoulder Framing: Smooth Scriptable transitions for NPC dialogue with DepthOfField.
+	4. Dynamic FOV & UI Focus: Clean lighting blur when menus are open.
 	Located in: StarterPlayerScripts.Client.Controllers.CameraController
 ]]
 
@@ -16,6 +14,9 @@ local Lighting = game:GetService("Lighting")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local Workspace = game:GetService("Workspace")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Spring = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Spring"))
 
 local player = Players.LocalPlayer
 
@@ -25,21 +26,30 @@ end
 
 local CameraController = {}
 CameraController._blurEffect = nil :: BlurEffect?
+CameraController._dialogueDOF = nil :: DepthOfFieldEffect?
 CameraController._isUIFocused = false
+CameraController._isCinematic = false
 CameraController._baseFOV = 70
 CameraController._currentFOV = 70
 CameraController._targetFOV = 70
-CameraController._shakeIntensity = 0
-CameraController._shakeDecay = 8
 CameraController._openModalsCount = 0
+
+-- Physics springs
+local shakeSpring = Spring.new(Vector3.zero, 28, 0.72)
+local bobCycle = 0
+
+-- Cache for cinematic restoration
+local originalCFrame = CFrame.identity
+local originalFOV = 70
+local activeCinematicTween: Tween? = nil
 
 -- ============================================================
 -- INITIALIZATION
 -- ============================================================
 function CameraController.Init()
-	print("  [CameraController] Initializing Dynamic Camera & UI Focus Engine...")
+	print("  [CameraController] Initializing AAA Camera & Cinematic Engine...")
 
-	-- 1. Ensure BlurEffect exists in Lighting for Cinematic UI Focus
+	-- 1. Ensure Lighting Effects exist
 	local blur = Lighting:FindFirstChild("VaultWarsUIBlur") :: BlurEffect?
 	if not blur then
 		blur = Instance.new("BlurEffect")
@@ -50,6 +60,19 @@ function CameraController.Init()
 	end
 	CameraController._blurEffect = blur
 
+	local dof = Lighting:FindFirstChild("DialogueDOF") :: DepthOfFieldEffect?
+	if not dof then
+		dof = Instance.new("DepthOfFieldEffect")
+		dof.Name = "DialogueDOF"
+		dof.FarIntensity = 0
+		dof.NearIntensity = 0
+		dof.InFocusRadius = 6
+		dof.FocusDistance = 10
+		dof.Enabled = false
+		dof.Parent = Lighting
+	end
+	CameraController._dialogueDOF = dof
+
 	-- 2. Configure camera parameters
 	local cam = getCamera()
 	if cam then
@@ -57,71 +80,155 @@ function CameraController.Init()
 		cam.FieldOfView = CameraController._baseFOV
 	end
 
-	player.CameraMinZoomDistance = 3.0
-	player.CameraMaxZoomDistance = 45.0
+	player.CameraMinZoomDistance = 3.5
+	player.CameraMaxZoomDistance = 40.0
 	player.DevCameraOcclusionMode = Enum.DevCameraOcclusionMode.Zoom
 
-	-- 3. Character framing on spawn / respawn
-	if player.Character then
-		task.spawn(CameraController._alignCameraOnCharacter, player.Character)
-	end
-	player.CharacterAdded:Connect(function(char)
-		task.spawn(CameraController._alignCameraOnCharacter, char)
-	end)
-
-	-- 4. RenderStepped Camera Loop (Dynamic FOV, subtle sway, shake)
-	local swayTime = 0
+	-- 3. Jitter-Free Positional Walk Bobbing via Humanoid.CameraOffset
 	RunService.RenderStepped:Connect(function(dt: number)
 		local currentCam = getCamera()
 		if not currentCam then return end
 
-		-- Smooth FOV lerp
-		if math.abs(currentCam.FieldOfView - CameraController._targetFOV) > 0.05 then
+		-- Dynamic FOV lerp
+		if not CameraController._isCinematic and math.abs(currentCam.FieldOfView - CameraController._targetFOV) > 0.05 then
 			currentCam.FieldOfView = currentCam.FieldOfView + (CameraController._targetFOV - currentCam.FieldOfView) * math.clamp(dt * 8, 0, 1)
 		end
+
+		if CameraController._isCinematic then return end
 
 		local char = player.Character
 		local hum = char and char:FindFirstChildOfClass("Humanoid")
 		local root = char and char:FindFirstChild("HumanoidRootPart") :: BasePart?
+		if not hum or not root then return end
 
+		local velocity = root.AssemblyLinearVelocity
+		local speed = Vector3.new(velocity.X, 0, velocity.Z).Magnitude
 
-
-		-- Procedural Camera Shake
-		if CameraController._shakeIntensity > 0.001 then
-			local sX = (math.random() - 0.5) * 2 * CameraController._shakeIntensity
-			local sY = (math.random() - 0.5) * 2 * CameraController._shakeIntensity
-			local sZ = (math.random() - 0.5) * 0.5 * CameraController._shakeIntensity
-			currentCam.CFrame = currentCam.CFrame * CFrame.Angles(math.rad(sX * 1.5), math.rad(sY * 1.5), math.rad(sZ))
-			CameraController._shakeIntensity = math.max(0, CameraController._shakeIntensity - (CameraController._shakeIntensity * CameraController._shakeDecay * dt))
+		if speed > 2 and hum.MoveDirection.Magnitude > 0.1 and hum.FloorMaterial ~= Enum.Material.Air and not CameraController._isUIFocused then
+			bobCycle += dt * (speed * 0.85)
+			local bobX = math.cos(bobCycle * 0.5) * 0.06
+			local bobY = math.abs(math.sin(bobCycle)) * 0.065
+			hum.CameraOffset = hum.CameraOffset:Lerp(Vector3.new(bobX, bobY, 0), math.clamp(dt * 12, 0, 1))
 		else
-			CameraController._shakeIntensity = 0
+			bobCycle = 0
+			hum.CameraOffset = hum.CameraOffset:Lerp(Vector3.zero, math.clamp(dt * 12, 0, 1))
 		end
 	end)
 
-	print("  [CameraController] Dynamic Camera Engine online ✓")
+	-- 4. Rotational Camera Shake bound at RenderPriority.Camera.Value + 1
+	RunService:BindToRenderStep("PostCameraShake", Enum.RenderPriority.Camera.Value + 1, function(dt: number)
+		local currentCam = getCamera()
+		if not currentCam or currentCam.CameraType ~= Enum.CameraType.Custom then return end
+
+		local shakePos = shakeSpring:Update(dt) :: Vector3
+		if shakePos.Magnitude > 0.005 then
+			local shakeAngles = CFrame.Angles(
+				math.rad(shakePos.X),
+				math.rad(shakePos.Y),
+				math.rad(shakePos.Z)
+			)
+			currentCam.CFrame = currentCam.CFrame * shakeAngles
+		end
+	end)
+
+	print("  [CameraController] AAA Camera Engine online ✓")
 end
 
 -- ============================================================
--- ALIGN CAMERA BEHIND CHARACTER ON SPAWN
+-- PROCEDURAL CAMERA SHAKE (Spring Driven)
 -- ============================================================
-function CameraController._alignCameraOnCharacter(char: Model)
-	local root = char:WaitForChild("HumanoidRootPart", 10) :: BasePart?
-	local hum = char:WaitForChild("Humanoid", 10) :: Humanoid?
-	if not root or not hum then return end
+function CameraController.Shake(intensity: number?)
+	local strength = intensity or 0.8
+	local rx = (math.random() - 0.5) * 2 * strength
+	local ry = (math.random() - 0.5) * 2 * strength
+	local rz = (math.random() - 0.5) * 2 * (strength * 0.5)
+	shakeSpring:Impulse(Vector3.new(rx, ry, rz))
+end
 
+-- ============================================================
+-- CINEMATIC OVER-THE-SHOULDER FRAMING (NPC Dialogue & Modals)
+-- ============================================================
+function CameraController.FocusCinematic(targetCFrame: CFrame, focusDistance: number, targetFOV: number?, onComplete: (() -> ())?)
 	local cam = getCamera()
-	if cam then
-		cam.CameraType = Enum.CameraType.Custom
-		cam.CameraSubject = hum
+	if not cam then return end
 
-		task.wait(0.08)
-		if root and root.Parent then
-			local look = root.CFrame.LookVector
-			local targetPos = root.Position + Vector3.new(0, 2.0, 0)
-			local eyePos = targetPos - (look * 14) + Vector3.new(0, 3.8, 0)
-			cam.CFrame = CFrame.lookAt(eyePos, targetPos)
-		end
+	CameraController._isCinematic = true
+	originalCFrame = cam.CFrame
+	originalFOV = cam.FieldOfView
+
+	cam.CameraType = Enum.CameraType.Scriptable
+
+	-- Activate Depth of Field
+	local dof = CameraController._dialogueDOF
+	if dof then
+		dof.FocusDistance = focusDistance
+		dof.InFocusRadius = 6.0
+		dof.Enabled = true
+		TweenService:Create(dof, TweenInfo.new(0.6, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {
+			FarIntensity = 0.7,
+			NearIntensity = 0.2,
+		}):Play()
 	end
+
+	if activeCinematicTween then activeCinematicTween:Cancel() end
+	local tInfo = TweenInfo.new(0.7, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out)
+	activeCinematicTween = TweenService:Create(cam, tInfo, {
+		CFrame = targetCFrame,
+		FieldOfView = targetFOV or 58,
+	})
+	activeCinematicTween.Completed:Once(function()
+		activeCinematicTween = nil
+		if onComplete then onComplete() end
+	end)
+	activeCinematicTween:Play()
+end
+
+function CameraController.RestoreDefault(onComplete: (() -> ())?)
+	local cam = getCamera()
+	if not cam then return end
+
+	local char = player.Character
+	local hum = char and char:FindFirstChildOfClass("Humanoid")
+	local root = char and char:FindFirstChild("HumanoidRootPart") :: BasePart?
+
+	-- Fade out DepthOfField
+	local dof = CameraController._dialogueDOF
+	if dof then
+		local dofTween = TweenService:Create(dof, TweenInfo.new(0.45, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+			FarIntensity = 0,
+			NearIntensity = 0,
+		})
+		dofTween:Play()
+		dofTween.Completed:Once(function()
+			if dof then dof.Enabled = false end
+		end)
+	end
+
+	-- Compute smooth return vantage behind character
+	local returnCFrame = originalCFrame
+	if root then
+		local look = root.CFrame.LookVector
+		local returnEye = root.Position - (look * 13) + Vector3.new(0, 3.2, 0)
+		returnCFrame = CFrame.lookAt(returnEye, root.Position + Vector3.new(0, 1.6, 0))
+	end
+
+	if activeCinematicTween then activeCinematicTween:Cancel() end
+	local tInfo = TweenInfo.new(0.55, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out)
+	activeCinematicTween = TweenService:Create(cam, tInfo, {
+		CFrame = returnCFrame,
+		FieldOfView = originalFOV,
+	})
+
+	activeCinematicTween.Completed:Once(function()
+		activeCinematicTween = nil
+		CameraController._isCinematic = false
+		if hum then
+			cam.CameraSubject = hum
+		end
+		cam.CameraType = Enum.CameraType.Custom
+		if onComplete then onComplete() end
+	end)
+	activeCinematicTween:Play()
 end
 
 -- ============================================================
@@ -139,31 +246,15 @@ function CameraController.SetUIFocus(isFocused: boolean)
 	CameraController._isUIFocused = shouldFocus
 
 	local blur = CameraController._blurEffect
-	if not blur or not blur.Parent then
-		blur = Lighting:FindFirstChild("VaultWarsUIBlur") :: BlurEffect?
-		if not blur then
-			blur = Instance.new("BlurEffect")
-			blur.Name = "VaultWarsUIBlur"
-			blur.Size = 0
-			blur.Enabled = false
-			blur.Parent = Lighting
-		end
-		CameraController._blurEffect = blur
-	end
-
-	if shouldFocus then
-		-- Entering UI: Smoothly fade in background blur and focus FOV
-		if blur then
+	if blur then
+		if shouldFocus then
 			blur.Enabled = true
 			TweenService:Create(blur, TweenInfo.new(0.24, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-				Size = 18
+				Size = 16
 			}):Play()
-		end
-		CameraController._targetFOV = 63
-	else
-		-- Exiting UI: Smoothly restore crisp world view
-		if blur then
-			local tw = TweenService:Create(blur, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+			CameraController._targetFOV = 62
+		else
+			local tw = TweenService:Create(blur, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
 				Size = 0
 			})
 			tw:Play()
@@ -172,37 +263,21 @@ function CameraController.SetUIFocus(isFocused: boolean)
 					blur.Enabled = false
 				end
 			end)
+			CameraController._targetFOV = CameraController._baseFOV
 		end
-		CameraController._targetFOV = CameraController._baseFOV
 	end
 end
 
--- ============================================================
--- DYNAMIC FOV ZOOM (Sprint / Heist Alarm / Adrenaline)
--- ============================================================
 function CameraController.SetTargetFOV(fov: number)
-	if CameraController._isUIFocused then return end
+	if CameraController._isUIFocused or CameraController._isCinematic then return end
 	CameraController._targetFOV = math.clamp(fov, 55, 95)
 end
 
 function CameraController.ResetFOV()
 	if CameraController._isUIFocused then
-		CameraController._targetFOV = 63
+		CameraController._targetFOV = 62
 	else
 		CameraController._targetFOV = CameraController._baseFOV
-	end
-end
-
--- ============================================================
--- PROCEDURAL CAMERA SHAKE
--- ============================================================
-function CameraController.Shake(intensity: number?, duration: number?)
-	local strength = intensity or 0.6
-	CameraController._shakeIntensity = math.clamp(CameraController._shakeIntensity + strength, 0, 3.5)
-	if duration and duration > 0 then
-		CameraController._shakeDecay = math.max(1, 1 / duration)
-	else
-		CameraController._shakeDecay = 7
 	end
 end
 

@@ -184,16 +184,18 @@ function AirdropService.SpawnAirdrop()
 
 		-- Ground impact flare
 		beacon:Destroy()
-		bLabel.Text = "🏆 CENTRAL GOLDEN CRATE\n[HOLD E] TO CRACK ($250K + RELIC)"
+		bLabel.Text = "CENTRAL GOLDEN CRATE\n[HOLD E] TO CRACK ($250K + RELIC)"
+		bLabel.Font = Enum.Font.BuilderSansExtraBold
 
 		-- Setup Proximity Prompt
 		local prompt = Instance.new("ProximityPrompt")
-		prompt.ObjectText = "Central Plaza Golden Airdrop"
-		prompt.ActionText = "Crack Crate"
+		prompt.ObjectText = "CENTRAL GOLDEN AIRDROP"
+		prompt.ActionText = "CRACK CRATE"
 		prompt.KeyboardKeyCode = Enum.KeyCode.E
 		prompt.HoldDuration = Config.Airdrop.ChannelDurationSeconds -- 3.5s
 		prompt.MaxActivationDistance = 16
 		prompt.RequiresLineOfSight = false
+		prompt.Style = Enum.ProximityPromptStyle.Custom
 		prompt.Parent = crateBody
 
 		prompt.Triggered:Connect(function(winner: Player)

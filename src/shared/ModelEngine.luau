@@ -798,19 +798,20 @@ function ModelEngine.CreateRelicFusionChamber(parent: Instance, baseCF: CFrame):
 	local bLabel = Instance.new("TextLabel")
 	bLabel.Size = UDim2.fromScale(1, 1)
 	bLabel.BackgroundTransparency = 1
-	bLabel.Text = "🔮 RELIC FUSION CHAMBER\n[E] SYNTHESIZE 3x IDENTICAL RELICS"
+	bLabel.Text = "RELIC FUSION CHAMBER\nSYNTHESIZE 3x IDENTICAL RELICS"
 	bLabel.TextColor3 = Color3.fromRGB(233, 213, 255)
 	bLabel.TextSize = 13
-	bLabel.Font = Enum.Font.GothamBlack
+	bLabel.Font = Enum.Font.BuilderSansExtraBold
 	bLabel.Parent = bFrame
 
 	local prompt = Instance.new("ProximityPrompt")
-	prompt.ObjectText = "Relic Fusion Chamber"
-	prompt.ActionText = "Open Synthesis Matrix"
+	prompt.ObjectText = "RELIC FUSION CHAMBER"
+	prompt.ActionText = "OPEN SYNTHESIS MATRIX"
 	prompt.KeyboardKeyCode = Enum.KeyCode.E
 	prompt.HoldDuration = 0
 	prompt.MaxActivationDistance = 16
 	prompt.RequiresLineOfSight = false
+	prompt.Style = Enum.ProximityPromptStyle.Custom
 	prompt.Parent = pedestal
 
 	return model, coreOrb, prompt
@@ -1147,20 +1148,21 @@ function ModelEngine.CreateSyndicateBrokerNPC(parent: Instance, baseCF: CFrame):
 	local lbl = Instance.new("TextLabel")
 	lbl.Size = UDim2.new(1, 0, 1, 0)
 	lbl.BackgroundTransparency = 1
-	lbl.Text = "⚡ SYNDICATE BROKER ⚡\n[DAILY HEIST CONTRACTS]"
+	lbl.Text = "SYNDICATE BROKER\nDAILY HEIST CONTRACTS"
 	lbl.TextColor3 = Color3.fromRGB(250, 204, 21)
 	lbl.TextSize = 13
-	lbl.Font = Enum.Font.GothamBlack
+	lbl.Font = Enum.Font.BuilderSansExtraBold
 	lbl.Parent = bGui
 
 	-- Proximity Prompt for interaction
 	local prompt = Instance.new("ProximityPrompt")
-	prompt.ObjectText = "Syndicate Broker"
-	prompt.ActionText = "View Daily Contracts"
+	prompt.ObjectText = "SYNDICATE BROKER"
+	prompt.ActionText = "TALK TO BROKER"
 	prompt.KeyboardKeyCode = Enum.KeyCode.E
 	prompt.HoldDuration = 0
 	prompt.MaxActivationDistance = 14
 	prompt.RequiresLineOfSight = false
+	prompt.Style = Enum.ProximityPromptStyle.Custom
 	prompt.Parent = torso
 
 	return npc
@@ -1406,10 +1408,10 @@ function ModelEngine.CreateBunkerShell(
 	local lbl = Instance.new("TextLabel")
 	lbl.Size = UDim2.new(1, 0, 1, 0)
 	lbl.BackgroundTransparency = 1
-	lbl.Text = "⚡ SECURE HEIST VAULT BASTION ⚡"
+	lbl.Text = "SECURE HEIST VAULT BASTION"
 	lbl.TextColor3 = Color3.fromRGB(15, 23, 42)
 	lbl.TextSize = 20
-	lbl.Font = Enum.Font.GothamBlack
+	lbl.Font = Enum.Font.BuilderSansExtraBold
 	lbl.Parent = sGui
 
 	-- 12.6. FRONT AIRLOCK SECURITY PORTAL (FRAMED ENTRANCE)

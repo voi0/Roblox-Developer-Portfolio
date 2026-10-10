@@ -71,7 +71,7 @@ Config.Arena = {
 	PlazaRadius = 60,          -- Studs from center origin to plot entrance
 	PlotWidth = 32,            -- Plot X dimension
 	PlotLength = 46,           -- Plot Z dimension
-	WallHeight = 16,
+	WallHeight = 18,           -- Increased ceiling clearance for smooth camera navigation
 	MonolithPosition = Vector3.new(0, 0, 0),
 	LobbyFloorColor = Color3.fromRGB(51, 65, 85),
 }

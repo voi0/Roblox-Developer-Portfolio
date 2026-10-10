@@ -92,11 +92,12 @@ UILib.TierColor = {
 
 -- 2026 Modern Professional Typography
 UILib.Fonts = {
-	Black  = Enum.Font.GothamBlack,
-	Bold   = Enum.Font.GothamBold,
-	Medium = Enum.Font.GothamMedium,
-	Body   = Enum.Font.Gotham,
-	Alt    = Enum.Font.GothamBlack,
+	Black  = Enum.Font.BuilderSansExtraBold,
+	Bold   = Enum.Font.BuilderSansBold,
+	Medium = Enum.Font.BuilderSansMedium,
+	Body   = Enum.Font.BuilderSans,
+	Alt    = Enum.Font.BuilderSansExtraBold,
+	Mono   = Enum.Font.BuilderMono,
 }
 
 UILib.Icons = {

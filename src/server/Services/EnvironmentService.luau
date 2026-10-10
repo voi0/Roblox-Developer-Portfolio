@@ -67,18 +67,20 @@ local function setupAtmosphericLighting()
 		Lighting.Technology = Enum.Technology.Future
 	end)
 
-	Lighting.ClockTime = 14.0
-	Lighting.TimeOfDay = "14:00:00"
-	Lighting.Brightness = 1.35
-	Lighting.Ambient = Color3.fromRGB(130, 145, 172)
-	Lighting.OutdoorAmbient = Color3.fromRGB(110, 125, 150)
-	Lighting.GeographicLatitude = 25
+	Lighting.ClockTime = 16.2
+	Lighting.TimeOfDay = "16:12:00"
+	Lighting.Brightness = 1.5
+	Lighting.Ambient = Color3.fromRGB(8, 8, 14)
+	Lighting.OutdoorAmbient = Color3.fromRGB(36, 42, 54)
+	Lighting.ColorShift_Top = Color3.fromRGB(255, 244, 228)
+	Lighting.ColorShift_Bottom = Color3.fromRGB(28, 32, 42)
+	Lighting.GeographicLatitude = 38
 	Lighting.GlobalShadows = true
 	Lighting.EnvironmentDiffuseScale = 1.0
 	Lighting.EnvironmentSpecularScale = 1.0
-	Lighting.FogStart = 450
-	Lighting.FogEnd = 2500
-	Lighting.FogColor = Color3.fromRGB(38, 46, 62)
+	Lighting.FogStart = 350
+	Lighting.FogEnd = 1800
+	Lighting.FogColor = Color3.fromRGB(28, 34, 46)
 
 	for _, child in Lighting:GetChildren() do
 		if child:IsA("Sky") then
@@ -104,12 +106,12 @@ local function setupAtmosphericLighting()
 		atmosphere = Instance.new("Atmosphere")
 		atmosphere.Parent = Lighting
 	end
-	atmosphere.Density = 0.12
-	atmosphere.Offset = 0.0
-	atmosphere.Color = Color3.fromRGB(135, 155, 190)
-	atmosphere.Decay = Color3.fromRGB(95, 115, 150)
+	atmosphere.Density = 0.36
+	atmosphere.Offset = 0.22
+	atmosphere.Color = Color3.fromRGB(152, 168, 186)
+	atmosphere.Decay = Color3.fromRGB(72, 85, 106)
 	atmosphere.Glare = 0.0
-	atmosphere.Haze = 0.25
+	atmosphere.Haze = 2.0
 
 	local bloom = Lighting:FindFirstChild("VaultWarsBloom") :: BloomEffect?
 	if not bloom then
@@ -117,9 +119,9 @@ local function setupAtmosphericLighting()
 		bloom.Name = "VaultWarsBloom"
 		bloom.Parent = Lighting
 	end
-	bloom.Intensity = 0.40
-	bloom.Size = 20
-	bloom.Threshold = 1.70
+	bloom.Intensity = 0.25
+	bloom.Size = 22
+	bloom.Threshold = 1.25
 
 	local cc = Lighting:FindFirstChild("VaultWarsCC") :: ColorCorrectionEffect?
 	if not cc then
@@ -127,10 +129,19 @@ local function setupAtmosphericLighting()
 		cc.Name = "VaultWarsCC"
 		cc.Parent = Lighting
 	end
-	cc.TintColor = Color3.fromRGB(248, 252, 255)
+	cc.TintColor = Color3.fromRGB(255, 250, 244)
 	cc.Brightness = 0.02
-	cc.Contrast = 0.14
-	cc.Saturation = 0.22
+	cc.Contrast = 0.16
+	cc.Saturation = 0.12
+
+	local sunRays = Lighting:FindFirstChild("VaultWarsSunRays") :: SunRaysEffect?
+	if not sunRays then
+		sunRays = Instance.new("SunRaysEffect")
+		sunRays.Name = "VaultWarsSunRays"
+		sunRays.Parent = Lighting
+	end
+	sunRays.Intensity = 0.10
+	sunRays.Spread = 0.8
 
 	local dof = Lighting:FindFirstChild("VaultWarsDOF") :: DepthOfFieldEffect?
 	if not dof then
@@ -138,9 +149,9 @@ local function setupAtmosphericLighting()
 		dof.Name = "VaultWarsDOF"
 		dof.Parent = Lighting
 	end
-	dof.FarIntensity = 0.12
-	dof.FocusDistance = 55
-	dof.InFocusRadius = 80
+	dof.FarIntensity = 0.20
+	dof.FocusDistance = 45
+	dof.InFocusRadius = 35
 	dof.NearIntensity = 0.0
 end
 
@@ -293,6 +304,17 @@ local function buildCavernEnclosure(parent: Folder)
 			true
 		)
 
+		-- Ground Baseboard Footer (Anchors wall firmly into bedrock, eliminates seams)
+		createPart(
+			`BlastWallBaseboard_{i}`,
+			Vector3.new(segmentWidth + 1, 2.4, wallThickness + 1.4),
+			lookCenterCF * CFrame.new(0, -17, -0.7),
+			Color3.fromRGB(30, 36, 48),
+			Enum.Material.Concrete,
+			wallsFolder,
+			true
+		)
+
 		-- 4.2. Upper Corrugated Blast Wall
 		createPart(
 			`BlastWallUpper_{i}`,
@@ -323,6 +345,39 @@ local function buildCavernEnclosure(parent: Folder)
 			wallsFolder,
 			false
 		)
+
+		-- Steam Exhaust Pressure Release Pipe (Puffs subtle atmospheric steam)
+		if i % 4 == 2 then
+			local steamVent = createPart(
+				`SteamVent_{i}`,
+				Vector3.new(1.8, 1.8, 2.4),
+				lookCenterCF * CFrame.new(0, 4.0, -wallThickness / 2 - 1.6),
+				Color3.fromRGB(38, 46, 60),
+				Enum.Material.Metal,
+				wallsFolder,
+				false
+			)
+			local pe = Instance.new("ParticleEmitter")
+			pe.Name = "SteamEmitter"
+			pe.Rate = 4
+			pe.Speed = NumberRange.new(3, 6)
+			pe.Lifetime = NumberRange.new(1.8, 3.0)
+			pe.SpreadAngle = Vector2.new(15, 15)
+			pe.Size = NumberSequence.new({
+				NumberSequenceKeypoint.new(0, 0.6),
+				NumberSequenceKeypoint.new(0.5, 2.4),
+				NumberSequenceKeypoint.new(1, 4.5),
+			})
+			pe.Transparency = NumberSequence.new({
+				NumberSequenceKeypoint.new(0, 0.5),
+				NumberSequenceKeypoint.new(0.7, 0.75),
+				NumberSequenceKeypoint.new(1, 1),
+			})
+			pe.Color = ColorSequence.new(Color3.fromRGB(200, 215, 230))
+			pe.Acceleration = Vector3.new(0, 2.5, 0)
+			pe.EmissionDirection = Enum.NormalId.Front
+			pe.Parent = steamVent
+		end
 
 		-- Upper Amber High-Voltage Bus Conduit
 		createPart(

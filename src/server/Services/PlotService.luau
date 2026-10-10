@@ -572,10 +572,16 @@ function PlotService.Init()
 	local brokerNpc = ModelEngine.CreateSyndicateBrokerNPC(rootFolder, CFrame.new(0, FLOOR_Y, -42))
 	local brokerPrompt = brokerNpc:FindFirstChildWhichIsA("ProximityPrompt", true)
 	if brokerPrompt then
+		local brokerDialogueEvt = ReplicatedStorage:FindFirstChild("OpenBrokerDialogue") :: RemoteEvent?
+		if not brokerDialogueEvt then
+			brokerDialogueEvt = Instance.new("RemoteEvent")
+			brokerDialogueEvt.Name = "OpenBrokerDialogue"
+			brokerDialogueEvt.Parent = ReplicatedStorage
+		end
+
 		brokerPrompt.Triggered:Connect(function(player: Player)
-			local openContractEvt = ReplicatedStorage:FindFirstChild("OpenContractModal") :: RemoteEvent?
-			if openContractEvt then
-				openContractEvt:FireClient(player)
+			if brokerDialogueEvt then
+				brokerDialogueEvt:FireClient(player, brokerNpc)
 			end
 		end)
 	end
