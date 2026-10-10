@@ -120,9 +120,9 @@ local function setupAtmosphericLighting()
 		bloom.Name = "VaultWarsBloom"
 		bloom.Parent = Lighting
 	end
-	bloom.Intensity = 0.25
-	bloom.Size = 22
-	bloom.Threshold = 1.25
+	bloom.Intensity = 0.12
+	bloom.Size = 12
+	bloom.Threshold = 1.95
 
 	local cc = Lighting:FindFirstChild("VaultWarsCC") :: ColorCorrectionEffect?
 	if not cc then
@@ -130,19 +130,15 @@ local function setupAtmosphericLighting()
 		cc.Name = "VaultWarsCC"
 		cc.Parent = Lighting
 	end
-	cc.TintColor = Color3.fromRGB(255, 250, 244)
-	cc.Brightness = 0.02
-	cc.Contrast = 0.16
-	cc.Saturation = 0.12
+	cc.TintColor = Color3.fromRGB(245, 248, 255)
+	cc.Brightness = 0.01
+	cc.Contrast = 0.20
+	cc.Saturation = 0.08
 
 	local sunRays = Lighting:FindFirstChild("VaultWarsSunRays") :: SunRaysEffect?
-	if not sunRays then
-		sunRays = Instance.new("SunRaysEffect")
-		sunRays.Name = "VaultWarsSunRays"
-		sunRays.Parent = Lighting
+	if sunRays then
+		sunRays:Destroy()
 	end
-	sunRays.Intensity = 0.10
-	sunRays.Spread = 0.8
 
 	local dof = Lighting:FindFirstChild("VaultWarsDOF") :: DepthOfFieldEffect?
 	if not dof then

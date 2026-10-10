@@ -416,16 +416,13 @@ function PlotService.Init()
 		true
 	)
 
-	-- Recessed Glowing Cyan Circuit Ring (+0.15 studs above Dais, Y=4.68)
-	createPart(
-		"PlazaCenterNeonRing",
-		Vector3.new(26, 0.15, 26),
-		CFrame.new(0, 4.68, 0),
-		Color3.fromRGB(56, 189, 248),
-		Enum.Material.Neon,
-		rootFolder,
-		false
-	)
+	-- Dais Outer Trim & Recessed Cyan Circuit Conduits (Thin 0.2-stud channels, zero solid neon slabs!)
+	for a = 0, 7 do
+		local radAngle = a * (math.pi / 4)
+		local dCF = CFrame.new(0, 4.65, 0) * CFrame.Angles(0, radAngle, 0) * CFrame.new(0, 0, 13)
+		createPart(`DaisTrim_{a}`, Vector3.new(9.8, 0.2, 0.8), dCF, Color3.fromRGB(30, 41, 59), Enum.Material.Metal, rootFolder, true)
+		createPart(`DaisConduit_{a}`, Vector3.new(9.4, 0.05, 0.15), dCF * CFrame.new(0, 0.1, 0), Color3.fromRGB(56, 189, 248), Enum.Material.Neon, rootFolder, false)
+	end
 
 	-- ── 2. CENTRAL SUBTERRANEAN CYBER-REACTOR & COMMAND VAULT ──
 	local reactorFolder = Instance.new("Folder")
@@ -437,18 +434,21 @@ function PlotService.Init()
 	createPart("ReactorBaseTier2", Vector3.new(20, 1.4, 20), CFrame.new(0, 6.4, 0), Color3.fromRGB(30, 41, 59), Enum.Material.DiamondPlate, reactorFolder, true)
 	createPart("ReactorCautionBorder", Vector3.new(20.4, 0.3, 20.4), CFrame.new(0, 7.15, 0), Color3.fromRGB(245, 158, 11), Enum.Material.SmoothPlastic, reactorFolder, false)
 
-	-- Central Cylindrical Plasma Energy Core (Glowing Cyan)
-	local reactorCore = createPart("ReactorPlasmaCore", Vector3.new(10, 20, 10), CFrame.new(0, 17.5, 0), Color3.fromRGB(14, 165, 233), Enum.Material.Neon, reactorFolder, false)
-	local coreMesh = Instance.new("CylinderMesh")
-	coreMesh.Parent = reactorCore
+	-- Central Plasma Energy Chamber: Tempered Glass Shell with Internal Glowing Plasma Rod
+	local innerPlasmaRod = createPart("ReactorPlasmaRod", Vector3.new(3.4, 18, 3.4), CFrame.new(0, 17.5, 0), Color3.fromRGB(14, 165, 233), Enum.Material.Neon, reactorFolder, false)
+	Instance.new("CylinderMesh", innerPlasmaRod)
+
+	local glassChamber = createPart("ReactorGlassChamber", Vector3.new(7.6, 19, 7.6), CFrame.new(0, 17.5, 0), Color3.fromRGB(15, 23, 42), Enum.Material.Glass, reactorFolder, false)
+	glassChamber.Transparency = 0.55
+	Instance.new("CylinderMesh", glassChamber)
 
 	local coreLight = Instance.new("PointLight")
 	coreLight.Color = Color3.fromRGB(56, 189, 248)
-	coreLight.Range = 45
-	coreLight.Brightness = 3.2
-	coreLight.Parent = reactorCore
+	coreLight.Range = 36
+	coreLight.Brightness = 2.0
+	coreLight.Parent = innerPlasmaRod
 
-	-- Slotted Dark Steel Reactor Containment Cage around Core
+	-- Slotted Dark Steel Reactor Containment Cage around Core (8 Structural Pillars)
 	for a = 0, 7 do
 		local radAngle = a * (math.pi / 4)
 		local pX = math.cos(radAngle) * 5.6
@@ -466,16 +466,26 @@ function PlotService.Init()
 		local fSpot = Instance.new("SpotLight")
 		fSpot.Face = Enum.NormalId.Bottom
 		fSpot.Angle = 110
-		fSpot.Range = 65
-		fSpot.Brightness = 3.5
+		fSpot.Range = 55
+		fSpot.Brightness = 2.8
 		fSpot.Color = Color3.fromRGB(255, 248, 235)
 		fSpot.Shadows = true
 		fSpot.Parent = fFixture
 	end
 
-	-- Overhead Rotating Coolant Magnetic Rings
-	createPart("ReactorMagneticRingTop", Vector3.new(15, 1.2, 15), CFrame.new(0, 26, 0), Color3.fromRGB(56, 189, 248), Enum.Material.Neon, reactorFolder, false)
-	createPart("ReactorMagneticRingMid", Vector3.new(17, 1.0, 17), CFrame.new(0, 20, 0), Color3.fromRGB(245, 158, 11), Enum.Material.Neon, reactorFolder, false)
+	-- Overhead Segmented Magnetic Containment Collars (Mechanical rings with thin recessed LED strips)
+	for a = 0, 7 do
+		local radAngle = a * (math.pi / 4)
+		-- Top cyan collar at Y=26, radius 7.5
+		local topCF = CFrame.new(0, 26, 0) * CFrame.Angles(0, radAngle, 0) * CFrame.new(0, 0, 7.5)
+		createPart(`CollarTopSeg_{a}`, Vector3.new(5.8, 1.2, 1.0), topCF, Color3.fromRGB(30, 41, 59), Enum.Material.Metal, reactorFolder, true)
+		createPart(`CollarTopTrim_{a}`, Vector3.new(5.6, 0.15, 0.2), topCF * CFrame.new(0, 0, 0.55), Color3.fromRGB(56, 189, 248), Enum.Material.Neon, reactorFolder, false)
+
+		-- Mid amber collar at Y=20, radius 8.5
+		local midCF = CFrame.new(0, 20, 0) * CFrame.Angles(0, radAngle, 0) * CFrame.new(0, 0, 8.5)
+		createPart(`CollarMidSeg_{a}`, Vector3.new(6.6, 1.0, 1.0), midCF, Color3.fromRGB(30, 41, 59), Enum.Material.Metal, reactorFolder, true)
+		createPart(`CollarMidTrim_{a}`, Vector3.new(6.4, 0.15, 0.2), midCF * CFrame.new(0, 0, 0.55), Color3.fromRGB(245, 158, 11), Enum.Material.Neon, reactorFolder, false)
+	end
 
 	-- Leaderboard Array (Embedded smoothly into South face of reactor towards arrivals)
 	local lbBacking = createPart("LeaderboardBacking", Vector3.new(11, 14, 1.2), CFrame.new(0, 16.5, 6.2), Color3.fromRGB(15, 17, 26), Enum.Material.Metal, reactorFolder, true)
@@ -610,11 +620,25 @@ function PlotService.Init()
 		local torso = createPart("Torso", Vector3.new(2.4, 2.6, 1.4), spawnCF * CFrame.new(0, 3.4, 0), Color3.fromRGB(30, 41, 59), Enum.Material.Metal, botModel, true)
 		botModel.PrimaryPart = torso
 
-		local head = createPart("Head", Vector3.new(1.4, 1.4, 1.4), torso.CFrame * CFrame.new(0, 1.9, 0), Color3.fromRGB(15, 23, 42), Enum.Material.SmoothPlastic, botModel, true)
-		createPart("Visor", Vector3.new(1.1, 0.4, 0.3), head.CFrame * CFrame.new(0, 0.2, -0.65), Color3.fromRGB(239, 68, 68), Enum.Material.Neon, botModel, false)
+		-- Side Thruster Turbines
+		createPart("ThrusterL", Vector3.new(0.6, 1.6, 0.8), torso.CFrame * CFrame.new(-1.5, 0, 0), Color3.fromRGB(15, 23, 42), Enum.Material.Metal, botModel, true)
+		createPart("ThrusterR", Vector3.new(0.6, 1.6, 0.8), torso.CFrame * CFrame.new(1.5, 0, 0), Color3.fromRGB(15, 23, 42), Enum.Material.Metal, botModel, true)
+		createPart("NozzleL", Vector3.new(0.5, 0.1, 0.6), torso.CFrame * CFrame.new(-1.5, -0.85, 0), Color3.fromRGB(56, 189, 248), Enum.Material.Neon, botModel, false)
+		createPart("NozzleR", Vector3.new(0.5, 0.1, 0.6), torso.CFrame * CFrame.new(1.5, -0.85, 0), Color3.fromRGB(56, 189, 248), Enum.Material.Neon, botModel, false)
 
-		createPart("TargetPedestal", Vector3.new(4.5, 0.6, 4.5), spawnCF * CFrame.new(0, 0.3, 0), Color3.fromRGB(24, 28, 40), Enum.Material.DiamondPlate, botModel, true)
-		createPart("TargetRing", Vector3.new(5.0, 0.2, 5.0), spawnCF * CFrame.new(0, 0.55, 0), Color3.fromRGB(239, 68, 68), Enum.Material.Neon, botModel, false)
+		local head = createPart("Head", Vector3.new(1.4, 1.2, 1.4), torso.CFrame * CFrame.new(0, 1.9, 0), Color3.fromRGB(15, 23, 42), Enum.Material.SmoothPlastic, botModel, true)
+		createPart("Visor", Vector3.new(1.1, 0.3, 0.2), head.CFrame * CFrame.new(0, 0.15, -0.7), Color3.fromRGB(239, 68, 68), Enum.Material.Neon, botModel, false)
+
+		-- Diamond Plate Combat Ring Pedestal with Thin 0.15-stud Hazard Border (No solid neon blocks!)
+		local ped = createPart("TargetPedestal", Vector3.new(4.8, 0.4, 4.8), spawnCF * CFrame.new(0, 0.2, 0), Color3.fromRGB(24, 28, 40), Enum.Material.DiamondPlate, botModel, true)
+		for _, edgeOffset in {
+			CFrame.new(0, 0.22, -2.35),
+			CFrame.new(0, 0.22, 2.35),
+			CFrame.new(-2.35, 0.22, 0) * CFrame.Angles(0, math.rad(90), 0),
+			CFrame.new(2.35, 0.22, 0) * CFrame.Angles(0, math.rad(90), 0),
+		} do
+			createPart("TargetEdgeTrim", Vector3.new(4.6, 0.05, 0.15), ped.CFrame * edgeOffset, Color3.fromRGB(239, 68, 68), Enum.Material.Neon, botModel, false)
+		end
 
 		local hum = Instance.new("Humanoid")
 		hum.MaxHealth = 100
