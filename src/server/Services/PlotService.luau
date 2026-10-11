@@ -601,7 +601,7 @@ function PlotService.Init()
 		"ArrivalDeck",
 		Vector3.new(34, 2.0, 20),
 		CFrame.new(0, deckH, 36),
-		Color3.fromRGB(24, 28, 40),
+		Color3.fromRGB(56, 68, 86),
 		Enum.Material.DiamondPlate,
 		stationFolder,
 		true
@@ -612,7 +612,7 @@ function PlotService.Init()
 		"StationBackWall",
 		Vector3.new(36, 16, 3.6),
 		CFrame.new(0, deckH + 8, 46.5),
-		Color3.fromRGB(30, 36, 48),
+		Color3.fromRGB(60, 72, 90),
 		Enum.Material.Concrete,
 		stationFolder,
 		true
@@ -644,13 +644,32 @@ function PlotService.Init()
 		for step = 1, 6 do
 			local sY = deckH - (step * (4.5 / 6))
 			local sZ = 26 - (step * 2.0)
-			local stepPart = createPart(`ArrivalStep_{xStair}_{step}`, Vector3.new(11, 0.8, 2.2), CFrame.new(xStair, sY, sZ), Color3.fromRGB(38, 46, 60), Enum.Material.Concrete, stationFolder, true)
+			local stepPart = createPart(`ArrivalStep_{xStair}_{step}`, Vector3.new(11, 0.8, 2.2), CFrame.new(xStair, sY, sZ), Color3.fromRGB(64, 75, 94), Enum.Material.Concrete, stationFolder, true)
 			createPart(`StepTread_{xStair}_{step}`, Vector3.new(10.8, 0.1, 0.4), CFrame.new(xStair, sY + 0.45, sZ - 0.9), Color3.fromRGB(56, 189, 248), Enum.Material.Neon, stepPart, false)
 		end
 	end
 
 	-- Overhead Gantry Arch with Professional Signage (No Emojis!)
-	local signArch = createPart("ArrivalSignArch", Vector3.new(24, 1.4, 1.4), CFrame.new(0, deckH + 11, 26), Color3.fromRGB(15, 23, 42), Enum.Material.Metal, stationFolder, true)
+	local signArch = createPart("ArrivalSignArch", Vector3.new(24, 1.4, 1.4), CFrame.new(0, deckH + 11, 26), Color3.fromRGB(24, 32, 48), Enum.Material.Metal, stationFolder, true)
+
+	-- Forward Plaza Floodlight (Illuminates stairs and transit path into the central plaza)
+	local arrivalPlazaFlood = Instance.new("SpotLight")
+	arrivalPlazaFlood.Name = "ArrivalPlazaFlood"
+	arrivalPlazaFlood.Face = Enum.NormalId.Front
+	arrivalPlazaFlood.Range = 70
+	arrivalPlazaFlood.Angle = 95
+	arrivalPlazaFlood.Brightness = 3.5
+	arrivalPlazaFlood.Color = Color3.fromRGB(255, 245, 220)
+	arrivalPlazaFlood.Shadows = true
+	arrivalPlazaFlood.Parent = signArch
+
+	local arrivalPoint = Instance.new("PointLight")
+	arrivalPoint.Name = "ArrivalDeckPointLight"
+	arrivalPoint.Range = 35
+	arrivalPoint.Brightness = 2.5
+	arrivalPoint.Color = Color3.fromRGB(240, 245, 255)
+	arrivalPoint.Shadows = false
+	arrivalPoint.Parent = signArch
 	local signGui = Instance.new("BillboardGui")
 	signGui.Name = "ArrivalSignGui"
 	signGui.Size = UDim2.new(0, 360, 0, 50)
@@ -918,7 +937,7 @@ function PlotService.Init()
 		createPart(`BridgeTrestleR_{i}`, Vector3.new(1.2, 2.0, 1.2), bridgeCF * CFrame.new(4.5, -2.0, 0), Color3.fromRGB(24, 28, 40), Enum.Material.Metal, pFolder, true)
 
 		-- 3.2. ELEVATED BUNKER FOUNDATION FLOOR (Top at Y=4.0, zero clipping)
-		local floor = createPart("PlotFloor", Vector3.new(pWidth, 2.0, pLen), faceCenterCF * CFrame.new(0, 1.0, 0), Color3.fromRGB(45, 52, 70), Enum.Material.Slate, pFolder)
+		local floor = createPart("PlotFloor", Vector3.new(pWidth, 2.0, pLen), faceCenterCF * CFrame.new(0, 1.0, 0), Color3.fromRGB(65, 75, 95), Enum.Material.Slate, pFolder)
 
 		-- Permanent Armored Compound Perimeter Walls & Corner Buttresses
 		createPart(`CompoundWallL_{i}`, Vector3.new(1.8, 12, pLen), faceCenterCF * CFrame.new(-pWidth / 2 + 0.9, 6.0, 0), Color3.fromRGB(42, 48, 64), Enum.Material.Concrete, pFolder, true)

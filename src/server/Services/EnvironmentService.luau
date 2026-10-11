@@ -70,20 +70,20 @@ local function setupAtmosphericLighting()
 		Lighting.Technology = Enum.Technology.Future
 	end)
 
-	Lighting.ClockTime = 0.0
-	Lighting.TimeOfDay = "00:00:00"
-	Lighting.Brightness = 0.0
-	Lighting.Ambient = Color3.fromRGB(24, 28, 38)
-	Lighting.OutdoorAmbient = Color3.fromRGB(16, 20, 30)
-	Lighting.ColorShift_Top = Color3.fromRGB(180, 200, 230)
-	Lighting.ColorShift_Bottom = Color3.fromRGB(15, 18, 25)
+	Lighting.ClockTime = 14.0
+	Lighting.TimeOfDay = "14:00:00"
+	Lighting.Brightness = 2.0
+	Lighting.Ambient = Color3.fromRGB(110, 125, 145)
+	Lighting.OutdoorAmbient = Color3.fromRGB(95, 110, 130)
+	Lighting.ColorShift_Top = Color3.fromRGB(240, 245, 255)
+	Lighting.ColorShift_Bottom = Color3.fromRGB(70, 80, 95)
 	Lighting.GeographicLatitude = 0
 	Lighting.GlobalShadows = true
-	Lighting.EnvironmentDiffuseScale = 0.4
-	Lighting.EnvironmentSpecularScale = 0.4
-	Lighting.FogStart = 250
-	Lighting.FogEnd = 1200
-	Lighting.FogColor = Color3.fromRGB(12, 15, 22)
+	Lighting.EnvironmentDiffuseScale = 0.8
+	Lighting.EnvironmentSpecularScale = 0.8
+	Lighting.FogStart = 400
+	Lighting.FogEnd = 2000
+	Lighting.FogColor = Color3.fromRGB(40, 48, 62)
 
 	for _, child in Lighting:GetChildren() do
 		if child:IsA("Sky") then
@@ -110,12 +110,12 @@ local function setupAtmosphericLighting()
 		atmosphere = Instance.new("Atmosphere")
 		atmosphere.Parent = Lighting
 	end
-	atmosphere.Density = 0.45
-	atmosphere.Offset = 0.20
-	atmosphere.Color = Color3.fromRGB(20, 24, 35)
-	atmosphere.Decay = Color3.fromRGB(10, 12, 18)
+	atmosphere.Density = 0.18
+	atmosphere.Offset = 0.10
+	atmosphere.Color = Color3.fromRGB(110, 125, 145)
+	atmosphere.Decay = Color3.fromRGB(60, 70, 85)
 	atmosphere.Glare = 0.0
-	atmosphere.Haze = 2.0
+	atmosphere.Haze = 0.35
 
 	local bloom = Lighting:FindFirstChild("VaultWarsBloom") :: BloomEffect?
 	if not bloom then
@@ -123,9 +123,9 @@ local function setupAtmosphericLighting()
 		bloom.Name = "VaultWarsBloom"
 		bloom.Parent = Lighting
 	end
-	bloom.Intensity = 0.12
-	bloom.Size = 12
-	bloom.Threshold = 1.95
+	bloom.Intensity = 0.30
+	bloom.Size = 16
+	bloom.Threshold = 0.95
 
 	local cc = Lighting:FindFirstChild("VaultWarsCC") :: ColorCorrectionEffect?
 	if not cc then
@@ -133,10 +133,10 @@ local function setupAtmosphericLighting()
 		cc.Name = "VaultWarsCC"
 		cc.Parent = Lighting
 	end
-	cc.TintColor = Color3.fromRGB(245, 248, 255)
-	cc.Brightness = 0.01
-	cc.Contrast = 0.20
-	cc.Saturation = 0.08
+	cc.TintColor = Color3.fromRGB(248, 250, 255)
+	cc.Brightness = 0.04
+	cc.Contrast = 0.12
+	cc.Saturation = 0.15
 
 	local sunRays = Lighting:FindFirstChild("VaultWarsSunRays") :: SunRaysEffect?
 	if sunRays then
@@ -149,9 +149,10 @@ local function setupAtmosphericLighting()
 		dof.Name = "VaultWarsDOF"
 		dof.Parent = Lighting
 	end
-	dof.FarIntensity = 0.20
-	dof.FocusDistance = 45
-	dof.InFocusRadius = 35
+	dof.Enabled = false
+	dof.FarIntensity = 0.0
+	dof.FocusDistance = 100
+	dof.InFocusRadius = 100
 	dof.NearIntensity = 0.0
 end
 
@@ -168,7 +169,7 @@ local function buildContinuousBedrockDeck(parent: Folder)
 		"CavernBedrockFoundation",
 		Vector3.new(244, 4.0, 244),
 		CFrame.new(0, 0, 0),
-		Color3.fromRGB(24, 28, 38),
+		Color3.fromRGB(56, 64, 78),
 		Enum.Material.Slate,
 		floorFolder,
 		true
@@ -190,7 +191,7 @@ local function buildContinuousBedrockDeck(parent: Folder)
 			`PerimeterApron_{i}`,
 			Vector3.new(segWidth, 0.3, 14),
 			cf * CFrame.new(0, 0, 0),
-			Color3.fromRGB(38, 46, 60),
+			Color3.fromRGB(65, 75, 92),
 			Enum.Material.DiamondPlate,
 			floorFolder,
 			true
@@ -770,7 +771,7 @@ local function buildCavernCeilingCanopy(parent: Folder)
 		"CeilingCenterHub",
 		Vector3.new(44, 4, 44),
 		CFrame.new(0, apexCeilingY, 0),
-		Color3.fromRGB(30, 41, 59),
+		Color3.fromRGB(45, 55, 72),
 		Enum.Material.DiamondPlate,
 		ceilingFolder,
 		true
@@ -785,6 +786,25 @@ local function buildCavernCeilingCanopy(parent: Folder)
 		centerHub,
 		false
 	)
+
+	-- Central Cavern Arena High-Bay Floodlight & Ambient Fill
+	local centerFlood = Instance.new("SpotLight")
+	centerFlood.Name = "CavernCentralArenaSpot"
+	centerFlood.Face = Enum.NormalId.Bottom
+	centerFlood.Range = 75
+	centerFlood.Angle = 125
+	centerFlood.Brightness = 3.6
+	centerFlood.Color = Color3.fromRGB(255, 238, 210)
+	centerFlood.Shadows = true
+	centerFlood.Parent = centerHub
+
+	local centerPoint = Instance.new("PointLight")
+	centerPoint.Name = "CavernCentralPointFill"
+	centerPoint.Range = 60
+	centerPoint.Brightness = 2.4
+	centerPoint.Color = Color3.fromRGB(225, 240, 255)
+	centerPoint.Shadows = false
+	centerPoint.Parent = centerHub
 
 	for i = 1, numSegs do
 		local angle = (i - 0.5) * (math.pi * 2 / numSegs)
@@ -804,6 +824,50 @@ local function buildCavernCeilingCanopy(parent: Folder)
 			ceilingFolder,
 			true
 		)
+	end
+
+	-- 8 Radial Ceiling High-Bay Halogen Floodlights (Illuminates full plaza & vault sectors)
+	for lightIdx = 1, 8 do
+		local lightAngle = (lightIdx - 0.5) * (math.pi * 2 / 8)
+		local lightPos = Vector3.new(math.cos(lightAngle) * 62, apexCeilingY - 3, math.sin(lightAngle) * 62)
+
+		local bayLightFixture = createPart(
+			`HighBayCeilingFixture_{lightIdx}`,
+			Vector3.new(4.5, 2.0, 4.5),
+			CFrame.new(lightPos),
+			Color3.fromRGB(71, 85, 105),
+			Enum.Material.Metal,
+			ceilingFolder,
+			true
+		)
+
+		local lens = createPart(
+			`HighBayCeilingLens_{lightIdx}`,
+			Vector3.new(3.6, 0.4, 3.6),
+			CFrame.new(lightPos - Vector3.new(0, 0.9, 0)),
+			Color3.fromRGB(255, 244, 215),
+			Enum.Material.Neon,
+			bayLightFixture,
+			false
+		)
+
+		local spot = Instance.new("SpotLight")
+		spot.Name = "HighBaySpot"
+		spot.Face = Enum.NormalId.Bottom
+		spot.Range = 65
+		spot.Angle = 110
+		spot.Brightness = 3.2
+		spot.Color = Color3.fromRGB(255, 240, 215)
+		spot.Shadows = true
+		spot.Parent = lens
+
+		local fill = Instance.new("PointLight")
+		fill.Name = "HighBayFill"
+		fill.Range = 45
+		fill.Brightness = 1.8
+		fill.Color = Color3.fromRGB(230, 242, 255)
+		fill.Shadows = false
+		fill.Parent = lens
 	end
 
 	-- Full-Map Structural Cavern Cap (300x300 at Y=50, completely seals off open sky)
