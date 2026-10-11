@@ -98,7 +98,7 @@ function ModelEngine.IngestStudioModels()
 
 	local KEYWORD_MAP = {
 		{ keywords = { "mint", "stamper", "press" }, target = "MintMachine" },
-		{ keywords = { "vault", "bulkhead", "cog", "vaultdoor" }, target = "VaultDoor" },
+		{ keywords = { "vaultdoor", "vault_door", "bulkhead", "cogdoor", "cog_door", "vault-door" }, target = "VaultDoor" },
 		{ keywords = { "turret", "sentry", "defenseturret" }, target = "DefenseTurret" },
 		{ keywords = { "drone", "securitydrone", "patrol" }, target = "SecurityDrone" },
 		{ keywords = { "reactor", "tokamak", "fusion" }, target = "ReactorCore" },
@@ -111,9 +111,13 @@ function ModelEngine.IngestStudioModels()
 
 	local function matchTarget(name: string): string?
 		local lower = name:lower()
+		-- Strict immunity for game world system folders and facility architecture
+		if lower:find("vaultwars") or lower:find("facility") or lower:find("arena") or lower:find("cavern") or lower:find("sector") then
+			return nil
+		end
 		for _, entry in KEYWORD_MAP do
 			for _, kw in entry.keywords do
-				if lower:find(kw) then
+				if lower == kw or lower:find(kw) then
 					return entry.target
 				end
 			end
@@ -124,8 +128,12 @@ function ModelEngine.IngestStudioModels()
 	local reservedNames = {
 		Terrain = true,
 		Camera = true,
+		VaultWarsCavern = true,
+		VaultWarsArena = true,
 		SubterraneanFacility = true,
 		VaultPlots = true,
+		Plots = true,
+		Sector7TransitTerminal = true,
 		CustomWorldDecor = true,
 		AirdropZone = true,
 		SpawnLocation = true,
@@ -135,7 +143,7 @@ function ModelEngine.IngestStudioModels()
 	}
 
 	for _, child in Workspace:GetChildren() do
-		if not reservedNames[child.Name] and (child:IsA("Model") or child:IsA("BasePart") or child:IsA("Folder")) then
+		if not reservedNames[child.Name] and not child.Name:find("VaultWars") and (child:IsA("Model") or child:IsA("MeshPart")) then
 			local lowerName = child.Name:lower()
 			if lowerName:find("prop") or lowerName:find("part-") or lowerName:find("kit") or lowerName:find("industrial") then
 				child.Parent = models

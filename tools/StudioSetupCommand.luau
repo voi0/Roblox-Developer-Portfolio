@@ -34,7 +34,7 @@ end
 -- 2. Keyword Mapping Table
 local KEYWORD_MAP = {
 	{ keywords = { "mint", "stamper", "press", "coin" }, target = "MintMachine" },
-	{ keywords = { "vault", "bulkhead", "cog", "vaultdoor" }, target = "VaultDoor" },
+	{ keywords = { "vaultdoor", "vault_door", "bulkhead", "cogdoor", "cog_door", "vault-door" }, target = "VaultDoor" },
 	{ keywords = { "turret", "sentry", "defenseturret" }, target = "DefenseTurret" },
 	{ keywords = { "drone", "securitydrone", "patrol", "bot" }, target = "SecurityDrone" },
 	{ keywords = { "reactor", "tokamak", "fusion", "core" }, target = "ReactorCore" },
@@ -47,9 +47,12 @@ local KEYWORD_MAP = {
 
 local function matchTarget(name: string): string?
 	local lower = name:lower()
+	if lower:find("vaultwars") or lower:find("facility") or lower:find("arena") or lower:find("cavern") or lower:find("sector") then
+		return nil
+	end
 	for _, entry in KEYWORD_MAP do
 		for _, kw in entry.keywords do
-			if lower:find(kw) then
+			if lower == kw or lower:find(kw) then
 				return entry.target
 			end
 		end
@@ -64,6 +67,8 @@ local reserved = {
 	VaultWarsCavern = true,
 	VaultWarsArena = true,
 	VaultPlots = true,
+	Plots = true,
+	Sector7TransitTerminal = true,
 	CustomWorldDecor = true,
 	AirdropZone = true,
 	SpawnLocation = true,
@@ -76,7 +81,7 @@ local ingestedCount = 0
 local auditReport = {}
 
 for _, child in Workspace:GetChildren() do
-	if not reserved[child.Name] and (child:IsA("Model") or child:IsA("BasePart") or child:IsA("Folder")) then
+	if not reserved[child.Name] and not child.Name:find("VaultWars") and (child:IsA("Model") or child:IsA("MeshPart")) then
 		local lowerName = child.Name:lower()
 
 		if lowerName:find("prop") or lowerName:find("part-") or lowerName:find("kit") or lowerName:find("industrial") then

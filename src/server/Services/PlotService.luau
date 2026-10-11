@@ -356,9 +356,6 @@ local UPGRADE_DEFS: { [string]: any } = {
 function PlotService.Init()
 	print("  [PlotService] Constructing Cyber-Industrial Plaza & 6 Fortified Bunker Bases...")
 
-	-- ── 0. INGEST STUDIO 3D MODELS ──
-	ModelEngine.IngestStudioModels()
-
 	-- ── 0.1 BASEPLATE CLEANUP (Eliminates ground flickering & Z-fighting) ──
 	for _, child in Workspace:GetChildren() do
 		if child:IsA("BasePart") then

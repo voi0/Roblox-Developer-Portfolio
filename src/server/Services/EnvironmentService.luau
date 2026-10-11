@@ -274,7 +274,7 @@ end
 local function buildCavernEnclosure(parent: Folder)
 	local numSegments = 16
 	local radius = 114
-	local wallHeight = 36
+	local wallHeight = 52
 	local wallThickness = 6
 	local halfAngle = math.pi / numSegments
 	local segmentWidth = 2 * radius * math.sin(halfAngle) + 6
@@ -289,17 +289,17 @@ local function buildCavernEnclosure(parent: Folder)
 
 		local wallPos = Vector3.new(
 			math.cos(centerAngle) * radius,
-			wallHeight / 2 + 2,
+			wallHeight / 2,
 			math.sin(centerAngle) * radius
 		)
-		local lookCenterCF = CFrame.lookAt(wallPos, Vector3.new(0, wallHeight / 2 + 2, 0))
+		local lookCenterCF = CFrame.lookAt(wallPos, Vector3.new(0, wallHeight / 2, 0))
 
 		-- 4.1. Lower Armored Blast Slab (DiamondPlate)
 		createPart(
 			`BlastWallLower_{i}`,
-			Vector3.new(segmentWidth, 18, wallThickness),
-			lookCenterCF * CFrame.new(0, -9, 0),
-			Color3.fromRGB(48, 56, 72),
+			Vector3.new(segmentWidth, 26, wallThickness),
+			lookCenterCF * CFrame.new(0, -13, 0),
+			Color3.fromRGB(56, 68, 86),
 			Enum.Material.DiamondPlate,
 			wallsFolder,
 			true
@@ -308,9 +308,9 @@ local function buildCavernEnclosure(parent: Folder)
 		-- Ground Baseboard Footer (Anchors wall firmly into bedrock, eliminates seams)
 		createPart(
 			`BlastWallBaseboard_{i}`,
-			Vector3.new(segmentWidth + 1, 2.4, wallThickness + 1.4),
-			lookCenterCF * CFrame.new(0, -17, -0.7),
-			Color3.fromRGB(30, 36, 48),
+			Vector3.new(segmentWidth + 1, 3.0, wallThickness + 1.4),
+			lookCenterCF * CFrame.new(0, -25, -0.7),
+			Color3.fromRGB(38, 46, 60),
 			Enum.Material.Concrete,
 			wallsFolder,
 			true
@@ -319,9 +319,9 @@ local function buildCavernEnclosure(parent: Folder)
 		-- 4.2. Upper Corrugated Blast Wall
 		createPart(
 			`BlastWallUpper_{i}`,
-			Vector3.new(segmentWidth, 18, wallThickness - 1),
-			lookCenterCF * CFrame.new(0, 9, 0.5),
-			Color3.fromRGB(64, 74, 94),
+			Vector3.new(segmentWidth, 26, wallThickness - 1),
+			lookCenterCF * CFrame.new(0, 13, 0.5),
+			Color3.fromRGB(72, 85, 108),
 			Enum.Material.CorrugatedMetal,
 			wallsFolder,
 			true
